@@ -154,7 +154,7 @@ html_content = """<!DOCTYPE html>
 
             <div>
 
-                <h1>ÉLÉGANCE</h1>
+                <h1>PRESENT PERFECT</h1>
 
                 <p>JEWELLERY COLLECTION</p>
 
@@ -377,7 +377,7 @@ html_content = """<!DOCTYPE html>
 
         <span>✦</span>
 
-        ÉLÉGANCE
+        PRESENT PERFECT
 
     </div>
 
@@ -391,7 +391,7 @@ html_content = """<!DOCTYPE html>
 
 
     <small>
-        © 2026 ÉLÉGANCE JEWELLERY
+        © 2026 PRESENT PERFECT JEWELLERY
     </small>
 
 </footer>
