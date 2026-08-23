@@ -11,29 +11,12 @@
     content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 
 <meta
-    name="theme-color"
-    content="#faf8f2">
-
-<meta
     name="description"
     content="Present Perfect Store - The Products Catalogue">
 
 <title>
 Present Perfect Store | The Products Catalogue
 </title>
-
-<link
-    rel="preconnect"
-    href="https://fonts.googleapis.com">
-
-<link
-    rel="preconnect"
-    href="https://fonts.gstatic.com"
-    crossorigin>
-
-<link
-    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600&display=swap"
-    rel="stylesheet">
 
 <link
     rel="stylesheet"
@@ -59,7 +42,7 @@ Present Perfect Store | The Products Catalogue
                 ✦
             </div>
 
-            <div class="brand-text">
+            <div>
 
                 <h1>
                     PRESENT PERFECT
@@ -81,7 +64,7 @@ Present Perfect Store | The Products Catalogue
             </span>
 
             <span>
-                FOR EVERY SPACE &amp; OCCASION
+                FOR EVERY SPACE & OCCASION
             </span>
 
         </div>
@@ -97,7 +80,7 @@ Present Perfect Store | The Products Catalogue
 
 <section class="hero">
 
-    <div class="hero-decoration hero-decoration-left">
+    <div class="hero-decoration left">
         ✦
     </div>
 
@@ -110,8 +93,10 @@ Present Perfect Store | The Products Catalogue
 
 
         <h2>
+
             The Products
             <em>Catalogue</em>
+
         </h2>
 
 
@@ -127,24 +112,18 @@ Present Perfect Store | The Products Catalogue
         </p>
 
 
-        <!-- ==================================================
-             MOBILE FIX:
-             Use BUTTON instead of relying only on #anchor.
-        =================================================== -->
-
-        <button
-            type="button"
-            class="explore-button"
-            id="viewCatalogueButton">
+        <a
+            href="#catalogue"
+            class="explore-button">
 
             VIEW CATALOGUE
 
-        </button>
+        </a>
 
     </div>
 
 
-    <div class="hero-decoration hero-decoration-right">
+    <div class="hero-decoration right">
         ✦
     </div>
 
@@ -160,6 +139,7 @@ Present Perfect Store | The Products Catalogue
 <section
     class="catalogue"
     id="catalogue">
+
 
     <div class="section-heading">
 
@@ -183,11 +163,8 @@ Present Perfect Store | The Products Catalogue
     </div>
 
 
-    <div
-        id="products-grid"
-        aria-live="polite">
+    <div id="products-grid"></div>
 
-    </div>
 
 </section>
 
@@ -204,16 +181,14 @@ Present Perfect Store | The Products Catalogue
     aria-hidden="true">
 
 
-    <div
-        class="modal-overlay">
-    </div>
+    <div class="modal-overlay"></div>
 
 
     <div
         class="modal-box"
         role="dialog"
         aria-modal="true"
-        aria-labelledby="modalTitle">
+        aria-labelledby="orderTitle">
 
 
         <button
@@ -227,109 +202,110 @@ Present Perfect Store | The Products Catalogue
         </button>
 
 
-        <div class="modal-content">
-
-            <div class="modal-symbol">
-                ✦
-            </div>
+        <div class="modal-symbol">
+            ✦
+        </div>
 
 
-            <h2 id="modalTitle">
-                Place Your Order
-            </h2>
+        <h2 id="orderTitle">
+            Place Your Order
+        </h2>
 
 
-            <p class="modal-subtitle">
+        <p class="modal-subtitle">
 
-                Please provide your details.
-                A custom WhatsApp message will
-                be prepared for the store.
+            Please provide your details.
+            A custom WhatsApp message will
+            be prepared for the store.
+
+        </p>
+
+
+        <div
+            id="selectedProduct"
+            class="selected-product">
+
+        </div>
+
+
+        <div class="popup-notice">
+
+            <strong>
+                WhatsApp Order
+            </strong>
+
+            <p>
+
+                After submitting your details,
+                WhatsApp will open with your
+                order message. Please review it
+                and press Send.
 
             </p>
 
-
-            <div
-                id="selectedProduct"
-                class="selected-product">
-
-            </div>
-
-
-            <div class="popup-notice">
-
-                <strong>
-                    WhatsApp Order
-                </strong>
-
-                <p>
-
-                    After submitting your details,
-                    WhatsApp will open with your
-                    order message. Please review it
-                    and press <strong>Send</strong>.
-
-                </p>
-
-            </div>
-
-
-            <form id="orderForm">
-
-                <label for="customerName">
-                    Your Name
-                </label>
-
-                <input
-                    id="customerName"
-                    name="customerName"
-                    type="text"
-                    autocomplete="name"
-                    placeholder="Enter your name"
-                    required>
-
-
-                <label for="customerNumber">
-                    WhatsApp Number
-                </label>
-
-                <input
-                    id="customerNumber"
-                    name="customerNumber"
-                    type="tel"
-                    inputmode="tel"
-                    autocomplete="tel"
-                    placeholder="Enter your WhatsApp number"
-                    required>
-
-
-                <label for="deliveryAddress">
-                    Delivery Address
-                </label>
-
-                <textarea
-                    id="deliveryAddress"
-                    name="deliveryAddress"
-                    autocomplete="street-address"
-                    rows="4"
-                    placeholder="Enter complete delivery address"
-                    required></textarea>
-
-
-                <button
-                    type="submit"
-                    class="whatsapp-button">
-
-                    <span>
-                        ☏
-                    </span>
-
-                    PREPARE WHATSAPP ORDER
-
-                </button>
-
-            </form>
-
         </div>
+
+
+        <form id="orderForm">
+
+
+            <label for="customerName">
+                Your Name
+            </label>
+
+
+            <input
+                id="customerName"
+                name="customerName"
+                type="text"
+                autocomplete="name"
+                placeholder="Enter your name"
+                required>
+
+
+            <label for="customerNumber">
+                WhatsApp Number
+            </label>
+
+
+            <input
+                id="customerNumber"
+                name="customerNumber"
+                type="tel"
+                inputmode="tel"
+                autocomplete="tel"
+                placeholder="Enter your WhatsApp number"
+                required>
+
+
+            <label for="deliveryAddress">
+                Delivery Address
+            </label>
+
+
+            <textarea
+                id="deliveryAddress"
+                name="deliveryAddress"
+                autocomplete="street-address"
+                rows="4"
+                placeholder="Enter complete delivery address"
+                required></textarea>
+
+
+            <button
+                type="submit"
+                class="whatsapp-button">
+
+                <span>
+                    ☏
+                </span>
+
+                PREPARE WHATSAPP ORDER
+
+            </button>
+
+
+        </form>
 
     </div>
 
@@ -354,8 +330,10 @@ Present Perfect Store | The Products Catalogue
 
 
     <p>
+
         Thoughtful products for every space,
         occasion and moment.
+
     </p>
 
 

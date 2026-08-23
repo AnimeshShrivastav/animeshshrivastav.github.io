@@ -1,5 +1,7 @@
-import os
+#!/usr/bin/env python3
+
 import json
+import os
 import re
 
 
@@ -7,13 +9,32 @@ import re
 # SETTINGS
 # ============================================================
 
-IMAGE_FOLDER = "images"
+ROOT = os.path.dirname(
+    os.path.abspath(__file__)
+)
 
-HTML_FILE = "index.html"
-CSS_FILE = "style.css"
-JS_FILE = "script.js"
+IMAGE_FOLDER = os.path.join(
+    ROOT,
+    "images"
+)
+
+HTML_FILE = os.path.join(
+    ROOT,
+    "index.html"
+)
+
+CSS_FILE = os.path.join(
+    ROOT,
+    "style.css"
+)
+
+JS_FILE = os.path.join(
+    ROOT,
+    "script.js"
+)
 
 SELLER_WHATSAPP = "918902411270"
+
 
 IMAGE_EXTENSIONS = {
     ".jpg",
@@ -25,7 +46,16 @@ IMAGE_EXTENSIONS = {
 
 
 # ============================================================
-# PRODUCT PARSER
+# PRODUCT FILENAME PARSER
+#
+# Expected:
+#
+# Necklace_5999.jpg
+# Wall_Decor_1499.jpg
+# Coffee_Mug_499.jpg
+#
+# Everything before LAST underscore = category
+# Everything after LAST underscore = MRP
 # ============================================================
 
 def parse_product_filename(filename):
@@ -42,7 +72,11 @@ def parse_product_filename(filename):
     if not price.isdigit():
         return None
 
-    category = " ".join(parts[:-1])
+    category_parts = parts[:-1]
+
+    category = " ".join(
+        category_parts
+    )
 
     category = re.sub(
         r"\s+",
@@ -63,95 +97,108 @@ def parse_product_filename(filename):
 # FIND PRODUCTS
 # ============================================================
 
-products = []
+def find_products():
 
-if not os.path.isdir(IMAGE_FOLDER):
+    products = []
 
-    print(
-        f"ERROR: '{IMAGE_FOLDER}' folder does not exist."
-    )
-
-    raise SystemExit(1)
-
-
-files = sorted(
-    os.listdir(IMAGE_FOLDER),
-    key=str.lower
-)
-
-
-for filename in files:
-
-    filepath = os.path.join(
-        IMAGE_FOLDER,
-        filename
-    )
-
-    if not os.path.isfile(filepath):
-        continue
-
-    extension = os.path.splitext(
-        filename
-    )[1].lower()
-
-    if extension not in IMAGE_EXTENSIONS:
-        continue
-
-    parsed = parse_product_filename(
-        filename
-    )
-
-    if parsed is None:
+    if not os.path.isdir(
+        IMAGE_FOLDER
+    ):
 
         print(
-            "WARNING: Skipping invalid filename:",
+            f"ERROR: '{IMAGE_FOLDER}' folder does not exist."
+        )
+
+        return products
+
+    files = sorted(
+        os.listdir(IMAGE_FOLDER),
+        key=lambda name: name.lower()
+    )
+
+    for filename in files:
+
+        filepath = os.path.join(
+            IMAGE_FOLDER,
             filename
         )
 
-        continue
+        if not os.path.isfile(
+            filepath
+        ):
+            continue
 
-    serial = len(products) + 1
+        extension = os.path.splitext(
+            filename
+        )[1].lower()
 
-    serial_string = str(serial).zfill(3)
+        if extension not in IMAGE_EXTENSIONS:
+            continue
 
-    product_code = (
-        serial_string
-        + "-"
-        + parsed["category"]
-        + "-"
-        + parsed["price"]
-    )
+        parsed = parse_product_filename(
+            filename
+        )
 
-    products.append({
+        if parsed is None:
 
-        "filename": filename,
+            print(
+                "WARNING: Skipping invalid filename:",
+                filename
+            )
 
-        "category": parsed["category"],
+            continue
 
-        "price": parsed["price"],
+        # ----------------------------------------------------
+        # SERIAL NUMBER
+        # ----------------------------------------------------
 
-        "serial": serial_string,
+        serial = len(products) + 1
 
-        "productCode": product_code
+        serial_string = str(
+            serial
+        ).zfill(3)
 
-    })
+        # ----------------------------------------------------
+        # PRODUCT CODE
+        # ----------------------------------------------------
+
+        product_code = (
+            serial_string
+            + "-"
+            + parsed["category"]
+            + "-"
+            + parsed["price"]
+        )
+
+        products.append({
+
+            "filename":
+                filename,
+
+            "category":
+                parsed["category"],
+
+            "price":
+                parsed["price"],
+
+            "serial":
+                serial_string,
+
+            "productCode":
+                product_code
+
+        })
+
+    return products
 
 
 # ============================================================
-# JSON
+# GENERATE PUBLIC HTML
 # ============================================================
 
-products_json = json.dumps(
-    products,
-    ensure_ascii=False
-)
+def generate_html():
 
-
-# ============================================================
-# INDEX.HTML
-# ============================================================
-
-html_content = """<!DOCTYPE html>
+    return """<!DOCTYPE html>
 
 <html lang="en">
 
@@ -164,29 +211,12 @@ html_content = """<!DOCTYPE html>
     content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 
 <meta
-    name="theme-color"
-    content="#faf8f2">
-
-<meta
     name="description"
     content="Present Perfect Store - The Products Catalogue">
 
 <title>
 Present Perfect Store | The Products Catalogue
 </title>
-
-<link
-    rel="preconnect"
-    href="https://fonts.googleapis.com">
-
-<link
-    rel="preconnect"
-    href="https://fonts.gstatic.com"
-    crossorigin>
-
-<link
-    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600&display=swap"
-    rel="stylesheet">
 
 <link
     rel="stylesheet"
@@ -212,7 +242,7 @@ Present Perfect Store | The Products Catalogue
                 ✦
             </div>
 
-            <div class="brand-text">
+            <div>
 
                 <h1>
                     PRESENT PERFECT
@@ -234,7 +264,7 @@ Present Perfect Store | The Products Catalogue
             </span>
 
             <span>
-                FOR EVERY SPACE &amp; OCCASION
+                FOR EVERY SPACE & OCCASION
             </span>
 
         </div>
@@ -250,7 +280,7 @@ Present Perfect Store | The Products Catalogue
 
 <section class="hero">
 
-    <div class="hero-decoration hero-decoration-left">
+    <div class="hero-decoration left">
         ✦
     </div>
 
@@ -263,8 +293,10 @@ Present Perfect Store | The Products Catalogue
 
 
         <h2>
+
             The Products
             <em>Catalogue</em>
+
         </h2>
 
 
@@ -280,24 +312,18 @@ Present Perfect Store | The Products Catalogue
         </p>
 
 
-        <!-- ==================================================
-             MOBILE FIX:
-             Use BUTTON instead of relying only on #anchor.
-        =================================================== -->
-
-        <button
-            type="button"
-            class="explore-button"
-            id="viewCatalogueButton">
+        <a
+            href="#catalogue"
+            class="explore-button">
 
             VIEW CATALOGUE
 
-        </button>
+        </a>
 
     </div>
 
 
-    <div class="hero-decoration hero-decoration-right">
+    <div class="hero-decoration right">
         ✦
     </div>
 
@@ -313,6 +339,7 @@ Present Perfect Store | The Products Catalogue
 <section
     class="catalogue"
     id="catalogue">
+
 
     <div class="section-heading">
 
@@ -336,11 +363,8 @@ Present Perfect Store | The Products Catalogue
     </div>
 
 
-    <div
-        id="products-grid"
-        aria-live="polite">
+    <div id="products-grid"></div>
 
-    </div>
 
 </section>
 
@@ -357,16 +381,14 @@ Present Perfect Store | The Products Catalogue
     aria-hidden="true">
 
 
-    <div
-        class="modal-overlay">
-    </div>
+    <div class="modal-overlay"></div>
 
 
     <div
         class="modal-box"
         role="dialog"
         aria-modal="true"
-        aria-labelledby="modalTitle">
+        aria-labelledby="orderTitle">
 
 
         <button
@@ -380,109 +402,110 @@ Present Perfect Store | The Products Catalogue
         </button>
 
 
-        <div class="modal-content">
-
-            <div class="modal-symbol">
-                ✦
-            </div>
+        <div class="modal-symbol">
+            ✦
+        </div>
 
 
-            <h2 id="modalTitle">
-                Place Your Order
-            </h2>
+        <h2 id="orderTitle">
+            Place Your Order
+        </h2>
 
 
-            <p class="modal-subtitle">
+        <p class="modal-subtitle">
 
-                Please provide your details.
-                A custom WhatsApp message will
-                be prepared for the store.
+            Please provide your details.
+            A custom WhatsApp message will
+            be prepared for the store.
+
+        </p>
+
+
+        <div
+            id="selectedProduct"
+            class="selected-product">
+
+        </div>
+
+
+        <div class="popup-notice">
+
+            <strong>
+                WhatsApp Order
+            </strong>
+
+            <p>
+
+                After submitting your details,
+                WhatsApp will open with your
+                order message. Please review it
+                and press Send.
 
             </p>
 
-
-            <div
-                id="selectedProduct"
-                class="selected-product">
-
-            </div>
-
-
-            <div class="popup-notice">
-
-                <strong>
-                    WhatsApp Order
-                </strong>
-
-                <p>
-
-                    After submitting your details,
-                    WhatsApp will open with your
-                    order message. Please review it
-                    and press <strong>Send</strong>.
-
-                </p>
-
-            </div>
-
-
-            <form id="orderForm">
-
-                <label for="customerName">
-                    Your Name
-                </label>
-
-                <input
-                    id="customerName"
-                    name="customerName"
-                    type="text"
-                    autocomplete="name"
-                    placeholder="Enter your name"
-                    required>
-
-
-                <label for="customerNumber">
-                    WhatsApp Number
-                </label>
-
-                <input
-                    id="customerNumber"
-                    name="customerNumber"
-                    type="tel"
-                    inputmode="tel"
-                    autocomplete="tel"
-                    placeholder="Enter your WhatsApp number"
-                    required>
-
-
-                <label for="deliveryAddress">
-                    Delivery Address
-                </label>
-
-                <textarea
-                    id="deliveryAddress"
-                    name="deliveryAddress"
-                    autocomplete="street-address"
-                    rows="4"
-                    placeholder="Enter complete delivery address"
-                    required></textarea>
-
-
-                <button
-                    type="submit"
-                    class="whatsapp-button">
-
-                    <span>
-                        ☏
-                    </span>
-
-                    PREPARE WHATSAPP ORDER
-
-                </button>
-
-            </form>
-
         </div>
+
+
+        <form id="orderForm">
+
+
+            <label for="customerName">
+                Your Name
+            </label>
+
+
+            <input
+                id="customerName"
+                name="customerName"
+                type="text"
+                autocomplete="name"
+                placeholder="Enter your name"
+                required>
+
+
+            <label for="customerNumber">
+                WhatsApp Number
+            </label>
+
+
+            <input
+                id="customerNumber"
+                name="customerNumber"
+                type="tel"
+                inputmode="tel"
+                autocomplete="tel"
+                placeholder="Enter your WhatsApp number"
+                required>
+
+
+            <label for="deliveryAddress">
+                Delivery Address
+            </label>
+
+
+            <textarea
+                id="deliveryAddress"
+                name="deliveryAddress"
+                autocomplete="street-address"
+                rows="4"
+                placeholder="Enter complete delivery address"
+                required></textarea>
+
+
+            <button
+                type="submit"
+                class="whatsapp-button">
+
+                <span>
+                    ☏
+                </span>
+
+                PREPARE WHATSAPP ORDER
+
+            </button>
+
+
+        </form>
 
     </div>
 
@@ -507,8 +530,10 @@ Present Perfect Store | The Products Catalogue
 
 
     <p>
+
         Thoughtful products for every space,
         occasion and moment.
+
     </p>
 
 
@@ -531,10 +556,12 @@ Present Perfect Store | The Products Catalogue
 
 
 # ============================================================
-# STYLE.CSS
+# GENERATE PUBLIC CSS
 # ============================================================
 
-css_content = r"""
+def generate_css():
+
+    return r"""
 @import url(
 'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600&display=swap'
 );
@@ -547,19 +574,14 @@ css_content = r"""
 :root {
 
     --cream: #faf8f2;
-
     --cream-dark: #f1ebdf;
-
     --white: #ffffff;
 
     --gold: #b8944b;
-
     --gold-light: #d9bf80;
-
     --gold-dark: #80652e;
 
     --dark: #292722;
-
     --muted: #77736b;
 
     --rose: #95656b;
@@ -574,17 +596,9 @@ css_content = r"""
         Arial,
         sans-serif;
 
-    --safe-top:
-        env(safe-area-inset-top, 0px);
-
-    --safe-right:
-        env(safe-area-inset-right, 0px);
-
-    --safe-bottom:
-        env(safe-area-inset-bottom, 0px);
-
-    --safe-left:
-        env(safe-area-inset-left, 0px);
+    --shadow:
+        0 15px 45px
+        rgba(60,45,20,.10);
 }
 
 
@@ -592,43 +606,31 @@ css_content = r"""
    RESET
 ============================================================ */
 
-*,
-*::before,
-*::after {
+* {
 
     box-sizing:
         border-box;
+
 }
 
 
 html {
-
-    width:
-        100%;
-
-    min-height:
-        100%;
-
-    overflow-x:
-        hidden;
 
     scroll-behavior:
         smooth;
 
     -webkit-text-size-adjust:
         100%;
+
 }
 
 
 body {
 
-    width:
-        100%;
-
-    min-height:
-        100%;
-
     margin:
+        0;
+
+    min-width:
         0;
 
     overflow-x:
@@ -643,17 +645,6 @@ body {
     font-family:
         var(--sans);
 
-    -webkit-font-smoothing:
-        antialiased;
-}
-
-
-button,
-input,
-textarea {
-
-    font:
-        inherit;
 }
 
 
@@ -663,21 +654,19 @@ textarea {
 
 .site-header {
 
+    background:
+        rgba(250,248,242,.96);
+
+    border-bottom:
+        1px solid
+        rgba(184,148,75,.25);
+
     position:
         relative;
 
     z-index:
         10;
 
-    background:
-        rgba(250,248,242,.98);
-
-    border-bottom:
-        1px solid
-        rgba(184,148,75,.25);
-
-    padding-top:
-        var(--safe-top);
 }
 
 
@@ -690,13 +679,10 @@ textarea {
         1400px;
 
     margin:
-        auto;
+        0 auto;
 
     padding:
-        18px
-        max(18px, var(--safe-right))
-        18px
-        max(18px, var(--safe-left));
+        18px 35px;
 
     display:
         flex;
@@ -707,8 +693,6 @@ textarea {
     align-items:
         center;
 
-    gap:
-        15px;
 }
 
 
@@ -720,11 +704,12 @@ textarea {
     align-items:
         center;
 
+    gap:
+        13px;
+
     min-width:
         0;
 
-    gap:
-        10px;
 }
 
 
@@ -737,14 +722,8 @@ textarea {
         var(--gold);
 
     font-size:
-        28px;
-}
+        29px;
 
-
-.brand-text {
-
-    min-width:
-        0;
 }
 
 
@@ -757,7 +736,7 @@ textarea {
         var(--serif);
 
     font-size:
-        28px;
+        29px;
 
     font-weight:
         600;
@@ -768,8 +747,6 @@ textarea {
     line-height:
         1;
 
-    white-space:
-        nowrap;
 }
 
 
@@ -789,6 +766,7 @@ textarea {
 
     text-align:
         center;
+
 }
 
 
@@ -808,6 +786,7 @@ textarea {
 
     line-height:
         1.8;
+
 }
 
 
@@ -815,6 +794,7 @@ textarea {
 
     display:
         block;
+
 }
 
 
@@ -824,14 +804,11 @@ textarea {
 
 .hero {
 
-    position:
-        relative;
+    min-height:
+        550px;
 
     width:
         100%;
-
-    min-height:
-        550px;
 
     display:
         flex;
@@ -842,13 +819,17 @@ textarea {
     justify-content:
         center;
 
-    overflow:
-        hidden;
-
     text-align:
         center;
 
+    position:
+        relative;
+
+    overflow:
+        hidden;
+
     background:
+
         radial-gradient(
             circle at center,
             #ffffff 0%,
@@ -856,11 +837,6 @@ textarea {
             #e6d9bd 100%
         );
 
-    padding:
-        40px
-        max(20px, var(--safe-right))
-        50px
-        max(20px, var(--safe-left));
 }
 
 
@@ -881,6 +857,49 @@ textarea {
 
     pointer-events:
         none;
+
+}
+
+
+.hero::after {
+
+    content:
+        "";
+
+    position:
+        absolute;
+
+    width:
+        500px;
+
+    height:
+        500px;
+
+    max-width:
+        90vw;
+
+    max-height:
+        90vw;
+
+    border-radius:
+        50%;
+
+    border:
+        1px solid
+        rgba(184,148,75,.10);
+
+    top:
+        50%;
+
+    left:
+        50%;
+
+    transform:
+        translate(-50%,-50%);
+
+    pointer-events:
+        none;
+
 }
 
 
@@ -896,17 +915,15 @@ textarea {
         100%;
 
     max-width:
-        760px;
+        750px;
 
     padding:
-        50px 15px;
+        80px 25px;
+
 }
 
 
 .eyebrow {
-
-    display:
-        block;
 
     color:
         var(--gold-dark);
@@ -919,6 +936,7 @@ textarea {
 
     font-weight:
         500;
+
 }
 
 
@@ -931,17 +949,14 @@ textarea {
         var(--serif);
 
     font-size:
-        clamp(
-            50px,
-            8vw,
-            88px
-        );
+        clamp(55px, 8vw, 88px);
 
     font-weight:
         500;
 
     line-height:
-        .88;
+        .85;
+
 }
 
 
@@ -955,6 +970,7 @@ textarea {
 
     font-weight:
         400;
+
 }
 
 
@@ -971,6 +987,7 @@ textarea {
 
     background:
         var(--gold);
+
 }
 
 
@@ -990,50 +1007,26 @@ textarea {
 
     line-height:
         1.9;
+
 }
 
-
-/* ============================================================
-   VIEW CATALOGUE BUTTON
-============================================================ */
 
 .explore-button {
 
     display:
-        inline-flex;
-
-    align-items:
-        center;
-
-    justify-content:
-        center;
-
-    min-width:
-        190px;
-
-    min-height:
-        48px;
+        inline-block;
 
     padding:
-        14px 28px;
+        14px 30px;
 
-    border:
-        0;
-
-    border-radius:
-        0;
+    color:
+        white;
 
     background:
         var(--dark);
 
-    color:
-        #ffffff;
-
-    cursor:
-        pointer;
-
-    font-family:
-        var(--sans);
+    text-decoration:
+        none;
 
     font-size:
         9px;
@@ -1044,11 +1037,9 @@ textarea {
     letter-spacing:
         2px;
 
-    text-decoration:
-        none;
+    transition:
+        .25s;
 
-    -webkit-tap-highlight-color:
-        transparent;
 }
 
 
@@ -1056,13 +1047,49 @@ textarea {
 
     background:
         var(--gold-dark);
+
+    transform:
+        translateY(-2px);
+
 }
 
 
-.explore-button:active {
+.hero-decoration {
 
-    transform:
-        scale(.98);
+    position:
+        absolute;
+
+    color:
+        rgba(184,148,75,.25);
+
+    font-size:
+        80px;
+
+    pointer-events:
+        none;
+
+}
+
+
+.hero-decoration.left {
+
+    left:
+        8%;
+
+    top:
+        30%;
+
+}
+
+
+.hero-decoration.right {
+
+    right:
+        8%;
+
+    bottom:
+        20%;
+
 }
 
 
@@ -1070,24 +1097,7 @@ textarea {
    CATALOGUE
 ============================================================ */
 
-/*
-   IMPORTANT MOBILE FIX:
-
-   scroll-margin-top prevents the catalogue from being
-   hidden underneath the mobile header after scrolling.
-*/
-
-#catalogue {
-
-    scroll-margin-top:
-        20px;
-}
-
-
 .catalogue {
-
-    position:
-        relative;
 
     width:
         100%;
@@ -1099,10 +1109,8 @@ textarea {
         0 auto;
 
     padding:
-        85px
-        max(20px, var(--safe-right))
-        85px
-        max(20px, var(--safe-left));
+        85px 30px;
+
 }
 
 
@@ -1112,7 +1120,8 @@ textarea {
         center;
 
     margin-bottom:
-        50px;
+        55px;
+
 }
 
 
@@ -1126,6 +1135,7 @@ textarea {
 
     letter-spacing:
         4px;
+
 }
 
 
@@ -1143,8 +1153,6 @@ textarea {
     font-weight:
         500;
 
-    line-height:
-        1.05;
 }
 
 
@@ -1161,19 +1169,18 @@ textarea {
 
     background:
         var(--gold);
+
 }
 
 
 .section-heading p {
-
-    margin:
-        0;
 
     color:
         var(--muted);
 
     font-size:
         12px;
+
 }
 
 
@@ -1197,6 +1204,7 @@ textarea {
 
     gap:
         28px;
+
 }
 
 
@@ -1209,19 +1217,32 @@ textarea {
     min-width:
         0;
 
+    background:
+        var(--white);
+
+    box-shadow:
+        0 8px 35px
+        rgba(60,45,20,.07);
+
     overflow:
         hidden;
 
-    background:
-        #ffffff;
+    transition:
+        transform .4s ease,
+        box-shadow .4s ease;
 
-    border:
-        1px solid
-        rgba(184,148,75,.10);
+}
+
+
+.product-card:hover {
+
+    transform:
+        translateY(-8px);
 
     box-shadow:
-        0 8px 30px
-        rgba(60,45,20,.07);
+        0 20px 55px
+        rgba(60,45,20,.15);
+
 }
 
 
@@ -1237,38 +1258,46 @@ textarea {
     width:
         100%;
 
-    aspect-ratio:
-        1 / 1.05;
-
     overflow:
         hidden;
 
     background:
         #eee8dc;
+
 }
 
 
 .product-image {
 
-    display:
-        block;
-
     width:
         100%;
 
-    height:
-        100%;
+    aspect-ratio:
+        1 / 1.05;
 
     object-fit:
         cover;
 
-    object-position:
-        center;
+    display:
+        block;
+
+    transition:
+        transform .7s ease;
+
+}
+
+
+.product-card:hover
+.product-image {
+
+    transform:
+        scale(1.06);
+
 }
 
 
 /* ============================================================
-   PRODUCT INFO
+   IMAGE TAG
 ============================================================ */
 
 .photo-tag {
@@ -1277,19 +1306,25 @@ textarea {
         absolute;
 
     left:
-        9px;
+        12px;
 
     right:
-        9px;
+        12px;
 
     bottom:
-        9px;
+        12px;
 
     padding:
-        11px 8px;
+        13px 14px;
 
     background:
-        rgba(255,255,255,.95);
+        rgba(255,255,255,.93);
+
+    backdrop-filter:
+        blur(7px);
+
+    -webkit-backdrop-filter:
+        blur(7px);
 
     border:
         1px solid
@@ -1298,53 +1333,57 @@ textarea {
     text-align:
         center;
 
-    overflow:
-        hidden;
+    box-shadow:
+        0 5px 20px
+        rgba(0,0,0,.08);
+
 }
 
 
 .photo-category {
 
     margin:
-        0 0 4px;
-
-    color:
-        var(--dark);
+        0 0 5px;
 
     font-family:
         var(--serif);
 
     font-size:
-        22px;
+        24px;
 
     font-weight:
         600;
 
-    line-height:
-        1.05;
+    color:
+        var(--dark);
 
     overflow-wrap:
         anywhere;
+
 }
 
 
 .photo-price {
 
+    margin:
+        0;
+
     color:
         var(--gold-dark);
 
     font-size:
-        13px;
+        14px;
 
     font-weight:
         600;
+
 }
 
 
 .photo-serial {
 
     margin-top:
-        5px;
+        7px;
 
     color:
         #777;
@@ -1353,14 +1392,18 @@ textarea {
         8px;
 
     letter-spacing:
-        1.3px;
+        2px;
+
+    text-transform:
+        uppercase;
+
 }
 
 
 .photo-code {
 
     margin-top:
-        4px;
+        5px;
 
     color:
         #999;
@@ -1373,6 +1416,7 @@ textarea {
 
     overflow-wrap:
         anywhere;
+
 }
 
 
@@ -1383,7 +1427,8 @@ textarea {
 .product-footer {
 
     padding:
-        12px;
+        15px;
+
 }
 
 
@@ -1393,10 +1438,10 @@ textarea {
         100%;
 
     min-height:
-        44px;
+        42px;
 
     padding:
-        10px;
+        12px;
 
     border:
         1px solid
@@ -1421,7 +1466,25 @@ textarea {
         600;
 
     letter-spacing:
-        1.5px;
+        2px;
+
+    transition:
+        .25s;
+
+}
+
+
+.buy-button:hover {
+
+    background:
+        var(--dark);
+
+    color:
+        white;
+
+    border-color:
+        var(--dark);
+
 }
 
 
@@ -1449,17 +1512,9 @@ textarea {
     justify-content:
         center;
 
-    width:
-        100%;
-
-    height:
-        100%;
-
-    background:
-        rgba(30,25,20,.78);
-
     padding:
-        15px;
+        20px;
+
 }
 
 
@@ -1467,6 +1522,7 @@ textarea {
 
     display:
         flex;
+
 }
 
 
@@ -1479,7 +1535,14 @@ textarea {
         0;
 
     background:
-        rgba(30,25,20,.78);
+        rgba(30,25,20,.75);
+
+    backdrop-filter:
+        blur(6px);
+
+    -webkit-backdrop-filter:
+        blur(6px);
+
 }
 
 
@@ -1498,29 +1561,52 @@ textarea {
         500px;
 
     max-height:
-        calc(100dvh - 30px);
-
-    overflow:
-        hidden;
-
-    background:
-        var(--cream);
-}
-
-
-.modal-content {
-
-    max-height:
-        calc(100dvh - 30px);
+        92vh;
 
     overflow-y:
         auto;
 
-    padding:
-        32px;
-
     -webkit-overflow-scrolling:
         touch;
+
+    padding:
+        35px;
+
+    background:
+        var(--cream);
+
+    box-shadow:
+        0 30px 90px
+        rgba(0,0,0,.35);
+
+    animation:
+        modalIn .25s ease;
+
+}
+
+
+@keyframes modalIn {
+
+    from {
+
+        opacity:
+            0;
+
+        transform:
+            translateY(20px);
+
+    }
+
+    to {
+
+        opacity:
+            1;
+
+        transform:
+            translateY(0);
+
+    }
+
 }
 
 
@@ -1530,19 +1616,10 @@ textarea {
         absolute;
 
     top:
-        7px;
-
-    right:
         10px;
 
-    z-index:
-        5;
-
-    width:
-        44px;
-
-    height:
-        44px;
+    right:
+        14px;
 
     border:
         none;
@@ -1554,10 +1631,11 @@ textarea {
         #777;
 
     font-size:
-        30px;
+        28px;
 
     cursor:
         pointer;
+
 }
 
 
@@ -1571,6 +1649,7 @@ textarea {
 
     font-size:
         25px;
+
 }
 
 
@@ -1590,6 +1669,7 @@ textarea {
 
     font-weight:
         500;
+
 }
 
 
@@ -1597,6 +1677,9 @@ textarea {
 
     margin:
         0 auto 20px;
+
+    max-width:
+        400px;
 
     text-align:
         center;
@@ -1609,19 +1692,24 @@ textarea {
 
     line-height:
         1.7;
+
 }
 
+
+/* ============================================================
+   SELECTED PRODUCT
+============================================================ */
 
 .selected-product {
 
     padding:
-        13px;
+        14px;
 
     margin-bottom:
         18px;
 
     background:
-        #ffffff;
+        white;
 
     border-left:
         3px solid
@@ -1629,6 +1717,7 @@ textarea {
 
     text-align:
         center;
+
 }
 
 
@@ -1643,8 +1732,6 @@ textarea {
     font-size:
         23px;
 
-    overflow-wrap:
-        anywhere;
 }
 
 
@@ -1660,13 +1747,11 @@ textarea {
         var(--gold-dark);
 
     font-size:
-        10px;
-
-    line-height:
-        1.6;
+        11px;
 
     overflow-wrap:
         anywhere;
+
 }
 
 
@@ -1677,7 +1762,7 @@ textarea {
 .popup-notice {
 
     margin-bottom:
-        18px;
+        20px;
 
     padding:
         12px 14px;
@@ -1697,6 +1782,7 @@ textarea {
 
     line-height:
         1.6;
+
 }
 
 
@@ -1704,6 +1790,7 @@ textarea {
 
     margin:
         5px 0 0;
+
 }
 
 
@@ -1717,7 +1804,7 @@ textarea {
         block;
 
     margin:
-        12px 0 6px;
+        13px 0 6px;
 
     color:
         #625c53;
@@ -1733,20 +1820,21 @@ textarea {
 
     text-transform:
         uppercase;
+
 }
 
 
 #orderForm input,
 #orderForm textarea {
 
-    display:
-        block;
-
     width:
         100%;
 
+    max-width:
+        100%;
+
     padding:
-        13px 12px;
+        12px;
 
     border:
         1px solid
@@ -1756,7 +1844,7 @@ textarea {
         0;
 
     background:
-        #ffffff;
+        white;
 
     color:
         var(--dark);
@@ -1764,19 +1852,25 @@ textarea {
     font-family:
         var(--sans);
 
-    /*
-       16px prevents iPhone Safari from
-       automatically zooming the page.
-    */
-
     font-size:
         16px;
 
     outline:
         none;
 
-    -webkit-appearance:
-        none;
+}
+
+
+#orderForm input:focus,
+#orderForm textarea:focus {
+
+    border-color:
+        var(--gold);
+
+    box-shadow:
+        0 0 0 3px
+        rgba(184,148,75,.10);
+
 }
 
 
@@ -1785,8 +1879,6 @@ textarea {
     resize:
         vertical;
 
-    min-height:
-        100px;
 }
 
 
@@ -1796,10 +1888,13 @@ textarea {
         100%;
 
     min-height:
-        50px;
+        48px;
 
     margin-top:
-        20px;
+        22px;
+
+    padding:
+        15px;
 
     border:
         none;
@@ -1813,6 +1908,9 @@ textarea {
     cursor:
         pointer;
 
+    font-family:
+        var(--sans);
+
     font-size:
         10px;
 
@@ -1820,7 +1918,30 @@ textarea {
         600;
 
     letter-spacing:
-        1px;
+        1.5px;
+
+    transition:
+        .25s;
+
+}
+
+
+.whatsapp-button:hover {
+
+    background:
+        #0d7065;
+
+}
+
+
+.whatsapp-button span {
+
+    margin-right:
+        7px;
+
+    font-size:
+        16px;
+
 }
 
 
@@ -1841,6 +1962,7 @@ textarea {
 
     color:
         #cfc5b4;
+
 }
 
 
@@ -1857,6 +1979,7 @@ textarea {
 
     color:
         #dfc77f;
+
 }
 
 
@@ -1864,6 +1987,7 @@ textarea {
 
     color:
         #d3aa52;
+
 }
 
 
@@ -1878,8 +2002,9 @@ textarea {
     font-size:
         10px;
 
-    line-height:
-        1.7;
+    letter-spacing:
+        1px;
+
 }
 
 
@@ -1896,6 +2021,7 @@ textarea {
 
     background:
         var(--gold-dark);
+
 }
 
 
@@ -1915,11 +2041,12 @@ textarea {
 
     letter-spacing:
         2px;
+
 }
 
 
 /* ============================================================
-   MOBILE
+   TABLET / MOBILE
 ============================================================ */
 
 @media (max-width: 700px) {
@@ -1927,38 +2054,46 @@ textarea {
     .header-inner {
 
         padding:
-            14px
-            16px;
+            15px 18px;
+
+    }
+
+
+    .brand {
+
+        gap:
+            9px;
+
     }
 
 
     .brand-symbol {
 
         font-size:
-            23px;
+            24px;
+
     }
 
 
     .brand h1 {
 
         font-size:
-            20px;
+            22px;
 
         letter-spacing:
-            1.5px;
+            2px;
+
     }
 
 
     .brand p {
 
-        margin-top:
-            3px;
-
         font-size:
-            7px;
+            8px;
 
         letter-spacing:
             3px;
+
     }
 
 
@@ -1966,42 +2101,31 @@ textarea {
 
         display:
             none;
+
     }
 
-
-    /* ========================================================
-       IMPORTANT:
-       Do NOT use 100svh for the mobile hero.
-       This was causing the catalogue position to behave
-       badly on some mobile browsers.
-    ======================================================== */
 
     .hero {
 
         min-height:
-            0;
+            500px;
 
-        height:
-            auto;
-
-        padding:
-            75px
-            18px
-            70px;
     }
 
 
     .hero::before {
 
         inset:
-            16px;
+            18px;
+
     }
 
 
     .hero-content {
 
         padding:
-            35px 5px;
+            70px 22px;
+
     }
 
 
@@ -2012,264 +2136,159 @@ textarea {
 
         letter-spacing:
             3px;
+
     }
 
 
     .hero h2 {
 
-        margin:
-            16px 0;
-
         font-size:
             clamp(
-                46px,
+                48px,
                 15vw,
-                68px
+                75px
             );
 
-        line-height:
-            .9;
     }
 
 
     .hero p {
 
-        max-width:
-            340px;
-
-        margin:
-            0 auto 28px;
-
         font-size:
             12px;
 
         line-height:
-            1.75;
-    }
+            1.8;
 
-
-    /*
-       Make the button impossible to miss.
-    */
-
-    .explore-button {
-
-        display:
-            inline-flex;
-
-        width:
-            210px;
-
-        min-height:
-            50px;
-
-        position:
-            relative;
-
-        z-index:
-            20;
     }
 
 
     .hero-decoration {
 
-        display:
-            none;
-    }
+        font-size:
+            50px;
 
-
-    /* ========================================================
-       CATALOGUE
-    ======================================================== */
-
-    #catalogue {
-
-        scroll-margin-top:
-            10px;
     }
 
 
     .catalogue {
 
-        display:
-            block;
-
-        width:
-            100%;
-
-        min-height:
-            200px;
-
         padding:
-            55px 12px 60px;
+            60px 12px;
+
     }
 
 
     .section-heading {
 
-        display:
-            block;
-
         margin-bottom:
-            32px;
-    }
+            35px;
 
-
-    .section-heading > span {
-
-        font-size:
-            7px;
-
-        letter-spacing:
-            2.5px;
     }
 
 
     .section-heading h2 {
 
-        margin:
-            8px 0;
-
         font-size:
-            38px;
+            42px;
 
-        line-height:
-            1;
     }
 
 
     .section-heading p {
 
         font-size:
-            10px;
+            11px;
+
     }
 
 
-    /*
-       Explicit mobile grid.
-       This guarantees the grid is visible instead of
-       depending on auto-fill/minmax calculations.
-    */
-
     #products-grid {
-
-        display:
-            grid;
-
-        width:
-            100%;
 
         grid-template-columns:
             repeat(
                 2,
-                minmax(
-                    0,
-                    1fr
-                )
+                minmax(0, 1fr)
             );
 
         gap:
-            10px;
-    }
+            12px;
 
-
-    .product-card {
-
-        width:
-            100%;
-
-        min-width:
-            0;
-    }
-
-
-    .product-image-container {
-
-        width:
-            100%;
-
-        aspect-ratio:
-            1 / 1.08;
     }
 
 
     .photo-tag {
 
         left:
-            5px;
+            7px;
 
         right:
-            5px;
+            7px;
 
         bottom:
-            5px;
+            7px;
 
         padding:
-            8px 4px;
+            9px 5px;
+
     }
 
 
     .photo-category {
 
         font-size:
-            clamp(
-                15px,
-                5vw,
-                19px
-            );
+            18px;
+
+        line-height:
+            1;
+
     }
 
 
     .photo-price {
 
         font-size:
-            10px;
+            12px;
+
     }
 
 
-    .photo-serial {
+    .photo-serial,
+    .photo-code {
 
         font-size:
             6px;
 
         letter-spacing:
-            .8px;
-    }
+            1px;
 
-
-    .photo-code {
-
-        font-size:
-            6px;
     }
 
 
     .product-footer {
 
         padding:
-            7px;
+            9px;
+
     }
 
 
     .buy-button {
 
         min-height:
-            42px;
+            40px;
 
         padding:
-            8px 2px;
+            10px 3px;
 
         font-size:
-            6.5px;
+            7px;
 
         letter-spacing:
-            .5px;
+            1px;
+
     }
 
-
-    /* ========================================================
-       MOBILE MODAL
-    ======================================================== */
 
     .modal {
 
@@ -2278,6 +2297,7 @@ textarea {
 
         padding:
             0;
+
     }
 
 
@@ -2290,24 +2310,11 @@ textarea {
             none;
 
         max-height:
-            95dvh;
-
-        border-radius:
-            14px 14px 0 0;
-    }
-
-
-    .modal-content {
-
-        max-height:
-            95dvh;
+            94vh;
 
         padding:
-            30px 18px
-            calc(
-                22px +
-                var(--safe-bottom)
-            );
+            32px 20px 24px;
+
     }
 
 
@@ -2315,62 +2322,76 @@ textarea {
 
         font-size:
             34px;
+
     }
+
+
+    .site-footer {
+
+        padding:
+            45px 15px;
+
+    }
+
+
+    .footer-brand {
+
+        font-size:
+            21px;
+
+        letter-spacing:
+            2px;
+
+    }
+
 }
 
 
 /* ============================================================
-   VERY SMALL MOBILE
+   VERY SMALL PHONES
 ============================================================ */
 
-@media (max-width: 350px) {
+@media (max-width: 360px) {
 
     #products-grid {
 
         grid-template-columns:
             1fr;
 
-        gap:
-            14px;
     }
 
 
-    .product-image-container {
-
-        aspect-ratio:
-            1 / 1;
-    }
-
-
-    .photo-category {
+    .hero h2 {
 
         font-size:
-            22px;
+            46px;
+
     }
 
 
-    .photo-price {
+    .section-heading h2 {
 
         font-size:
-            12px;
+            36px;
+
     }
 
-
-    .photo-serial,
-    .photo-code {
-
-        font-size:
-            7px;
-    }
 }
 """
 
 
 # ============================================================
-# SCRIPT.JS
+# GENERATE PUBLIC JAVASCRIPT
 # ============================================================
 
-js_content = f"""
+def generate_js(products):
+
+    products_json = json.dumps(
+        products,
+        ensure_ascii=False
+    )
+
+    return f"""
 // ============================================================
 // PRODUCT DATA
 // ============================================================
@@ -2379,7 +2400,7 @@ const PRODUCTS = {products_json};
 
 
 // ============================================================
-// WHATSAPP
+// STORE WHATSAPP
 // ============================================================
 
 const SELLER_WHATSAPP =
@@ -2393,16 +2414,6 @@ const SELLER_WHATSAPP =
 const productsGrid =
     document.getElementById(
         "products-grid"
-    );
-
-const catalogue =
-    document.getElementById(
-        "catalogue"
-    );
-
-const viewCatalogueButton =
-    document.getElementById(
-        "viewCatalogueButton"
     );
 
 const modal =
@@ -2432,27 +2443,6 @@ const selectedProduct =
 
 
 let currentProduct = null;
-
-
-// ============================================================
-// MOBILE CATALOGUE NAVIGATION
-//
-// IMPORTANT:
-// Do not rely only on href="#catalogue".
-// scrollIntoView() is much more reliable here.
-// ============================================================
-
-viewCatalogueButton.addEventListener(
-    "click",
-    function() {{
-
-        catalogue.scrollIntoView({{
-            behavior: "smooth",
-            block: "start"
-        }});
-
-    }}
-);
 
 
 // ============================================================
@@ -2505,9 +2495,8 @@ function displayProducts() {{
 
             <div style="
                 grid-column: 1 / -1;
-                width: 100%;
                 text-align: center;
-                padding: 50px 20px;
+                padding: 60px 20px;
                 color: #777;
             ">
 
@@ -2522,7 +2511,7 @@ function displayProducts() {{
 
 
     PRODUCTS.forEach(
-        function(product) {{
+        product => {{
 
             const card =
                 document.createElement(
@@ -2534,7 +2523,7 @@ function displayProducts() {{
 
 
             // =================================================
-            // IMAGE
+            // IMAGE CONTAINER
             // =================================================
 
             const imageContainer =
@@ -2554,36 +2543,35 @@ function displayProducts() {{
             image.className =
                 "product-image";
 
+
+            /*
+             * Use the actual filename.
+             *
+             * encodeURIComponent() protects filenames
+             * containing spaces or special characters.
+             */
+
             image.src =
                 "images/" +
                 encodeURIComponent(
                     product.filename
                 );
 
+
             image.alt =
                 product.category;
 
+
             image.loading =
                 "lazy";
+
 
             image.decoding =
                 "async";
 
 
-            image.onerror =
-                function() {{
-
-                    image.style.objectFit =
-                        "contain";
-
-                    image.style.padding =
-                        "25px";
-
-                }};
-
-
             // =================================================
-            // INFORMATION
+            // PHOTO INFORMATION
             // =================================================
 
             const photoTag =
@@ -2673,7 +2661,7 @@ function displayProducts() {{
 
 
             // =================================================
-            // ORDER BUTTON
+            // FOOTER
             // =================================================
 
             const footer =
@@ -2717,6 +2705,10 @@ function displayProducts() {{
             );
 
 
+            // =================================================
+            // CARD
+            // =================================================
+
             card.appendChild(
                 imageContainer
             );
@@ -2736,7 +2728,7 @@ function displayProducts() {{
 
 
 // ============================================================
-// OPEN MODAL
+// OPEN ORDER MODAL
 // ============================================================
 
 function openOrderModal(product) {{
@@ -2812,7 +2804,7 @@ function openOrderModal(product) {{
                 .focus();
 
         }},
-        150
+        100
     );
 }}
 
@@ -2824,11 +2816,12 @@ function openOrderModal(product) {{
 function closeOrderModal() {{
 
     if (
-        document.activeElement &&
-        document.activeElement.blur
+        document.activeElement
     ) {{
 
-        document.activeElement.blur();
+        document
+            .activeElement
+            .blur();
 
     }}
 
@@ -2853,11 +2846,19 @@ function closeOrderModal() {{
 }}
 
 
+// ============================================================
+// CLOSE BUTTON
+// ============================================================
+
 closeModalButton.addEventListener(
     "click",
     closeOrderModal
 );
 
+
+// ============================================================
+// OVERLAY
+// ============================================================
 
 modalOverlay.addEventListener(
     "click",
@@ -2866,7 +2867,7 @@ modalOverlay.addEventListener(
 
 
 // ============================================================
-// ESCAPE KEY
+// ESC KEY
 // ============================================================
 
 document.addEventListener(
@@ -2889,7 +2890,7 @@ document.addEventListener(
 
 
 // ============================================================
-// ORDER SUBMISSION
+// ORDER FORM
 // ============================================================
 
 orderForm.addEventListener(
@@ -2931,6 +2932,10 @@ orderForm.addEventListener(
                 .trim();
 
 
+        // ----------------------------------------------------
+        // VALIDATION
+        // ----------------------------------------------------
+
         if (
             !customerName ||
             !customerNumber ||
@@ -2945,15 +2950,15 @@ orderForm.addEventListener(
         }}
 
 
-        const digitsOnly =
+        const cleanedNumber =
             customerNumber.replace(
-                /[^0-9]/g,
+                /[^0-9+]/g,
                 ""
             );
 
 
         if (
-            digitsOnly.length < 8
+            cleanedNumber.length < 8
         ) {{
 
             alert(
@@ -2964,12 +2969,17 @@ orderForm.addEventListener(
         }}
 
 
+        // ----------------------------------------------------
+        // CREATE MESSAGE
+        // ----------------------------------------------------
+
         const message =
 
             "I, " +
             customerName +
 
             ", wish to buy Product Code " +
+
             currentProduct.productCode +
 
             " (" +
@@ -2986,6 +2996,7 @@ orderForm.addEventListener(
             ". " +
 
             "Kindly deliver the package to my delivery address: " +
+
             deliveryAddress +
 
             ". " +
@@ -2993,29 +3004,63 @@ orderForm.addEventListener(
             "For the same, please provide me your QR code scanner for payment.";
 
 
+        // ----------------------------------------------------
+        // WHATSAPP URL
+        // ----------------------------------------------------
+
         const whatsappURL =
 
             "https://wa.me/" +
+
             SELLER_WHATSAPP +
+
             "?text=" +
+
             encodeURIComponent(
                 message
             );
 
 
+        // ----------------------------------------------------
+        // CLOSE MODAL FIRST
+        // ----------------------------------------------------
+
+        if (
+            document.activeElement
+        ) {{
+
+            document
+                .activeElement
+                .blur();
+
+        }}
+
+
         closeOrderModal();
 
 
-        /*
-           Normal location navigation is more reliable
-           than window.open on mobile browsers.
-        */
+        // ----------------------------------------------------
+        // OPEN WHATSAPP
+        // ----------------------------------------------------
 
         setTimeout(
             function() {{
 
-                window.location.href =
-                    whatsappURL;
+                const whatsappWindow =
+                    window.open(
+                        whatsappURL,
+                        "_blank"
+                    );
+
+
+                if (!whatsappWindow) {{
+
+                    alert(
+                        "Your browser blocked the WhatsApp window. " +
+                        "Please allow popups for this website."
+                    );
+
+                }}
 
             }},
             150
@@ -3034,88 +3079,199 @@ displayProducts();
 
 
 # ============================================================
-# WRITE FILES
+# WRITE PUBLIC FILES ONLY
+#
+# IMPORTANT:
+#
+# This function deliberately writes ONLY:
+#
+#   index.html
+#   style.css
+#   script.js
+#
+# It does NOT touch:
+#
+#   admin.html
+#   admin.css
+#   admin.js
+#   admin_server.py
 # ============================================================
 
-with open(
-    HTML_FILE,
-    "w",
-    encoding="utf-8"
-) as file:
+def write_public_files(products):
 
-    file.write(
-        html_content
+    html_content = generate_html()
+
+    css_content = generate_css()
+
+    js_content = generate_js(
+        products
     )
 
 
-with open(
-    CSS_FILE,
-    "w",
-    encoding="utf-8"
-) as file:
+    # --------------------------------------------------------
+    # INDEX.HTML
+    # --------------------------------------------------------
 
-    file.write(
-        css_content
-    )
+    with open(
+        HTML_FILE,
+        "w",
+        encoding="utf-8"
+    ) as file:
+
+        file.write(
+            html_content
+        )
 
 
-with open(
-    JS_FILE,
-    "w",
-    encoding="utf-8"
-) as file:
+    # --------------------------------------------------------
+    # STYLE.CSS
+    # --------------------------------------------------------
 
-    file.write(
-        js_content
-    )
+    with open(
+        CSS_FILE,
+        "w",
+        encoding="utf-8"
+    ) as file:
+
+        file.write(
+            css_content
+        )
+
+
+    # --------------------------------------------------------
+    # SCRIPT.JS
+    # --------------------------------------------------------
+
+    with open(
+        JS_FILE,
+        "w",
+        encoding="utf-8"
+    ) as file:
+
+        file.write(
+            js_content
+        )
 
 
 # ============================================================
-# SUMMARY
+# MAIN
 # ============================================================
 
-print()
-print("================================================")
-print(" PRESENT PERFECT STORE")
-print(" MOBILE CATALOGUE VERSION GENERATED")
-print("================================================")
-print()
+def main():
 
-print(
-    f"Products found : {len(products)}"
-)
+    print()
+    print(
+        "================================================"
+    )
+    print(
+        " PRESENT PERFECT STORE"
+    )
+    print(
+        " PUBLIC CATALOGUE GENERATOR"
+    )
+    print(
+        "================================================"
+    )
+    print()
 
-print(
-    f"WhatsApp       : {SELLER_WHATSAPP}"
-)
 
-print()
+    # --------------------------------------------------------
+    # CHECK IMAGES FOLDER
+    # --------------------------------------------------------
 
-print("Generated:")
+    if not os.path.isdir(
+        IMAGE_FOLDER
+    ):
 
-print(
-    f"  {HTML_FILE}"
-)
+        print(
+            f"ERROR: '{IMAGE_FOLDER}' folder does not exist."
+        )
 
-print(
-    f"  {CSS_FILE}"
-)
+        return 1
 
-print(
-    f"  {JS_FILE}"
-)
 
-print()
+    # --------------------------------------------------------
+    # FIND PRODUCTS
+    # --------------------------------------------------------
 
-print("Mobile catalogue:")
-print("  VIEW CATALOGUE uses scrollIntoView()")
-print("  Mobile hero has automatic height")
-print("  Product grid is explicitly 2 columns")
-print("  <= 350px uses 1 column")
-print("  Catalogue has scroll-margin-top")
+    products = find_products()
 
-print()
 
-print("Open index.html to view the catalogue.")
-print()
+    print(
+        f"Products found : {len(products)}"
+    )
+
+
+    # --------------------------------------------------------
+    # GENERATE PUBLIC FILES
+    # --------------------------------------------------------
+
+    write_public_files(
+        products
+    )
+
+
+    print()
+    print(
+        "Generated public files:"
+    )
+
+    print(
+        f"  {os.path.basename(HTML_FILE)}"
+    )
+
+    print(
+        f"  {os.path.basename(CSS_FILE)}"
+    )
+
+    print(
+        f"  {os.path.basename(JS_FILE)}"
+    )
+
+
+    print()
+    print(
+        "Admin files were NOT modified."
+    )
+
+
+    print()
+    print(
+        "Images folder:"
+    )
+
+    print(
+        f"  {IMAGE_FOLDER}"
+    )
+
+
+    print()
+    print(
+        "Filename format:"
+    )
+
+    print(
+        "  Product_Category_MRP.jpg"
+    )
+
+
+    print()
+    print(
+        "Catalogue generation completed."
+    )
+
+    print()
+
+    return 0
+
+
+# ============================================================
+# RUN
+# ============================================================
+
+if __name__ == "__main__":
+
+    raise SystemExit(
+        main()
+    )
 
