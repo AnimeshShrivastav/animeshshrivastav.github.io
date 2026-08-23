@@ -2,6 +2,7 @@ import os
 import json
 import re
 
+
 # ============================================================
 # SETTINGS
 # ============================================================
@@ -25,16 +26,6 @@ IMAGE_EXTENSIONS = {
 
 # ============================================================
 # PRODUCT PARSER
-#
-# Expected filename:
-#
-# Necklace_5999.jpg
-# Wall_Decor_1499.jpg
-# Coffee_Mug_499.jpg
-# Gift_Box_799.jpg
-#
-# Everything before the LAST underscore = category
-# Everything after the LAST underscore = MRP
 # ============================================================
 
 def parse_product_filename(filename):
@@ -48,9 +39,10 @@ def parse_product_filename(filename):
 
     price = parts[-1].strip()
 
-    category_parts = parts[:-1]
+    if not price.isdigit():
+        return None
 
-    category = " ".join(category_parts)
+    category = " ".join(parts[:-1])
 
     category = re.sub(
         r"\s+",
@@ -58,8 +50,7 @@ def parse_product_filename(filename):
         category
     ).strip()
 
-    # Validate price
-    if not price.isdigit():
+    if not category:
         return None
 
     return {
@@ -80,11 +71,12 @@ if not os.path.isdir(IMAGE_FOLDER):
         f"ERROR: '{IMAGE_FOLDER}' folder does not exist."
     )
 
-    exit(1)
+    raise SystemExit(1)
 
 
 files = sorted(
-    os.listdir(IMAGE_FOLDER)
+    os.listdir(IMAGE_FOLDER),
+    key=str.lower
 )
 
 
@@ -118,23 +110,9 @@ for filename in files:
 
         continue
 
-
-    # --------------------------------------------------------
-    # AUTO SERIAL NUMBER
-    # --------------------------------------------------------
-
     serial = len(products) + 1
 
     serial_string = str(serial).zfill(3)
-
-
-    # --------------------------------------------------------
-    # PRODUCT CODE
-    #
-    # Example:
-    #
-    # 001-Necklace-5999
-    # --------------------------------------------------------
 
     product_code = (
         serial_string
@@ -143,7 +121,6 @@ for filename in files:
         + "-"
         + parsed["price"]
     )
-
 
     products.append({
 
@@ -161,7 +138,7 @@ for filename in files:
 
 
 # ============================================================
-# JSON DATA
+# JSON
 # ============================================================
 
 products_json = json.dumps(
@@ -184,7 +161,11 @@ html_content = """<!DOCTYPE html>
 
 <meta
     name="viewport"
-    content="width=device-width, initial-scale=1.0">
+    content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
+<meta
+    name="theme-color"
+    content="#faf8f2">
 
 <meta
     name="description"
@@ -193,6 +174,19 @@ html_content = """<!DOCTYPE html>
 <title>
 Present Perfect Store | The Products Catalogue
 </title>
+
+<link
+    rel="preconnect"
+    href="https://fonts.googleapis.com">
+
+<link
+    rel="preconnect"
+    href="https://fonts.gstatic.com"
+    crossorigin>
+
+<link
+    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600&display=swap"
+    rel="stylesheet">
 
 <link
     rel="stylesheet"
@@ -218,7 +212,7 @@ Present Perfect Store | The Products Catalogue
                 ✦
             </div>
 
-            <div>
+            <div class="brand-text">
 
                 <h1>
                     PRESENT PERFECT
@@ -240,7 +234,7 @@ Present Perfect Store | The Products Catalogue
             </span>
 
             <span>
-                FOR EVERY SPACE & OCCASION
+                FOR EVERY SPACE &amp; OCCASION
             </span>
 
         </div>
@@ -256,9 +250,10 @@ Present Perfect Store | The Products Catalogue
 
 <section class="hero">
 
-    <div class="hero-decoration left">
+    <div class="hero-decoration hero-decoration-left">
         ✦
     </div>
+
 
     <div class="hero-content">
 
@@ -266,12 +261,15 @@ Present Perfect Store | The Products Catalogue
             PRESENT PERFECT STORE
         </span>
 
+
         <h2>
             The Products
             <em>Catalogue</em>
         </h2>
 
+
         <div class="gold-line"></div>
+
 
         <p>
 
@@ -282,18 +280,24 @@ Present Perfect Store | The Products Catalogue
         </p>
 
 
-        <a
-            href="#catalogue"
-            class="explore-button">
+        <!-- ==================================================
+             MOBILE FIX:
+             Use BUTTON instead of relying only on #anchor.
+        =================================================== -->
+
+        <button
+            type="button"
+            class="explore-button"
+            id="viewCatalogueButton">
 
             VIEW CATALOGUE
 
-        </a>
+        </button>
 
     </div>
 
 
-    <div class="hero-decoration right">
+    <div class="hero-decoration hero-decoration-right">
         ✦
     </div>
 
@@ -310,18 +314,20 @@ Present Perfect Store | The Products Catalogue
     class="catalogue"
     id="catalogue">
 
-
     <div class="section-heading">
 
         <span>
             PRESENT PERFECT STORE
         </span>
 
+
         <h2>
             The Products Catalogue
         </h2>
 
+
         <div class="heading-line"></div>
+
 
         <p>
             Find something perfect for every occasion.
@@ -330,10 +336,11 @@ Present Perfect Store | The Products Catalogue
     </div>
 
 
-    <div id="products-grid">
+    <div
+        id="products-grid"
+        aria-live="polite">
 
     </div>
-
 
 </section>
 
@@ -350,13 +357,16 @@ Present Perfect Store | The Products Catalogue
     aria-hidden="true">
 
 
-    <div class="modal-overlay"></div>
+    <div
+        class="modal-overlay">
+    </div>
 
 
     <div
         class="modal-box"
         role="dialog"
-        aria-modal="true">
+        aria-modal="true"
+        aria-labelledby="modalTitle">
 
 
         <button
@@ -370,116 +380,109 @@ Present Perfect Store | The Products Catalogue
         </button>
 
 
-        <div class="modal-symbol">
-            ✦
-        </div>
+        <div class="modal-content">
+
+            <div class="modal-symbol">
+                ✦
+            </div>
 
 
-        <h2>
-            Place Your Order
-        </h2>
+            <h2 id="modalTitle">
+                Place Your Order
+            </h2>
 
 
-        <p class="modal-subtitle">
+            <p class="modal-subtitle">
 
-            Please provide your details.
-            A custom WhatsApp message will
-            be prepared for the store.
-
-        </p>
-
-
-        <!-- Selected product -->
-
-        <div
-            id="selectedProduct"
-            class="selected-product">
-
-        </div>
-
-
-        <!-- Notice -->
-
-        <div class="popup-notice">
-
-            <strong>
-                WhatsApp Order
-            </strong>
-
-            <p>
-
-                After submitting your details,
-                WhatsApp will open with your
-                order message. Please review it
-                and press <strong>Send</strong>.
-
-                If your browser asks,
-                please allow popups for this site.
+                Please provide your details.
+                A custom WhatsApp message will
+                be prepared for the store.
 
             </p>
 
+
+            <div
+                id="selectedProduct"
+                class="selected-product">
+
+            </div>
+
+
+            <div class="popup-notice">
+
+                <strong>
+                    WhatsApp Order
+                </strong>
+
+                <p>
+
+                    After submitting your details,
+                    WhatsApp will open with your
+                    order message. Please review it
+                    and press <strong>Send</strong>.
+
+                </p>
+
+            </div>
+
+
+            <form id="orderForm">
+
+                <label for="customerName">
+                    Your Name
+                </label>
+
+                <input
+                    id="customerName"
+                    name="customerName"
+                    type="text"
+                    autocomplete="name"
+                    placeholder="Enter your name"
+                    required>
+
+
+                <label for="customerNumber">
+                    WhatsApp Number
+                </label>
+
+                <input
+                    id="customerNumber"
+                    name="customerNumber"
+                    type="tel"
+                    inputmode="tel"
+                    autocomplete="tel"
+                    placeholder="Enter your WhatsApp number"
+                    required>
+
+
+                <label for="deliveryAddress">
+                    Delivery Address
+                </label>
+
+                <textarea
+                    id="deliveryAddress"
+                    name="deliveryAddress"
+                    autocomplete="street-address"
+                    rows="4"
+                    placeholder="Enter complete delivery address"
+                    required></textarea>
+
+
+                <button
+                    type="submit"
+                    class="whatsapp-button">
+
+                    <span>
+                        ☏
+                    </span>
+
+                    PREPARE WHATSAPP ORDER
+
+                </button>
+
+            </form>
+
         </div>
-
-
-        <!-- Order form -->
-
-        <form id="orderForm">
-
-
-            <label for="customerName">
-                Your Name
-            </label>
-
-            <input
-                id="customerName"
-                name="customerName"
-                type="text"
-                autocomplete="name"
-                placeholder="Enter your name"
-                required>
-
-
-            <label for="customerNumber">
-                WhatsApp Number
-            </label>
-
-            <input
-                id="customerNumber"
-                name="customerNumber"
-                type="tel"
-                inputmode="tel"
-                autocomplete="tel"
-                placeholder="Enter your WhatsApp number"
-                required>
-
-
-            <label for="deliveryAddress">
-                Delivery Address
-            </label>
-
-            <textarea
-                id="deliveryAddress"
-                name="deliveryAddress"
-                autocomplete="street-address"
-                rows="4"
-                placeholder="Enter complete delivery address"
-                required></textarea>
-
-
-            <button
-                type="submit"
-                class="whatsapp-button">
-
-                <span>
-                    ☏
-                </span>
-
-                PREPARE WHATSAPP ORDER
-
-            </button>
-
-
-        </form>
 
     </div>
 
@@ -571,9 +574,17 @@ css_content = r"""
         Arial,
         sans-serif;
 
-    --shadow:
-        0 15px 45px
-        rgba(60,45,20,.10);
+    --safe-top:
+        env(safe-area-inset-top, 0px);
+
+    --safe-right:
+        env(safe-area-inset-right, 0px);
+
+    --safe-bottom:
+        env(safe-area-inset-bottom, 0px);
+
+    --safe-left:
+        env(safe-area-inset-left, 0px);
 }
 
 
@@ -581,19 +592,47 @@ css_content = r"""
    RESET
 ============================================================ */
 
-* {
-    box-sizing: border-box;
+*,
+*::before,
+*::after {
+
+    box-sizing:
+        border-box;
 }
 
 
 html {
-    scroll-behavior: smooth;
+
+    width:
+        100%;
+
+    min-height:
+        100%;
+
+    overflow-x:
+        hidden;
+
+    scroll-behavior:
+        smooth;
+
+    -webkit-text-size-adjust:
+        100%;
 }
 
 
 body {
 
-    margin: 0;
+    width:
+        100%;
+
+    min-height:
+        100%;
+
+    margin:
+        0;
+
+    overflow-x:
+        hidden;
 
     background:
         var(--cream);
@@ -603,6 +642,18 @@ body {
 
     font-family:
         var(--sans);
+
+    -webkit-font-smoothing:
+        antialiased;
+}
+
+
+button,
+input,
+textarea {
+
+    font:
+        inherit;
 }
 
 
@@ -612,21 +663,28 @@ body {
 
 .site-header {
 
+    position:
+        relative;
+
+    z-index:
+        10;
+
     background:
-        rgba(250,248,242,.96);
+        rgba(250,248,242,.98);
 
     border-bottom:
         1px solid
         rgba(184,148,75,.25);
 
-    position:
-        relative;
-
-    z-index: 10;
+    padding-top:
+        var(--safe-top);
 }
 
 
 .header-inner {
+
+    width:
+        100%;
 
     max-width:
         1400px;
@@ -635,7 +693,10 @@ body {
         auto;
 
     padding:
-        18px 35px;
+        18px
+        max(18px, var(--safe-right))
+        18px
+        max(18px, var(--safe-left));
 
     display:
         flex;
@@ -645,6 +706,9 @@ body {
 
     align-items:
         center;
+
+    gap:
+        15px;
 }
 
 
@@ -656,30 +720,44 @@ body {
     align-items:
         center;
 
+    min-width:
+        0;
+
     gap:
-        13px;
+        10px;
 }
 
 
 .brand-symbol {
 
+    flex:
+        0 0 auto;
+
     color:
         var(--gold);
 
     font-size:
-        29px;
+        28px;
+}
+
+
+.brand-text {
+
+    min-width:
+        0;
 }
 
 
 .brand h1 {
 
-    margin: 0;
+    margin:
+        0;
 
     font-family:
         var(--serif);
 
     font-size:
-        29px;
+        28px;
 
     font-weight:
         600;
@@ -689,6 +767,9 @@ body {
 
     line-height:
         1;
+
+    white-space:
+        nowrap;
 }
 
 
@@ -743,6 +824,12 @@ body {
 
 .hero {
 
+    position:
+        relative;
+
+    width:
+        100%;
+
     min-height:
         550px;
 
@@ -755,29 +842,32 @@ body {
     justify-content:
         center;
 
-    text-align:
-        center;
-
-    position:
-        relative;
-
     overflow:
         hidden;
 
-    background:
+    text-align:
+        center;
 
+    background:
         radial-gradient(
             circle at center,
             #ffffff 0%,
             #f6f0e4 48%,
             #e6d9bd 100%
         );
+
+    padding:
+        40px
+        max(20px, var(--safe-right))
+        50px
+        max(20px, var(--safe-left));
 }
 
 
 .hero::before {
 
-    content: "";
+    content:
+        "";
 
     position:
         absolute;
@@ -788,37 +878,9 @@ body {
     border:
         1px solid
         rgba(184,148,75,.30);
-}
 
-
-.hero::after {
-
-    content: "";
-
-    position:
-        absolute;
-
-    width:
-        500px;
-
-    height:
-        500px;
-
-    border-radius:
-        50%;
-
-    border:
-        1px solid
-        rgba(184,148,75,.10);
-
-    top:
-        50%;
-
-    left:
-        50%;
-
-    transform:
-        translate(-50%,-50%);
+    pointer-events:
+        none;
 }
 
 
@@ -830,15 +892,21 @@ body {
     z-index:
         2;
 
+    width:
+        100%;
+
     max-width:
-        750px;
+        760px;
 
     padding:
-        80px 25px;
+        50px 15px;
 }
 
 
 .eyebrow {
+
+    display:
+        block;
 
     color:
         var(--gold-dark);
@@ -863,13 +931,17 @@ body {
         var(--serif);
 
     font-size:
-        clamp(55px, 8vw, 88px);
+        clamp(
+            50px,
+            8vw,
+            88px
+        );
 
     font-weight:
         500;
 
     line-height:
-        .85;
+        .88;
 }
 
 
@@ -921,22 +993,47 @@ body {
 }
 
 
+/* ============================================================
+   VIEW CATALOGUE BUTTON
+============================================================ */
+
 .explore-button {
 
     display:
-        inline-block;
+        inline-flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    min-width:
+        190px;
+
+    min-height:
+        48px;
 
     padding:
-        14px 30px;
+        14px 28px;
 
-    color:
-        white;
+    border:
+        0;
+
+    border-radius:
+        0;
 
     background:
         var(--dark);
 
-    text-decoration:
-        none;
+    color:
+        #ffffff;
+
+    cursor:
+        pointer;
+
+    font-family:
+        var(--sans);
 
     font-size:
         9px;
@@ -947,8 +1044,11 @@ body {
     letter-spacing:
         2px;
 
-    transition:
-        .25s;
+    text-decoration:
+        none;
+
+    -webkit-tap-highlight-color:
+        transparent;
 }
 
 
@@ -956,42 +1056,13 @@ body {
 
     background:
         var(--gold-dark);
+}
+
+
+.explore-button:active {
 
     transform:
-        translateY(-2px);
-}
-
-
-.hero-decoration {
-
-    position:
-        absolute;
-
-    color:
-        rgba(184,148,75,.25);
-
-    font-size:
-        80px;
-}
-
-
-.hero-decoration.left {
-
-    left:
-        8%;
-
-    top:
-        30%;
-}
-
-
-.hero-decoration.right {
-
-    right:
-        8%;
-
-    bottom:
-        20%;
+        scale(.98);
 }
 
 
@@ -999,16 +1070,39 @@ body {
    CATALOGUE
 ============================================================ */
 
+/*
+   IMPORTANT MOBILE FIX:
+
+   scroll-margin-top prevents the catalogue from being
+   hidden underneath the mobile header after scrolling.
+*/
+
+#catalogue {
+
+    scroll-margin-top:
+        20px;
+}
+
+
 .catalogue {
+
+    position:
+        relative;
+
+    width:
+        100%;
 
     max-width:
         1450px;
 
     margin:
-        auto;
+        0 auto;
 
     padding:
-        85px 30px;
+        85px
+        max(20px, var(--safe-right))
+        85px
+        max(20px, var(--safe-left));
 }
 
 
@@ -1018,7 +1112,7 @@ body {
         center;
 
     margin-bottom:
-        55px;
+        50px;
 }
 
 
@@ -1048,6 +1142,9 @@ body {
 
     font-weight:
         500;
+
+    line-height:
+        1.05;
 }
 
 
@@ -1069,6 +1166,9 @@ body {
 
 .section-heading p {
 
+    margin:
+        0;
+
     color:
         var(--muted);
 
@@ -1083,13 +1183,16 @@ body {
 
 #products-grid {
 
+    width:
+        100%;
+
     display:
         grid;
 
     grid-template-columns:
         repeat(
             auto-fill,
-            minmax(240px,1fr)
+            minmax(240px, 1fr)
         );
 
     gap:
@@ -1103,30 +1206,22 @@ body {
 
 .product-card {
 
-    background:
-        var(--white);
-
-    box-shadow:
-        0 8px 35px
-        rgba(60,45,20,.07);
+    min-width:
+        0;
 
     overflow:
         hidden;
 
-    transition:
-        transform .4s ease,
-        box-shadow .4s ease;
-}
+    background:
+        #ffffff;
 
-
-.product-card:hover {
-
-    transform:
-        translateY(-8px);
+    border:
+        1px solid
+        rgba(184,148,75,.10);
 
     box-shadow:
-        0 20px 55px
-        rgba(60,45,20,.15);
+        0 8px 30px
+        rgba(60,45,20,.07);
 }
 
 
@@ -1139,6 +1234,12 @@ body {
     position:
         relative;
 
+    width:
+        100%;
+
+    aspect-ratio:
+        1 / 1.05;
+
     overflow:
         hidden;
 
@@ -1149,33 +1250,25 @@ body {
 
 .product-image {
 
+    display:
+        block;
+
     width:
         100%;
 
-    aspect-ratio:
-        1 / 1.05;
+    height:
+        100%;
 
     object-fit:
         cover;
 
-    display:
-        block;
-
-    transition:
-        transform .7s ease;
-}
-
-
-.product-card:hover
-.product-image {
-
-    transform:
-        scale(1.06);
+    object-position:
+        center;
 }
 
 
 /* ============================================================
-   IMAGE TAG
+   PRODUCT INFO
 ============================================================ */
 
 .photo-tag {
@@ -1184,22 +1277,19 @@ body {
         absolute;
 
     left:
-        12px;
+        9px;
 
     right:
-        12px;
+        9px;
 
     bottom:
-        12px;
+        9px;
 
     padding:
-        13px 14px;
+        11px 8px;
 
     background:
-        rgba(255,255,255,.93);
-
-    backdrop-filter:
-        blur(7px);
+        rgba(255,255,255,.95);
 
     border:
         1px solid
@@ -1208,41 +1298,43 @@ body {
     text-align:
         center;
 
-    box-shadow:
-        0 5px 20px
-        rgba(0,0,0,.08);
+    overflow:
+        hidden;
 }
 
 
 .photo-category {
 
     margin:
-        0 0 5px;
+        0 0 4px;
+
+    color:
+        var(--dark);
 
     font-family:
         var(--serif);
 
     font-size:
-        24px;
+        22px;
 
     font-weight:
         600;
 
-    color:
-        var(--dark);
+    line-height:
+        1.05;
+
+    overflow-wrap:
+        anywhere;
 }
 
 
 .photo-price {
 
-    margin:
-        0;
-
     color:
         var(--gold-dark);
 
     font-size:
-        14px;
+        13px;
 
     font-weight:
         600;
@@ -1252,7 +1344,7 @@ body {
 .photo-serial {
 
     margin-top:
-        7px;
+        5px;
 
     color:
         #777;
@@ -1261,17 +1353,14 @@ body {
         8px;
 
     letter-spacing:
-        2px;
-
-    text-transform:
-        uppercase;
+        1.3px;
 }
 
 
 .photo-code {
 
     margin-top:
-        5px;
+        4px;
 
     color:
         #999;
@@ -1282,8 +1371,8 @@ body {
     font-size:
         8px;
 
-    word-break:
-        break-all;
+    overflow-wrap:
+        anywhere;
 }
 
 
@@ -1294,7 +1383,7 @@ body {
 .product-footer {
 
     padding:
-        15px;
+        12px;
 }
 
 
@@ -1303,8 +1392,11 @@ body {
     width:
         100%;
 
+    min-height:
+        44px;
+
     padding:
-        12px;
+        10px;
 
     border:
         1px solid
@@ -1329,23 +1421,7 @@ body {
         600;
 
     letter-spacing:
-        2px;
-
-    transition:
-        .25s;
-}
-
-
-.buy-button:hover {
-
-    background:
-        var(--dark);
-
-    color:
-        white;
-
-    border-color:
-        var(--dark);
+        1.5px;
 }
 
 
@@ -1373,8 +1449,17 @@ body {
     justify-content:
         center;
 
+    width:
+        100%;
+
+    height:
+        100%;
+
+    background:
+        rgba(30,25,20,.78);
+
     padding:
-        20px;
+        15px;
 }
 
 
@@ -1394,10 +1479,7 @@ body {
         0;
 
     background:
-        rgba(30,25,20,.75);
-
-    backdrop-filter:
-        blur(6px);
+        rgba(30,25,20,.78);
 }
 
 
@@ -1416,45 +1498,29 @@ body {
         500px;
 
     max-height:
-        92vh;
+        calc(100dvh - 30px);
+
+    overflow:
+        hidden;
+
+    background:
+        var(--cream);
+}
+
+
+.modal-content {
+
+    max-height:
+        calc(100dvh - 30px);
 
     overflow-y:
         auto;
 
     padding:
-        35px;
+        32px;
 
-    background:
-        var(--cream);
-
-    box-shadow:
-        0 30px 90px
-        rgba(0,0,0,.35);
-
-    animation:
-        modalIn .25s ease;
-}
-
-
-@keyframes modalIn {
-
-    from {
-
-        opacity:
-            0;
-
-        transform:
-            translateY(20px);
-    }
-
-    to {
-
-        opacity:
-            1;
-
-        transform:
-            translateY(0);
-    }
+    -webkit-overflow-scrolling:
+        touch;
 }
 
 
@@ -1464,10 +1530,19 @@ body {
         absolute;
 
     top:
-        10px;
+        7px;
 
     right:
-        14px;
+        10px;
+
+    z-index:
+        5;
+
+    width:
+        44px;
+
+    height:
+        44px;
 
     border:
         none;
@@ -1479,7 +1554,7 @@ body {
         #777;
 
     font-size:
-        28px;
+        30px;
 
     cursor:
         pointer;
@@ -1523,9 +1598,6 @@ body {
     margin:
         0 auto 20px;
 
-    max-width:
-        400px;
-
     text-align:
         center;
 
@@ -1540,20 +1612,16 @@ body {
 }
 
 
-/* ============================================================
-   SELECTED PRODUCT
-============================================================ */
-
 .selected-product {
 
     padding:
-        14px;
+        13px;
 
     margin-bottom:
         18px;
 
     background:
-        white;
+        #ffffff;
 
     border-left:
         3px solid
@@ -1574,6 +1642,9 @@ body {
 
     font-size:
         23px;
+
+    overflow-wrap:
+        anywhere;
 }
 
 
@@ -1589,7 +1660,13 @@ body {
         var(--gold-dark);
 
     font-size:
-        11px;
+        10px;
+
+    line-height:
+        1.6;
+
+    overflow-wrap:
+        anywhere;
 }
 
 
@@ -1600,7 +1677,7 @@ body {
 .popup-notice {
 
     margin-bottom:
-        20px;
+        18px;
 
     padding:
         12px 14px;
@@ -1640,7 +1717,7 @@ body {
         block;
 
     margin:
-        13px 0 6px;
+        12px 0 6px;
 
     color:
         #625c53;
@@ -1662,18 +1739,24 @@ body {
 #orderForm input,
 #orderForm textarea {
 
+    display:
+        block;
+
     width:
         100%;
 
     padding:
-        12px;
+        13px 12px;
 
     border:
         1px solid
         #d7cfbf;
 
+    border-radius:
+        0;
+
     background:
-        white;
+        #ffffff;
 
     color:
         var(--dark);
@@ -1681,23 +1764,19 @@ body {
     font-family:
         var(--sans);
 
+    /*
+       16px prevents iPhone Safari from
+       automatically zooming the page.
+    */
+
     font-size:
-        12px;
+        16px;
 
     outline:
         none;
-}
 
-
-#orderForm input:focus,
-#orderForm textarea:focus {
-
-    border-color:
-        var(--gold);
-
-    box-shadow:
-        0 0 0 3px
-        rgba(184,148,75,.10);
+    -webkit-appearance:
+        none;
 }
 
 
@@ -1705,6 +1784,9 @@ body {
 
     resize:
         vertical;
+
+    min-height:
+        100px;
 }
 
 
@@ -1713,11 +1795,11 @@ body {
     width:
         100%;
 
-    margin-top:
-        22px;
+    min-height:
+        50px;
 
-    padding:
-        15px;
+    margin-top:
+        20px;
 
     border:
         none;
@@ -1731,9 +1813,6 @@ body {
     cursor:
         pointer;
 
-    font-family:
-        var(--sans);
-
     font-size:
         10px;
 
@@ -1741,27 +1820,7 @@ body {
         600;
 
     letter-spacing:
-        1.5px;
-
-    transition:
-        .25s;
-}
-
-
-.whatsapp-button:hover {
-
-    background:
-        #0d7065;
-}
-
-
-.whatsapp-button span {
-
-    margin-right:
-        7px;
-
-    font-size:
-        16px;
+        1px;
 }
 
 
@@ -1819,8 +1878,8 @@ body {
     font-size:
         10px;
 
-    letter-spacing:
-        1px;
+    line-height:
+        1.7;
 }
 
 
@@ -1868,17 +1927,38 @@ body {
     .header-inner {
 
         padding:
-            15px 18px;
+            14px
+            16px;
+    }
+
+
+    .brand-symbol {
+
+        font-size:
+            23px;
     }
 
 
     .brand h1 {
 
         font-size:
-            23px;
+            20px;
 
         letter-spacing:
-            2px;
+            1.5px;
+    }
+
+
+    .brand p {
+
+        margin-top:
+            3px;
+
+        font-size:
+            7px;
+
+        letter-spacing:
+            3px;
     }
 
 
@@ -1889,85 +1969,383 @@ body {
     }
 
 
+    /* ========================================================
+       IMPORTANT:
+       Do NOT use 100svh for the mobile hero.
+       This was causing the catalogue position to behave
+       badly on some mobile browsers.
+    ======================================================== */
+
     .hero {
 
         min-height:
-            500px;
+            0;
+
+        height:
+            auto;
+
+        padding:
+            75px
+            18px
+            70px;
     }
 
 
     .hero::before {
 
         inset:
-            18px;
+            16px;
+    }
+
+
+    .hero-content {
+
+        padding:
+            35px 5px;
+    }
+
+
+    .eyebrow {
+
+        font-size:
+            8px;
+
+        letter-spacing:
+            3px;
     }
 
 
     .hero h2 {
 
+        margin:
+            16px 0;
+
         font-size:
             clamp(
-                50px,
+                46px,
                 15vw,
-                75px
+                68px
             );
+
+        line-height:
+            .9;
+    }
+
+
+    .hero p {
+
+        max-width:
+            340px;
+
+        margin:
+            0 auto 28px;
+
+        font-size:
+            12px;
+
+        line-height:
+            1.75;
+    }
+
+
+    /*
+       Make the button impossible to miss.
+    */
+
+    .explore-button {
+
+        display:
+            inline-flex;
+
+        width:
+            210px;
+
+        min-height:
+            50px;
+
+        position:
+            relative;
+
+        z-index:
+            20;
     }
 
 
     .hero-decoration {
 
-        font-size:
-            50px;
+        display:
+            none;
+    }
+
+
+    /* ========================================================
+       CATALOGUE
+    ======================================================== */
+
+    #catalogue {
+
+        scroll-margin-top:
+            10px;
     }
 
 
     .catalogue {
 
+        display:
+            block;
+
+        width:
+            100%;
+
+        min-height:
+            200px;
+
         padding:
-            60px 12px;
+            55px 12px 60px;
+    }
+
+
+    .section-heading {
+
+        display:
+            block;
+
+        margin-bottom:
+            32px;
+    }
+
+
+    .section-heading > span {
+
+        font-size:
+            7px;
+
+        letter-spacing:
+            2.5px;
     }
 
 
     .section-heading h2 {
 
+        margin:
+            8px 0;
+
         font-size:
-            42px;
+            38px;
+
+        line-height:
+            1;
     }
 
 
+    .section-heading p {
+
+        font-size:
+            10px;
+    }
+
+
+    /*
+       Explicit mobile grid.
+       This guarantees the grid is visible instead of
+       depending on auto-fill/minmax calculations.
+    */
+
     #products-grid {
+
+        display:
+            grid;
+
+        width:
+            100%;
 
         grid-template-columns:
             repeat(
                 2,
-                minmax(0,1fr)
+                minmax(
+                    0,
+                    1fr
+                )
             );
 
         gap:
-            12px;
+            10px;
+    }
+
+
+    .product-card {
+
+        width:
+            100%;
+
+        min-width:
+            0;
+    }
+
+
+    .product-image-container {
+
+        width:
+            100%;
+
+        aspect-ratio:
+            1 / 1.08;
     }
 
 
     .photo-tag {
 
         left:
-            7px;
+            5px;
 
         right:
-            7px;
+            5px;
 
         bottom:
-            7px;
+            5px;
 
         padding:
-            9px 5px;
+            8px 4px;
     }
 
 
     .photo-category {
 
         font-size:
-            18px;
+            clamp(
+                15px,
+                5vw,
+                19px
+            );
+    }
+
+
+    .photo-price {
+
+        font-size:
+            10px;
+    }
+
+
+    .photo-serial {
+
+        font-size:
+            6px;
+
+        letter-spacing:
+            .8px;
+    }
+
+
+    .photo-code {
+
+        font-size:
+            6px;
+    }
+
+
+    .product-footer {
+
+        padding:
+            7px;
+    }
+
+
+    .buy-button {
+
+        min-height:
+            42px;
+
+        padding:
+            8px 2px;
+
+        font-size:
+            6.5px;
+
+        letter-spacing:
+            .5px;
+    }
+
+
+    /* ========================================================
+       MOBILE MODAL
+    ======================================================== */
+
+    .modal {
+
+        align-items:
+            flex-end;
+
+        padding:
+            0;
+    }
+
+
+    .modal-box {
+
+        width:
+            100%;
+
+        max-width:
+            none;
+
+        max-height:
+            95dvh;
+
+        border-radius:
+            14px 14px 0 0;
+    }
+
+
+    .modal-content {
+
+        max-height:
+            95dvh;
+
+        padding:
+            30px 18px
+            calc(
+                22px +
+                var(--safe-bottom)
+            );
+    }
+
+
+    .modal-box h2 {
+
+        font-size:
+            34px;
+    }
+}
+
+
+/* ============================================================
+   VERY SMALL MOBILE
+============================================================ */
+
+@media (max-width: 350px) {
+
+    #products-grid {
+
+        grid-template-columns:
+            1fr;
+
+        gap:
+            14px;
+    }
+
+
+    .product-image-container {
+
+        aspect-ratio:
+            1 / 1;
+    }
+
+
+    .photo-category {
+
+        font-size:
+            22px;
     }
 
 
@@ -1983,50 +2361,6 @@ body {
 
         font-size:
             7px;
-    }
-
-
-    .product-footer {
-
-        padding:
-            9px;
-    }
-
-
-    .buy-button {
-
-        padding:
-            10px 3px;
-
-        font-size:
-            7px;
-
-        letter-spacing:
-            1px;
-    }
-
-
-    .modal-box {
-
-        padding:
-            30px 20px;
-
-        max-height:
-            95vh;
-    }
-}
-
-
-/* ============================================================
-   SMALL PHONE
-============================================================ */
-
-@media (max-width: 360px) {
-
-    #products-grid {
-
-        grid-template-columns:
-            1fr;
     }
 }
 """
@@ -2045,7 +2379,7 @@ const PRODUCTS = {products_json};
 
 
 // ============================================================
-// STORE WHATSAPP
+// WHATSAPP
 // ============================================================
 
 const SELLER_WHATSAPP =
@@ -2059,6 +2393,16 @@ const SELLER_WHATSAPP =
 const productsGrid =
     document.getElementById(
         "products-grid"
+    );
+
+const catalogue =
+    document.getElementById(
+        "catalogue"
+    );
+
+const viewCatalogueButton =
+    document.getElementById(
+        "viewCatalogueButton"
     );
 
 const modal =
@@ -2087,9 +2431,28 @@ const selectedProduct =
     );
 
 
-// Currently selected product
-
 let currentProduct = null;
+
+
+// ============================================================
+// MOBILE CATALOGUE NAVIGATION
+//
+// IMPORTANT:
+// Do not rely only on href="#catalogue".
+// scrollIntoView() is much more reliable here.
+// ============================================================
+
+viewCatalogueButton.addEventListener(
+    "click",
+    function() {{
+
+        catalogue.scrollIntoView({{
+            behavior: "smooth",
+            block: "start"
+        }});
+
+    }}
+);
 
 
 // ============================================================
@@ -2142,8 +2505,9 @@ function displayProducts() {{
 
             <div style="
                 grid-column: 1 / -1;
+                width: 100%;
                 text-align: center;
-                padding: 60px;
+                padding: 50px 20px;
                 color: #777;
             ">
 
@@ -2158,7 +2522,7 @@ function displayProducts() {{
 
 
     PRODUCTS.forEach(
-        product => {{
+        function(product) {{
 
             const card =
                 document.createElement(
@@ -2170,7 +2534,7 @@ function displayProducts() {{
 
 
             // =================================================
-            // IMAGE CONTAINER
+            // IMAGE
             // =================================================
 
             const imageContainer =
@@ -2202,9 +2566,24 @@ function displayProducts() {{
             image.loading =
                 "lazy";
 
+            image.decoding =
+                "async";
+
+
+            image.onerror =
+                function() {{
+
+                    image.style.objectFit =
+                        "contain";
+
+                    image.style.padding =
+                        "25px";
+
+                }};
+
 
             // =================================================
-            // PHOTO INFORMATION TAG
+            // INFORMATION
             // =================================================
 
             const photoTag =
@@ -2294,7 +2673,7 @@ function displayProducts() {{
 
 
             // =================================================
-            // BUY BUTTON
+            // ORDER BUTTON
             // =================================================
 
             const footer =
@@ -2338,10 +2717,6 @@ function displayProducts() {{
             );
 
 
-            // =================================================
-            // CARD
-            // =================================================
-
             card.appendChild(
                 imageContainer
             );
@@ -2361,7 +2736,7 @@ function displayProducts() {{
 
 
 // ============================================================
-// OPEN ORDER MODAL
+// OPEN MODAL
 // ============================================================
 
 function openOrderModal(product) {{
@@ -2373,7 +2748,9 @@ function openOrderModal(product) {{
     selectedProduct.innerHTML = `
 
         <strong>
-            ${{escapeHtml(product.category)}}
+            ${{escapeHtml(
+                product.category
+            )}}
         </strong>
 
         <span>
@@ -2421,19 +2798,9 @@ function openOrderModal(product) {{
     );
 
 
-    /*
-       Prevent page scrolling while
-       the order window is open.
-    */
-
     document.body.style.overflow =
         "hidden";
 
-
-    /*
-       Focus the first field after
-       the modal is visible.
-    */
 
     setTimeout(
         function() {{
@@ -2445,31 +2812,23 @@ function openOrderModal(product) {{
                 .focus();
 
         }},
-        100
+        150
     );
 }}
 
 
 // ============================================================
-// CLOSE ORDER MODAL
+// CLOSE MODAL
 // ============================================================
 
 function closeOrderModal() {{
 
-    /*
-       Remove focus from any input.
-
-       This helps prevent the mobile
-       keyboard from remaining active.
-    */
-
     if (
-        document.activeElement
+        document.activeElement &&
+        document.activeElement.blur
     ) {{
 
-        document
-            .activeElement
-            .blur();
+        document.activeElement.blur();
 
     }}
 
@@ -2506,6 +2865,10 @@ modalOverlay.addEventListener(
 );
 
 
+// ============================================================
+// ESCAPE KEY
+// ============================================================
+
 document.addEventListener(
     "keydown",
     function(event) {{
@@ -2526,7 +2889,7 @@ document.addEventListener(
 
 
 // ============================================================
-// SUBMIT ORDER
+// ORDER SUBMISSION
 // ============================================================
 
 orderForm.addEventListener(
@@ -2568,10 +2931,6 @@ orderForm.addEventListener(
                 .trim();
 
 
-        // ----------------------------------------------------
-        // VALIDATION
-        // ----------------------------------------------------
-
         if (
             !customerName ||
             !customerNumber ||
@@ -2586,15 +2945,15 @@ orderForm.addEventListener(
         }}
 
 
-        const cleanedNumber =
+        const digitsOnly =
             customerNumber.replace(
-                /[^0-9+]/g,
+                /[^0-9]/g,
                 ""
             );
 
 
         if (
-            cleanedNumber.length < 8
+            digitsOnly.length < 8
         ) {{
 
             alert(
@@ -2605,38 +2964,28 @@ orderForm.addEventListener(
         }}
 
 
-        // ----------------------------------------------------
-        // CREATE ORDER MESSAGE
-        // ----------------------------------------------------
-
         const message =
 
             "I, " +
-
             customerName +
 
             ", wish to buy Product Code " +
-
             currentProduct.productCode +
 
             " (" +
-
             currentProduct.category +
 
             ", MRP ₹" +
-
             currentProduct.price +
 
             "). " +
 
             "My WhatsApp number is " +
-
             customerNumber +
 
             ". " +
 
             "Kindly deliver the package to my delivery address: " +
-
             deliveryAddress +
 
             ". " +
@@ -2644,74 +2993,29 @@ orderForm.addEventListener(
             "For the same, please provide me your QR code scanner for payment.";
 
 
-        // ----------------------------------------------------
-        // CREATE WHATSAPP URL
-        // ----------------------------------------------------
-
         const whatsappURL =
 
             "https://wa.me/" +
-
             SELLER_WHATSAPP +
-
             "?text=" +
-
             encodeURIComponent(
                 message
             );
-
-
-        // ----------------------------------------------------
-        // IMPORTANT MOBILE UX
-        //
-        // Remove focus and close modal BEFORE
-        // opening WhatsApp.
-        // ----------------------------------------------------
-
-        if (
-            document.activeElement
-        ) {{
-
-            document
-                .activeElement
-                .blur();
-
-        }}
 
 
         closeOrderModal();
 
 
         /*
-           Small delay allows the keyboard to
-           disappear before opening WhatsApp.
+           Normal location navigation is more reliable
+           than window.open on mobile browsers.
         */
 
         setTimeout(
             function() {{
 
-                const whatsappWindow =
-                    window.open(
-                        whatsappURL,
-                        "_blank"
-                    );
-
-
-                /*
-                   Popup blocked
-                */
-
-                if (!whatsappWindow) {{
-
-                    alert(
-                        "Your browser blocked the WhatsApp window. " +
-
-                        "Please allow popups for this website " +
-
-                        "and try again."
-                    );
-
-                }}
+                window.location.href =
+                    whatsappURL;
 
             }},
             150
@@ -2773,7 +3077,7 @@ with open(
 print()
 print("================================================")
 print(" PRESENT PERFECT STORE")
-print(" PRODUCT CATALOGUE GENERATED")
+print(" MOBILE CATALOGUE VERSION GENERATED")
 print("================================================")
 print()
 
@@ -2803,25 +3107,12 @@ print(
 
 print()
 
-print("Filename format:")
-print(
-    "  Product_Category_MRP.jpg"
-)
-
-print()
-
-print("Examples:")
-print(
-    "  Necklace_5999.jpg"
-)
-
-print(
-    "  Wall_Decor_1499.jpg"
-)
-
-print(
-    "  Coffee_Mug_499.jpg"
-)
+print("Mobile catalogue:")
+print("  VIEW CATALOGUE uses scrollIntoView()")
+print("  Mobile hero has automatic height")
+print("  Product grid is explicitly 2 columns")
+print("  <= 350px uses 1 column")
+print("  Catalogue has scroll-margin-top")
 
 print()
 

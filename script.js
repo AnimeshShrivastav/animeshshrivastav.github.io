@@ -3,11 +3,11 @@
 // PRODUCT DATA
 // ============================================================
 
-const PRODUCTS = [{"filename": "bangle_1000.png", "category": "bangle", "price": "1000", "serial": "001", "productCode": "001-bangle-1000"}, {"filename": "necklace_2000.png", "category": "necklace", "price": "2000", "serial": "002", "productCode": "002-necklace-2000"}, {"filename": "necklace_3000.png", "category": "necklace", "price": "3000", "serial": "003", "productCode": "003-necklace-3000"}, {"filename": "set_4000.png", "category": "set", "price": "4000", "serial": "004", "productCode": "004-set-4000"}, {"filename": "set_5000.png", "category": "set", "price": "5000", "serial": "005", "productCode": "005-set-5000"}, {"filename": "set_7000.png", "category": "set", "price": "7000", "serial": "006", "productCode": "006-set-7000"}, {"filename": "set_8000.png", "category": "set", "price": "8000", "serial": "007", "productCode": "007-set-8000"}, {"filename": "set_9000.png", "category": "set", "price": "9000", "serial": "008", "productCode": "008-set-9000"}];
+const PRODUCTS = [{"filename": "bangle_1000.png", "category": "bangle", "price": "1000", "serial": "001", "productCode": "001-bangle-1000"}, {"filename": "chocbox_350.png", "category": "chocbox", "price": "350", "serial": "002", "productCode": "002-chocbox-350"}, {"filename": "gift_500.png", "category": "gift", "price": "500", "serial": "003", "productCode": "003-gift-500"}, {"filename": "giftset_700.png", "category": "giftset", "price": "700", "serial": "004", "productCode": "004-giftset-700"}, {"filename": "necklace_2000.png", "category": "necklace", "price": "2000", "serial": "005", "productCode": "005-necklace-2000"}, {"filename": "necklace_3000.png", "category": "necklace", "price": "3000", "serial": "006", "productCode": "006-necklace-3000"}, {"filename": "set_4000.png", "category": "set", "price": "4000", "serial": "007", "productCode": "007-set-4000"}, {"filename": "set_5000.png", "category": "set", "price": "5000", "serial": "008", "productCode": "008-set-5000"}, {"filename": "set_7000.png", "category": "set", "price": "7000", "serial": "009", "productCode": "009-set-7000"}, {"filename": "set_8000.png", "category": "set", "price": "8000", "serial": "010", "productCode": "010-set-8000"}, {"filename": "set_9000.png", "category": "set", "price": "9000", "serial": "011", "productCode": "011-set-9000"}];
 
 
 // ============================================================
-// STORE WHATSAPP
+// WHATSAPP
 // ============================================================
 
 const SELLER_WHATSAPP =
@@ -21,6 +21,16 @@ const SELLER_WHATSAPP =
 const productsGrid =
     document.getElementById(
         "products-grid"
+    );
+
+const catalogue =
+    document.getElementById(
+        "catalogue"
+    );
+
+const viewCatalogueButton =
+    document.getElementById(
+        "viewCatalogueButton"
     );
 
 const modal =
@@ -49,9 +59,28 @@ const selectedProduct =
     );
 
 
-// Currently selected product
-
 let currentProduct = null;
+
+
+// ============================================================
+// MOBILE CATALOGUE NAVIGATION
+//
+// IMPORTANT:
+// Do not rely only on href="#catalogue".
+// scrollIntoView() is much more reliable here.
+// ============================================================
+
+viewCatalogueButton.addEventListener(
+    "click",
+    function() {
+
+        catalogue.scrollIntoView({
+            behavior: "smooth",
+            block: "start"
+        });
+
+    }
+);
 
 
 // ============================================================
@@ -104,8 +133,9 @@ function displayProducts() {
 
             <div style="
                 grid-column: 1 / -1;
+                width: 100%;
                 text-align: center;
-                padding: 60px;
+                padding: 50px 20px;
                 color: #777;
             ">
 
@@ -120,7 +150,7 @@ function displayProducts() {
 
 
     PRODUCTS.forEach(
-        product => {
+        function(product) {
 
             const card =
                 document.createElement(
@@ -132,7 +162,7 @@ function displayProducts() {
 
 
             // =================================================
-            // IMAGE CONTAINER
+            // IMAGE
             // =================================================
 
             const imageContainer =
@@ -164,9 +194,24 @@ function displayProducts() {
             image.loading =
                 "lazy";
 
+            image.decoding =
+                "async";
+
+
+            image.onerror =
+                function() {
+
+                    image.style.objectFit =
+                        "contain";
+
+                    image.style.padding =
+                        "25px";
+
+                };
+
 
             // =================================================
-            // PHOTO INFORMATION TAG
+            // INFORMATION
             // =================================================
 
             const photoTag =
@@ -256,7 +301,7 @@ function displayProducts() {
 
 
             // =================================================
-            // BUY BUTTON
+            // ORDER BUTTON
             // =================================================
 
             const footer =
@@ -300,10 +345,6 @@ function displayProducts() {
             );
 
 
-            // =================================================
-            // CARD
-            // =================================================
-
             card.appendChild(
                 imageContainer
             );
@@ -323,7 +364,7 @@ function displayProducts() {
 
 
 // ============================================================
-// OPEN ORDER MODAL
+// OPEN MODAL
 // ============================================================
 
 function openOrderModal(product) {
@@ -335,7 +376,9 @@ function openOrderModal(product) {
     selectedProduct.innerHTML = `
 
         <strong>
-            ${escapeHtml(product.category)}
+            ${escapeHtml(
+                product.category
+            )}
         </strong>
 
         <span>
@@ -383,19 +426,9 @@ function openOrderModal(product) {
     );
 
 
-    /*
-       Prevent page scrolling while
-       the order window is open.
-    */
-
     document.body.style.overflow =
         "hidden";
 
-
-    /*
-       Focus the first field after
-       the modal is visible.
-    */
 
     setTimeout(
         function() {
@@ -407,31 +440,23 @@ function openOrderModal(product) {
                 .focus();
 
         },
-        100
+        150
     );
 }
 
 
 // ============================================================
-// CLOSE ORDER MODAL
+// CLOSE MODAL
 // ============================================================
 
 function closeOrderModal() {
 
-    /*
-       Remove focus from any input.
-
-       This helps prevent the mobile
-       keyboard from remaining active.
-    */
-
     if (
-        document.activeElement
+        document.activeElement &&
+        document.activeElement.blur
     ) {
 
-        document
-            .activeElement
-            .blur();
+        document.activeElement.blur();
 
     }
 
@@ -468,6 +493,10 @@ modalOverlay.addEventListener(
 );
 
 
+// ============================================================
+// ESCAPE KEY
+// ============================================================
+
 document.addEventListener(
     "keydown",
     function(event) {
@@ -488,7 +517,7 @@ document.addEventListener(
 
 
 // ============================================================
-// SUBMIT ORDER
+// ORDER SUBMISSION
 // ============================================================
 
 orderForm.addEventListener(
@@ -530,10 +559,6 @@ orderForm.addEventListener(
                 .trim();
 
 
-        // ----------------------------------------------------
-        // VALIDATION
-        // ----------------------------------------------------
-
         if (
             !customerName ||
             !customerNumber ||
@@ -548,15 +573,15 @@ orderForm.addEventListener(
         }
 
 
-        const cleanedNumber =
+        const digitsOnly =
             customerNumber.replace(
-                /[^0-9+]/g,
+                /[^0-9]/g,
                 ""
             );
 
 
         if (
-            cleanedNumber.length < 8
+            digitsOnly.length < 8
         ) {
 
             alert(
@@ -567,38 +592,28 @@ orderForm.addEventListener(
         }
 
 
-        // ----------------------------------------------------
-        // CREATE ORDER MESSAGE
-        // ----------------------------------------------------
-
         const message =
 
             "I, " +
-
             customerName +
 
             ", wish to buy Product Code " +
-
             currentProduct.productCode +
 
             " (" +
-
             currentProduct.category +
 
             ", MRP ₹" +
-
             currentProduct.price +
 
             "). " +
 
             "My WhatsApp number is " +
-
             customerNumber +
 
             ". " +
 
             "Kindly deliver the package to my delivery address: " +
-
             deliveryAddress +
 
             ". " +
@@ -606,74 +621,29 @@ orderForm.addEventListener(
             "For the same, please provide me your QR code scanner for payment.";
 
 
-        // ----------------------------------------------------
-        // CREATE WHATSAPP URL
-        // ----------------------------------------------------
-
         const whatsappURL =
 
             "https://wa.me/" +
-
             SELLER_WHATSAPP +
-
             "?text=" +
-
             encodeURIComponent(
                 message
             );
-
-
-        // ----------------------------------------------------
-        // IMPORTANT MOBILE UX
-        //
-        // Remove focus and close modal BEFORE
-        // opening WhatsApp.
-        // ----------------------------------------------------
-
-        if (
-            document.activeElement
-        ) {
-
-            document
-                .activeElement
-                .blur();
-
-        }
 
 
         closeOrderModal();
 
 
         /*
-           Small delay allows the keyboard to
-           disappear before opening WhatsApp.
+           Normal location navigation is more reliable
+           than window.open on mobile browsers.
         */
 
         setTimeout(
             function() {
 
-                const whatsappWindow =
-                    window.open(
-                        whatsappURL,
-                        "_blank"
-                    );
-
-
-                /*
-                   Popup blocked
-                */
-
-                if (!whatsappWindow) {
-
-                    alert(
-                        "Your browser blocked the WhatsApp window. " +
-
-                        "Please allow popups for this website " +
-
-                        "and try again."
-                    );
-
-                }
+                window.location.href =
+                    whatsappURL;
 
             },
             150
