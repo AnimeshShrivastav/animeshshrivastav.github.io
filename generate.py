@@ -24,17 +24,71 @@ IMAGE_EXTENSIONS = {
 
 
 # ============================================================
+# PRODUCT PARSER
+#
+# Expected filename:
+#
+# Necklace_5999.jpg
+# Wall_Decor_1499.jpg
+# Coffee_Mug_499.jpg
+# Gift_Box_799.jpg
+#
+# Everything before the LAST underscore = category
+# Everything after the LAST underscore = MRP
+# ============================================================
+
+def parse_product_filename(filename):
+
+    name = os.path.splitext(filename)[0]
+
+    parts = name.split("_")
+
+    if len(parts) < 2:
+        return None
+
+    price = parts[-1].strip()
+
+    category_parts = parts[:-1]
+
+    category = " ".join(category_parts)
+
+    category = re.sub(
+        r"\s+",
+        " ",
+        category
+    ).strip()
+
+    # Validate price
+    if not price.isdigit():
+        return None
+
+    return {
+        "category": category,
+        "price": price
+    }
+
+
+# ============================================================
 # FIND PRODUCTS
 # ============================================================
 
 products = []
 
 if not os.path.isdir(IMAGE_FOLDER):
-    print(f"ERROR: '{IMAGE_FOLDER}' folder does not exist.")
+
+    print(
+        f"ERROR: '{IMAGE_FOLDER}' folder does not exist."
+    )
+
     exit(1)
 
 
-for filename in sorted(os.listdir(IMAGE_FOLDER)):
+files = sorted(
+    os.listdir(IMAGE_FOLDER)
+)
+
+
+for filename in files:
 
     filepath = os.path.join(
         IMAGE_FOLDER,
@@ -51,57 +105,63 @@ for filename in sorted(os.listdir(IMAGE_FOLDER)):
     if extension not in IMAGE_EXTENSIONS:
         continue
 
-    name_without_extension = os.path.splitext(
+    parsed = parse_product_filename(
         filename
-    )[0]
+    )
 
-    parts = name_without_extension.split("_")
+    if parsed is None:
+
+        print(
+            "WARNING: Skipping invalid filename:",
+            filename
+        )
+
+        continue
 
 
     # --------------------------------------------------------
-    # Expected:
-    #
-    # Necklace_001_5999.jpg
-    #
-    # Category = Necklace
-    # Serial   = 001
-    # MRP      = 5999
+    # AUTO SERIAL NUMBER
     # --------------------------------------------------------
 
-    if len(parts) >= 3:
+    serial = len(products) + 1
 
-        serial = parts[-2]
+    serial_string = str(serial).zfill(3)
 
-        price = parts[-1]
 
-        category_parts = parts[:-2]
+    # --------------------------------------------------------
+    # PRODUCT CODE
+    #
+    # Example:
+    #
+    # 001-Necklace-5999
+    # --------------------------------------------------------
 
-        category = " ".join(category_parts)
-
-    else:
-
-        category = name_without_extension
-
-        serial = ""
-
-        price = ""
+    product_code = (
+        serial_string
+        + "-"
+        + parsed["category"]
+        + "-"
+        + parsed["price"]
+    )
 
 
     products.append({
 
         "filename": filename,
 
-        "category": category,
+        "category": parsed["category"],
 
-        "serial": serial,
+        "price": parsed["price"],
 
-        "price": price
+        "serial": serial_string,
+
+        "productCode": product_code
 
     })
 
 
 # ============================================================
-# PRODUCT DATA
+# JSON DATA
 # ============================================================
 
 products_json = json.dumps(
@@ -122,13 +182,17 @@ html_content = """<!DOCTYPE html>
 
 <meta charset="UTF-8">
 
-<meta name="viewport"
-      content="width=device-width, initial-scale=1.0">
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0">
 
-<meta name="description"
-      content="Elegant jewellery collection">
+<meta
+    name="description"
+    content="Present Perfect Store - The Products Catalogue">
 
-<title>Jewellery Collection</title>
+<title>
+Present Perfect Store | The Products Catalogue
+</title>
 
 <link
     rel="stylesheet"
@@ -150,23 +214,34 @@ html_content = """<!DOCTYPE html>
 
         <div class="brand">
 
-            <span class="brand-mark">✦</span>
+            <div class="brand-symbol">
+                ✦
+            </div>
 
             <div>
 
-                <h1>PRESENT PERFECT</h1>
+                <h1>
+                    PRESENT PERFECT
+                </h1>
 
-                <p>JEWELLERY COLLECTION</p>
+                <p>
+                    STORE
+                </p>
 
             </div>
 
         </div>
 
 
-        <div class="header-tagline">
+        <div class="header-description">
 
-            Timeless Beauty<br>
-            <span>Made For You</span>
+            <span>
+                THOUGHTFUL THINGS
+            </span>
+
+            <span>
+                FOR EVERY SPACE & OCCASION
+            </span>
 
         </div>
 
@@ -181,91 +256,113 @@ html_content = """<!DOCTYPE html>
 
 <section class="hero">
 
+    <div class="hero-decoration left">
+        ✦
+    </div>
+
     <div class="hero-content">
 
-        <span class="hero-small">
-            THE ART OF ADORNMENT
+        <span class="eyebrow">
+            PRESENT PERFECT STORE
         </span>
 
         <h2>
-            Jewellery That<br>
-            <em>Tells Your Story</em>
+            The Products
+            <em>Catalogue</em>
         </h2>
 
+        <div class="gold-line"></div>
+
         <p>
-            Discover our carefully selected collection
-            of elegant pieces designed to celebrate
-            life's beautiful moments.
+
+            Discover carefully selected products
+            for gifting, decorating, celebrating
+            and making everyday moments special.
+
         </p>
 
-        <a
-            href="#products"
-            class="hero-button">
 
-            Explore Collection
+        <a
+            href="#catalogue"
+            class="explore-button">
+
+            VIEW CATALOGUE
 
         </a>
 
+    </div>
+
+
+    <div class="hero-decoration right">
+        ✦
     </div>
 
 </section>
 
 
 <!-- ========================================================
-     PRODUCTS
+     CATALOGUE
 ========================================================= -->
 
 <main>
 
-    <section
-        class="collection-section"
-        id="products">
-
-        <div class="section-heading">
-
-            <span>
-                OUR COLLECTION
-            </span>
-
-            <h2>
-                Timeless Pieces
-            </h2>
-
-            <div class="gold-line"></div>
-
-            <p>
-                Crafted to make every moment memorable.
-            </p>
-
-        </div>
+<section
+    class="catalogue"
+    id="catalogue">
 
 
-        <div id="products-grid">
+    <div class="section-heading">
 
-        </div>
+        <span>
+            PRESENT PERFECT STORE
+        </span>
 
-    </section>
+        <h2>
+            The Products Catalogue
+        </h2>
+
+        <div class="heading-line"></div>
+
+        <p>
+            Find something perfect for every occasion.
+        </p>
+
+    </div>
+
+
+    <div id="products-grid">
+
+    </div>
+
+
+</section>
 
 </main>
 
 
 <!-- ========================================================
-     BUY MODAL
+     ORDER MODAL
 ========================================================= -->
 
 <div
-    id="buyModal"
+    id="orderModal"
     class="modal"
     aria-hidden="true">
+
 
     <div class="modal-overlay"></div>
 
 
-    <div class="modal-box">
+    <div
+        class="modal-box"
+        role="dialog"
+        aria-modal="true">
+
 
         <button
+            type="button"
+            id="closeModal"
             class="modal-close"
-            id="modalClose"
             aria-label="Close">
 
             ×
@@ -273,69 +370,86 @@ html_content = """<!DOCTYPE html>
         </button>
 
 
-        <div class="modal-icon">
+        <div class="modal-symbol">
             ✦
         </div>
 
 
         <h2>
-            Complete Your Order
+            Place Your Order
         </h2>
 
 
-        <p class="modal-intro">
+        <p class="modal-subtitle">
 
             Please provide your details.
-            A personalized WhatsApp message
-            will then be prepared for the seller.
+            A custom WhatsApp message will
+            be prepared for the store.
 
         </p>
 
 
+        <!-- Selected product -->
+
         <div
-            class="selected-product"
-            id="selectedProduct">
+            id="selectedProduct"
+            class="selected-product">
 
         </div>
 
 
-        <div class="notice">
+        <!-- Notice -->
 
-            <strong>Important</strong>
+        <div class="popup-notice">
+
+            <strong>
+                WhatsApp Order
+            </strong>
 
             <p>
-                Please allow popups if your browser
-                asks. After submitting your details,
-                WhatsApp will open with a custom
-                purchase message. Please review it
+
+                After submitting your details,
+                WhatsApp will open with your
+                order message. Please review it
                 and press <strong>Send</strong>.
+
+                If your browser asks,
+                please allow popups for this site.
+
             </p>
 
         </div>
 
 
+        <!-- Order form -->
+
         <form id="orderForm">
 
 
             <label for="customerName">
-                Full Name
+                Your Name
             </label>
 
             <input
                 id="customerName"
+                name="customerName"
                 type="text"
-                placeholder="Your full name"
+                autocomplete="name"
+                placeholder="Enter your name"
                 required>
 
 
             <label for="customerNumber">
-                WhatsApp / Mobile Number
+                WhatsApp Number
             </label>
 
             <input
                 id="customerNumber"
+                name="customerNumber"
                 type="tel"
-                placeholder="Your WhatsApp number"
+                inputmode="tel"
+                autocomplete="tel"
+                placeholder="Enter your WhatsApp number"
                 required>
 
 
@@ -345,8 +459,10 @@ html_content = """<!DOCTYPE html>
 
             <textarea
                 id="deliveryAddress"
+                name="deliveryAddress"
+                autocomplete="street-address"
                 rows="4"
-                placeholder="Complete delivery address"
+                placeholder="Enter complete delivery address"
                 required></textarea>
 
 
@@ -354,11 +470,14 @@ html_content = """<!DOCTYPE html>
                 type="submit"
                 class="whatsapp-button">
 
-                <span>☏</span>
+                <span>
+                    ☏
+                </span>
 
-                Continue to WhatsApp
+                PREPARE WHATSAPP ORDER
 
             </button>
+
 
         </form>
 
@@ -373,25 +492,28 @@ html_content = """<!DOCTYPE html>
 
 <footer class="site-footer">
 
-    <div class="footer-logo">
+    <div class="footer-brand">
 
-        <span>✦</span>
+        <span>
+            ✦
+        </span>
 
-        PRESENT PERFECT
+        PRESENT PERFECT STORE
 
     </div>
 
 
     <p>
-        Jewellery that celebrates you.
+        Thoughtful products for every space,
+        occasion and moment.
     </p>
 
 
-    <div class="footer-line"></div>
+    <div class="footer-divider"></div>
 
 
     <small>
-        © 2026 PRESENT PERFECT JEWELLERY
+        © 2026 PRESENT PERFECT STORE
     </small>
 
 </footer>
@@ -410,12 +532,8 @@ html_content = """<!DOCTYPE html>
 # ============================================================
 
 css_content = r"""
-/* ============================================================
-   FONTS
-============================================================ */
-
 @import url(
-    'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600&display=swap'
+'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600&display=swap'
 );
 
 
@@ -425,26 +543,23 @@ css_content = r"""
 
 :root {
 
-    --ivory: #faf8f3;
+    --cream: #faf8f2;
 
-    --cream: #f4efe5;
+    --cream-dark: #f1ebdf;
 
     --white: #ffffff;
 
-    --gold: #b9954b;
+    --gold: #b8944b;
 
-    --gold-light: #d8bd7a;
+    --gold-light: #d9bf80;
 
-    --gold-dark: #80662d;
+    --gold-dark: #80652e;
 
-    --charcoal: #292621;
+    --dark: #292722;
 
-    --muted: #777269;
+    --muted: #77736b;
 
-    --rose: #8f5960;
-
-    --shadow:
-        0 15px 50px rgba(70, 50, 20, .10);
+    --rose: #95656b;
 
     --serif:
         "Cormorant Garamond",
@@ -455,6 +570,10 @@ css_content = r"""
         "Montserrat",
         Arial,
         sans-serif;
+
+    --shadow:
+        0 15px 45px
+        rgba(60,45,20,.10);
 }
 
 
@@ -466,21 +585,24 @@ css_content = r"""
     box-sizing: border-box;
 }
 
+
 html {
     scroll-behavior: smooth;
 }
+
 
 body {
 
     margin: 0;
 
-    background: var(--ivory);
+    background:
+        var(--cream);
 
-    color: var(--charcoal);
+    color:
+        var(--dark);
 
-    font-family: var(--sans);
-
-    font-weight: 400;
+    font-family:
+        var(--sans);
 }
 
 
@@ -490,54 +612,62 @@ body {
 
 .site-header {
 
-    position: relative;
-
-    z-index: 10;
-
     background:
-        rgba(250, 248, 243, .94);
+        rgba(250,248,242,.96);
 
     border-bottom:
         1px solid
-        rgba(185,149,75,.25);
+        rgba(184,148,75,.25);
 
-    backdrop-filter:
-        blur(12px);
+    position:
+        relative;
+
+    z-index: 10;
 }
 
 
 .header-inner {
 
-    max-width: 1400px;
+    max-width:
+        1400px;
 
-    margin: auto;
+    margin:
+        auto;
 
     padding:
         18px 35px;
 
-    display: flex;
+    display:
+        flex;
 
-    align-items: center;
+    justify-content:
+        space-between;
 
-    justify-content: space-between;
+    align-items:
+        center;
 }
 
 
 .brand {
 
-    display: flex;
+    display:
+        flex;
 
-    align-items: center;
+    align-items:
+        center;
 
-    gap: 13px;
+    gap:
+        13px;
 }
 
 
-.brand-mark {
+.brand-symbol {
 
-    color: var(--gold);
+    color:
+        var(--gold);
 
-    font-size: 30px;
+    font-size:
+        29px;
 }
 
 
@@ -545,47 +675,65 @@ body {
 
     margin: 0;
 
-    font-family: var(--serif);
+    font-family:
+        var(--serif);
 
-    font-size: 30px;
+    font-size:
+        29px;
 
-    font-weight: 600;
+    font-weight:
+        600;
 
-    letter-spacing: 5px;
+    letter-spacing:
+        4px;
 
-    line-height: 1;
+    line-height:
+        1;
 }
 
 
 .brand p {
 
-    margin: 6px 0 0;
+    margin:
+        5px 0 0;
 
-    color: var(--gold-dark);
+    color:
+        var(--gold-dark);
 
-    font-size: 8px;
+    font-size:
+        9px;
 
-    letter-spacing: 4px;
+    letter-spacing:
+        5px;
+
+    text-align:
+        center;
 }
 
 
-.header-tagline {
+.header-description {
 
-    text-align: right;
+    text-align:
+        right;
 
-    color: var(--muted);
+    color:
+        var(--muted);
 
-    font-size: 10px;
+    font-size:
+        8px;
 
-    line-height: 1.7;
+    letter-spacing:
+        2px;
 
-    letter-spacing: 2px;
+    line-height:
+        1.8;
 }
 
 
-.header-tagline span {
+.header-description span {
 
-    color: var(--gold-dark);
+    display:
+        block;
 }
 
 
@@ -595,27 +743,34 @@ body {
 
 .hero {
 
-    min-height: 560px;
+    min-height:
+        550px;
 
-    display: flex;
+    display:
+        flex;
 
-    align-items: center;
+    align-items:
+        center;
 
-    justify-content: center;
+    justify-content:
+        center;
 
-    text-align: center;
+    text-align:
+        center;
 
-    position: relative;
+    position:
+        relative;
 
-    overflow: hidden;
+    overflow:
+        hidden;
 
     background:
 
         radial-gradient(
-            circle at 50% 45%,
-            rgba(255,255,255,.95),
-            rgba(244,239,229,.8) 40%,
-            rgba(228,215,186,.65) 100%
+            circle at center,
+            #ffffff 0%,
+            #f6f0e4 48%,
+            #e6d9bd 100%
         );
 }
 
@@ -624,59 +779,78 @@ body {
 
     content: "";
 
-    position: absolute;
+    position:
+        absolute;
 
-    inset: 30px;
+    inset:
+        30px;
 
     border:
         1px solid
-        rgba(185,149,75,.28);
-
-    pointer-events: none;
+        rgba(184,148,75,.30);
 }
 
 
 .hero::after {
 
-    content: "✦";
+    content: "";
 
-    position: absolute;
+    position:
+        absolute;
 
-    top: 55px;
+    width:
+        500px;
 
-    left: 50%;
+    height:
+        500px;
+
+    border-radius:
+        50%;
+
+    border:
+        1px solid
+        rgba(184,148,75,.10);
+
+    top:
+        50%;
+
+    left:
+        50%;
 
     transform:
-        translateX(-50%);
-
-    color:
-        rgba(185,149,75,.35);
-
-    font-size: 26px;
+        translate(-50%,-50%);
 }
 
 
 .hero-content {
 
-    position: relative;
+    position:
+        relative;
 
-    z-index: 1;
+    z-index:
+        2;
 
-    max-width: 700px;
+    max-width:
+        750px;
 
-    padding: 70px 25px;
+    padding:
+        80px 25px;
 }
 
 
-.hero-small {
+.eyebrow {
 
-    color: var(--gold-dark);
+    color:
+        var(--gold-dark);
 
-    font-size: 11px;
+    font-size:
+        10px;
 
-    letter-spacing: 5px;
+    letter-spacing:
+        5px;
 
-    font-weight: 500;
+    font-weight:
+        500;
 }
 
 
@@ -685,83 +859,153 @@ body {
     margin:
         18px 0;
 
-    font-family: var(--serif);
+    font-family:
+        var(--serif);
 
     font-size:
-        clamp(55px, 8vw, 92px);
+        clamp(55px, 8vw, 88px);
 
-    line-height: .82;
+    font-weight:
+        500;
 
-    font-weight: 500;
-
-    color: var(--charcoal);
+    line-height:
+        .85;
 }
 
 
 .hero h2 em {
 
-    color: var(--rose);
+    display:
+        block;
 
-    font-weight: 400;
+    color:
+        var(--rose);
+
+    font-weight:
+        400;
+}
+
+
+.gold-line {
+
+    width:
+        55px;
+
+    height:
+        1px;
+
+    margin:
+        25px auto;
+
+    background:
+        var(--gold);
 }
 
 
 .hero p {
 
-    max-width: 520px;
+    max-width:
+        560px;
 
     margin:
-        25px auto 30px;
+        0 auto 30px;
 
-    color: var(--muted);
+    color:
+        var(--muted);
 
-    font-size: 14px;
+    font-size:
+        13px;
 
-    line-height: 1.9;
+    line-height:
+        1.9;
 }
 
 
-.hero-button {
+.explore-button {
 
-    display: inline-block;
+    display:
+        inline-block;
 
     padding:
         14px 30px;
 
-    color: white;
+    color:
+        white;
 
-    background: var(--charcoal);
+    background:
+        var(--dark);
 
-    text-decoration: none;
+    text-decoration:
+        none;
 
-    font-size: 11px;
+    font-size:
+        9px;
 
-    letter-spacing: 2px;
+    font-weight:
+        500;
+
+    letter-spacing:
+        2px;
 
     transition:
-        background .25s,
-        transform .25s;
+        .25s;
 }
 
 
-.hero-button:hover {
+.explore-button:hover {
 
-    background: var(--gold-dark);
+    background:
+        var(--gold-dark);
 
     transform:
         translateY(-2px);
 }
 
 
+.hero-decoration {
+
+    position:
+        absolute;
+
+    color:
+        rgba(184,148,75,.25);
+
+    font-size:
+        80px;
+}
+
+
+.hero-decoration.left {
+
+    left:
+        8%;
+
+    top:
+        30%;
+}
+
+
+.hero-decoration.right {
+
+    right:
+        8%;
+
+    bottom:
+        20%;
+}
+
+
 /* ============================================================
-   COLLECTION
+   CATALOGUE
 ============================================================ */
 
-.collection-section {
+.catalogue {
 
-    max-width: 1450px;
+    max-width:
+        1450px;
 
-    margin: auto;
+    margin:
+        auto;
 
     padding:
         85px 30px;
@@ -770,19 +1014,24 @@ body {
 
 .section-heading {
 
-    text-align: center;
+    text-align:
+        center;
 
-    margin-bottom: 50px;
+    margin-bottom:
+        55px;
 }
 
 
 .section-heading > span {
 
-    color: var(--gold-dark);
+    color:
+        var(--gold-dark);
 
-    font-size: 10px;
+    font-size:
+        9px;
 
-    letter-spacing: 4px;
+    letter-spacing:
+        4px;
 }
 
 
@@ -791,31 +1040,40 @@ body {
     margin:
         10px 0;
 
-    font-family: var(--serif);
+    font-family:
+        var(--serif);
 
-    font-size: 52px;
+    font-size:
+        52px;
 
-    font-weight: 500;
+    font-weight:
+        500;
+}
+
+
+.heading-line {
+
+    width:
+        50px;
+
+    height:
+        1px;
+
+    margin:
+        15px auto;
+
+    background:
+        var(--gold);
 }
 
 
 .section-heading p {
 
-    color: var(--muted);
+    color:
+        var(--muted);
 
-    font-size: 13px;
-}
-
-
-.gold-line {
-
-    width: 55px;
-
-    height: 1px;
-
-    margin: 15px auto;
-
-    background: var(--gold);
+    font-size:
+        12px;
 }
 
 
@@ -825,15 +1083,17 @@ body {
 
 #products-grid {
 
-    display: grid;
+    display:
+        grid;
 
     grid-template-columns:
         repeat(
             auto-fill,
-            minmax(240px, 1fr)
+            minmax(240px,1fr)
         );
 
-    gap: 28px;
+    gap:
+        28px;
 }
 
 
@@ -843,15 +1103,15 @@ body {
 
 .product-card {
 
-    position: relative;
-
-    background: white;
-
-    overflow: hidden;
+    background:
+        var(--white);
 
     box-shadow:
         0 8px 35px
         rgba(60,45,20,.07);
+
+    overflow:
+        hidden;
 
     transition:
         transform .4s ease,
@@ -865,7 +1125,7 @@ body {
         translateY(-8px);
 
     box-shadow:
-        0 20px 50px
+        0 20px 55px
         rgba(60,45,20,.15);
 }
 
@@ -874,28 +1134,35 @@ body {
    IMAGE
 ============================================================ */
 
-.product-image-wrap {
+.product-image-container {
 
-    position: relative;
+    position:
+        relative;
 
-    overflow: hidden;
+    overflow:
+        hidden;
 
-    background: #eee8dc;
+    background:
+        #eee8dc;
 }
 
 
 .product-image {
 
-    width: 100%;
+    width:
+        100%;
 
-    aspect-ratio: 1 / 1.08;
+    aspect-ratio:
+        1 / 1.05;
 
-    object-fit: cover;
+    object-fit:
+        cover;
 
-    display: block;
+    display:
+        block;
 
     transition:
-        transform .7s cubic-bezier(.2,.7,.2,1);
+        transform .7s ease;
 }
 
 
@@ -903,130 +1170,182 @@ body {
 .product-image {
 
     transform:
-        scale(1.07);
-}
-
-
-.image-overlay {
-
-    position: absolute;
-
-    inset: 0;
-
-    background:
-        linear-gradient(
-            to top,
-            rgba(0,0,0,.22),
-            transparent 45%
-        );
-
-    opacity: 0;
-
-    transition:
-        opacity .35s;
-}
-
-
-.product-card:hover
-.image-overlay {
-
-    opacity: 1;
+        scale(1.06);
 }
 
 
 /* ============================================================
-   PRODUCT DETAILS
+   IMAGE TAG
 ============================================================ */
 
-.product-details {
+.photo-tag {
+
+    position:
+        absolute;
+
+    left:
+        12px;
+
+    right:
+        12px;
+
+    bottom:
+        12px;
 
     padding:
-        20px 20px 22px;
+        13px 14px;
 
-    text-align: center;
+    background:
+        rgba(255,255,255,.93);
+
+    backdrop-filter:
+        blur(7px);
+
+    border:
+        1px solid
+        rgba(184,148,75,.35);
+
+    text-align:
+        center;
+
+    box-shadow:
+        0 5px 20px
+        rgba(0,0,0,.08);
 }
 
 
-.product-category {
-
-    margin: 0 0 5px;
-
-    font-family: var(--serif);
-
-    font-size: 25px;
-
-    font-weight: 600;
-
-    color: var(--charcoal);
-}
-
-
-.product-serial {
-
-    margin: 0 0 12px;
-
-    color: #999;
-
-    font-size: 9px;
-
-    letter-spacing: 2px;
-
-    text-transform: uppercase;
-}
-
-
-.product-price {
+.photo-category {
 
     margin:
-        0 0 17px;
+        0 0 5px;
 
-    color: var(--gold-dark);
+    font-family:
+        var(--serif);
 
-    font-size: 17px;
+    font-size:
+        24px;
 
-    font-weight: 600;
+    font-weight:
+        600;
+
+    color:
+        var(--dark);
+}
+
+
+.photo-price {
+
+    margin:
+        0;
+
+    color:
+        var(--gold-dark);
+
+    font-size:
+        14px;
+
+    font-weight:
+        600;
+}
+
+
+.photo-serial {
+
+    margin-top:
+        7px;
+
+    color:
+        #777;
+
+    font-size:
+        8px;
+
+    letter-spacing:
+        2px;
+
+    text-transform:
+        uppercase;
+}
+
+
+.photo-code {
+
+    margin-top:
+        5px;
+
+    color:
+        #999;
+
+    font-family:
+        monospace;
+
+    font-size:
+        8px;
+
+    word-break:
+        break-all;
+}
+
+
+/* ============================================================
+   CARD FOOTER
+============================================================ */
+
+.product-footer {
+
+    padding:
+        15px;
 }
 
 
 .buy-button {
 
-    width: 100%;
+    width:
+        100%;
 
-    padding: 12px;
+    padding:
+        12px;
 
     border:
         1px solid
         var(--gold);
 
-    background: transparent;
+    background:
+        transparent;
 
-    color: var(--charcoal);
+    color:
+        var(--dark);
 
-    cursor: pointer;
+    cursor:
+        pointer;
 
-    font-family: var(--sans);
+    font-family:
+        var(--sans);
 
-    font-size: 10px;
+    font-size:
+        9px;
 
-    font-weight: 600;
+    font-weight:
+        600;
 
-    letter-spacing: 2px;
-
-    text-transform: uppercase;
+    letter-spacing:
+        2px;
 
     transition:
-        background .25s,
-        color .25s;
+        .25s;
 }
 
 
 .buy-button:hover {
 
-    background: var(--charcoal);
+    background:
+        var(--dark);
 
-    color: white;
+    color:
+        white;
 
-    border-color: var(--charcoal);
+    border-color:
+        var(--dark);
 }
 
 
@@ -1036,36 +1355,46 @@ body {
 
 .modal {
 
-    position: fixed;
+    position:
+        fixed;
 
-    inset: 0;
+    inset:
+        0;
 
-    z-index: 1000;
+    z-index:
+        1000;
 
-    display: none;
+    display:
+        none;
 
-    align-items: center;
+    align-items:
+        center;
 
-    justify-content: center;
+    justify-content:
+        center;
 
-    padding: 20px;
+    padding:
+        20px;
 }
 
 
 .modal.active {
 
-    display: flex;
+    display:
+        flex;
 }
 
 
 .modal-overlay {
 
-    position: absolute;
+    position:
+        absolute;
 
-    inset: 0;
+    inset:
+        0;
 
     background:
-        rgba(35,28,20,.72);
+        rgba(30,25,20,.75);
 
     backdrop-filter:
         blur(6px);
@@ -1074,28 +1403,36 @@ body {
 
 .modal-box {
 
-    position: relative;
+    position:
+        relative;
 
-    z-index: 2;
+    z-index:
+        2;
 
-    width: 100%;
+    width:
+        100%;
 
-    max-width: 500px;
+    max-width:
+        500px;
 
-    max-height: 92vh;
+    max-height:
+        92vh;
 
-    overflow-y: auto;
+    overflow-y:
+        auto;
 
-    padding: 38px;
+    padding:
+        35px;
 
-    background: var(--ivory);
+    background:
+        var(--cream);
 
     box-shadow:
-        0 25px 80px
-        rgba(0,0,0,.3);
+        0 30px 90px
+        rgba(0,0,0,.35);
 
     animation:
-        modalIn .3s ease;
+        modalIn .25s ease;
 }
 
 
@@ -1103,89 +1440,103 @@ body {
 
     from {
 
-        opacity: 0;
+        opacity:
+            0;
 
         transform:
-            translateY(25px)
-            scale(.98);
+            translateY(20px);
     }
 
     to {
 
-        opacity: 1;
+        opacity:
+            1;
 
         transform:
-            translateY(0)
-            scale(1);
+            translateY(0);
     }
 }
 
 
 .modal-close {
 
-    position: absolute;
+    position:
+        absolute;
 
-    top: 12px;
+    top:
+        10px;
 
-    right: 15px;
+    right:
+        14px;
 
-    width: 35px;
+    border:
+        none;
 
-    height: 35px;
+    background:
+        transparent;
 
-    border: none;
+    color:
+        #777;
 
-    background: transparent;
+    font-size:
+        28px;
 
-    color: #777;
-
-    font-size: 28px;
-
-    cursor: pointer;
+    cursor:
+        pointer;
 }
 
 
-.modal-icon {
+.modal-symbol {
 
-    text-align: center;
+    text-align:
+        center;
 
-    color: var(--gold);
+    color:
+        var(--gold);
 
-    font-size: 25px;
-
-    margin-bottom: 8px;
+    font-size:
+        25px;
 }
 
 
 .modal-box h2 {
 
     margin:
-        0 0 8px;
+        5px 0;
 
-    text-align: center;
+    text-align:
+        center;
 
-    font-family: var(--serif);
+    font-family:
+        var(--serif);
 
-    font-size: 38px;
+    font-size:
+        38px;
 
-    font-weight: 500;
+    font-weight:
+        500;
 }
 
 
-.modal-intro {
+.modal-subtitle {
 
     margin:
         0 auto 20px;
 
-    max-width: 400px;
+    max-width:
+        400px;
 
-    text-align: center;
+    text-align:
+        center;
 
-    color: var(--muted);
+    color:
+        var(--muted);
 
-    font-size: 12px;
+    font-size:
+        11px;
 
-    line-height: 1.7;
+    line-height:
+        1.7;
 }
 
 
@@ -1195,41 +1546,50 @@ body {
 
 .selected-product {
 
-    margin:
-        15px 0 20px;
-
     padding:
         14px;
 
-    text-align: center;
+    margin-bottom:
+        18px;
 
-    background: white;
+    background:
+        white;
 
     border-left:
         3px solid
         var(--gold);
+
+    text-align:
+        center;
 }
 
 
 .selected-product strong {
 
-    display: block;
+    display:
+        block;
 
-    font-family: var(--serif);
+    font-family:
+        var(--serif);
 
-    font-size: 23px;
+    font-size:
+        23px;
 }
 
 
 .selected-product span {
 
-    display: block;
+    display:
+        block;
 
-    margin-top: 4px;
+    margin-top:
+        5px;
 
-    color: var(--gold-dark);
+    color:
+        var(--gold-dark);
 
-    font-size: 12px;
+    font-size:
+        11px;
 }
 
 
@@ -1237,35 +1597,33 @@ body {
    NOTICE
 ============================================================ */
 
-.notice {
+.popup-notice {
 
-    margin-bottom: 22px;
+    margin-bottom:
+        20px;
 
     padding:
-        13px 15px;
+        12px 14px;
 
     background:
-        #f3ead6;
+        #f3ead7;
 
     border:
         1px solid
-        #e4d4b3;
+        #e1cfaa;
 
-    color: #665b47;
+    color:
+        #665c4c;
 
-    font-size: 11px;
+    font-size:
+        10px;
 
-    line-height: 1.6;
+    line-height:
+        1.6;
 }
 
 
-.notice strong {
-
-    color: var(--gold-dark);
-}
-
-
-.notice p {
+.popup-notice p {
 
     margin:
         5px 0 0;
@@ -1278,120 +1636,132 @@ body {
 
 #orderForm label {
 
-    display: block;
+    display:
+        block;
 
     margin:
-        14px 0 6px;
+        13px 0 6px;
 
-    color: #625d54;
+    color:
+        #625c53;
 
-    font-size: 10px;
+    font-size:
+        9px;
 
-    font-weight: 600;
+    font-weight:
+        600;
 
-    letter-spacing: 1.5px;
+    letter-spacing:
+        1.5px;
 
-    text-transform: uppercase;
+    text-transform:
+        uppercase;
 }
 
 
 #orderForm input,
 #orderForm textarea {
 
-    width: 100%;
+    width:
+        100%;
+
+    padding:
+        12px;
 
     border:
         1px solid
-        #d8d0c1;
+        #d7cfbf;
 
-    border-radius: 0;
+    background:
+        white;
 
-    padding:
-        12px 13px;
+    color:
+        var(--dark);
 
-    background: white;
+    font-family:
+        var(--sans);
 
-    color: var(--charcoal);
+    font-size:
+        12px;
 
-    font-family: var(--sans);
-
-    font-size: 13px;
-
-    outline: none;
-
-    transition:
-        border .2s,
-        box-shadow .2s;
-}
-
-
-#orderForm textarea {
-
-    resize: vertical;
+    outline:
+        none;
 }
 
 
 #orderForm input:focus,
 #orderForm textarea:focus {
 
-    border-color: var(--gold);
+    border-color:
+        var(--gold);
 
     box-shadow:
         0 0 0 3px
-        rgba(185,149,75,.10);
+        rgba(184,148,75,.10);
 }
 
 
-/* ============================================================
-   WHATSAPP BUTTON
-============================================================ */
+#orderForm textarea {
+
+    resize:
+        vertical;
+}
+
 
 .whatsapp-button {
 
-    width: 100%;
+    width:
+        100%;
 
-    margin-top: 25px;
+    margin-top:
+        22px;
 
-    padding: 15px;
+    padding:
+        15px;
 
-    border: none;
+    border:
+        none;
 
     background:
         #128c7e;
 
-    color: white;
+    color:
+        white;
 
-    cursor: pointer;
+    cursor:
+        pointer;
 
-    font-family: var(--sans);
+    font-family:
+        var(--sans);
 
-    font-size: 11px;
+    font-size:
+        10px;
 
-    font-weight: 600;
+    font-weight:
+        600;
 
-    letter-spacing: 1.5px;
+    letter-spacing:
+        1.5px;
 
     transition:
-        background .25s,
-        transform .25s;
+        .25s;
 }
 
 
 .whatsapp-button:hover {
 
     background:
-        #0d6f63;
-
-    transform:
-        translateY(-2px);
+        #0d7065;
 }
 
 
 .whatsapp-button span {
 
-    margin-right: 8px;
+    margin-right:
+        7px;
 
-    font-size: 17px;
+    font-size:
+        16px;
 }
 
 
@@ -1404,31 +1774,37 @@ body {
     padding:
         55px 20px;
 
-    text-align: center;
+    text-align:
+        center;
 
     background:
-        #27231f;
+        #292622;
 
     color:
-        #cfc6b7;
+        #cfc5b4;
 }
 
 
-.footer-logo {
+.footer-brand {
 
-    color: #e2c477;
+    font-family:
+        var(--serif);
 
-    font-family: var(--serif);
+    font-size:
+        27px;
 
-    font-size: 26px;
+    letter-spacing:
+        4px;
 
-    letter-spacing: 5px;
+    color:
+        #dfc77f;
 }
 
 
-.footer-logo span {
+.footer-brand span {
 
-    color: #d4af37;
+    color:
+        #d3aa52;
 }
 
 
@@ -1437,37 +1813,49 @@ body {
     margin:
         10px 0 25px;
 
-    color: #938a7c;
+    color:
+        #92897b;
 
-    font-size: 11px;
+    font-size:
+        10px;
 
-    letter-spacing: 2px;
+    letter-spacing:
+        1px;
 }
 
 
-.footer-line {
+.footer-divider {
 
-    width: 45px;
+    width:
+        45px;
 
-    height: 1px;
+    height:
+        1px;
 
-    margin: auto;
+    margin:
+        auto;
 
-    background: #80662d;
+    background:
+        var(--gold-dark);
 }
 
 
 .site-footer small {
 
-    display: block;
+    display:
+        block;
 
-    margin-top: 20px;
+    margin-top:
+        20px;
 
-    color: #71695f;
+    color:
+        #6e675d;
 
-    font-size: 8px;
+    font-size:
+        8px;
 
-    letter-spacing: 2px;
+    letter-spacing:
+        2px;
 }
 
 
@@ -1480,44 +1868,60 @@ body {
     .header-inner {
 
         padding:
-            16px 18px;
+            15px 18px;
     }
 
 
     .brand h1 {
 
-        font-size: 24px;
+        font-size:
+            23px;
 
-        letter-spacing: 3px;
+        letter-spacing:
+            2px;
     }
 
 
-    .header-tagline {
+    .header-description {
 
-        display: none;
+        display:
+            none;
     }
 
 
     .hero {
 
-        min-height: 500px;
+        min-height:
+            500px;
     }
 
 
     .hero::before {
 
-        inset: 18px;
+        inset:
+            18px;
     }
 
 
     .hero h2 {
 
         font-size:
-            clamp(52px, 15vw, 75px);
+            clamp(
+                50px,
+                15vw,
+                75px
+            );
     }
 
 
-    .collection-section {
+    .hero-decoration {
+
+        font-size:
+            50px;
+    }
+
+
+    .catalogue {
 
         padding:
             60px 12px;
@@ -1526,47 +1930,79 @@ body {
 
     .section-heading h2 {
 
-        font-size: 42px;
+        font-size:
+            42px;
     }
 
 
     #products-grid {
 
         grid-template-columns:
-            repeat(2, minmax(0,1fr));
+            repeat(
+                2,
+                minmax(0,1fr)
+            );
 
-        gap: 12px;
+        gap:
+            12px;
     }
 
 
-    .product-details {
+    .photo-tag {
+
+        left:
+            7px;
+
+        right:
+            7px;
+
+        bottom:
+            7px;
 
         padding:
-            13px 9px 15px;
+            9px 5px;
     }
 
 
-    .product-category {
+    .photo-category {
 
-        font-size: 20px;
+        font-size:
+            18px;
     }
 
 
-    .product-price {
+    .photo-price {
 
-        font-size: 14px;
+        font-size:
+            12px;
+    }
 
-        margin-bottom: 12px;
+
+    .photo-serial,
+    .photo-code {
+
+        font-size:
+            7px;
+    }
+
+
+    .product-footer {
+
+        padding:
+            9px;
     }
 
 
     .buy-button {
 
-        padding: 10px 4px;
+        padding:
+            10px 3px;
 
-        font-size: 8px;
+        font-size:
+            7px;
 
-        letter-spacing: 1px;
+        letter-spacing:
+            1px;
     }
 
 
@@ -1575,20 +2011,22 @@ body {
         padding:
             30px 20px;
 
-        max-height: 95vh;
+        max-height:
+            95vh;
     }
 }
 
 
 /* ============================================================
-   VERY SMALL PHONES
+   SMALL PHONE
 ============================================================ */
 
 @media (max-width: 360px) {
 
     #products-grid {
 
-        grid-template-columns: 1fr;
+        grid-template-columns:
+            1fr;
     }
 }
 """
@@ -1600,14 +2038,14 @@ body {
 
 js_content = f"""
 // ============================================================
-// PRODUCT DATA GENERATED BY PYTHON
+// PRODUCT DATA
 // ============================================================
 
 const PRODUCTS = {products_json};
 
 
 // ============================================================
-// SELLER WHATSAPP
+// STORE WHATSAPP
 // ============================================================
 
 const SELLER_WHATSAPP =
@@ -1619,31 +2057,78 @@ const SELLER_WHATSAPP =
 // ============================================================
 
 const productsGrid =
-    document.getElementById("products-grid");
+    document.getElementById(
+        "products-grid"
+    );
 
 const modal =
-    document.getElementById("buyModal");
-
-const modalClose =
-    document.getElementById("modalClose");
+    document.getElementById(
+        "orderModal"
+    );
 
 const modalOverlay =
-    document.querySelector(".modal-overlay");
+    document.querySelector(
+        ".modal-overlay"
+    );
+
+const closeModalButton =
+    document.getElementById(
+        "closeModal"
+    );
 
 const orderForm =
-    document.getElementById("orderForm");
+    document.getElementById(
+        "orderForm"
+    );
 
 const selectedProduct =
-    document.getElementById("selectedProduct");
+    document.getElementById(
+        "selectedProduct"
+    );
 
 
 // Currently selected product
 
-let selectedProductData = null;
+let currentProduct = null;
 
 
 // ============================================================
-// CREATE PRODUCT CARDS
+// ESCAPE HTML
+// ============================================================
+
+function escapeHtml(value) {{
+
+    return String(value)
+
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+
+        .replace(
+            /</g,
+            "&lt;"
+        )
+
+        .replace(
+            />/g,
+            "&gt;"
+        )
+
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+
+        .replace(
+            /'/g,
+            "&#039;"
+        );
+}}
+
+
+// ============================================================
+// DISPLAY PRODUCTS
 // ============================================================
 
 function displayProducts() {{
@@ -1654,180 +2139,281 @@ function displayProducts() {{
     if (PRODUCTS.length === 0) {{
 
         productsGrid.innerHTML = `
-            <p style="
+
+            <div style="
                 grid-column: 1 / -1;
                 text-align: center;
-                padding: 50px;
+                padding: 60px;
                 color: #777;
             ">
-                No jewellery products available.
-            </p>
+
+                No products are currently available.
+
+            </div>
+
         `;
 
         return;
     }}
 
 
-    PRODUCTS.forEach(product => {{
+    PRODUCTS.forEach(
+        product => {{
 
-        const card =
-            document.createElement("article");
+            const card =
+                document.createElement(
+                    "article"
+                );
 
-        card.className =
-            "product-card";
-
-
-        // ----------------------------------------------------
-        // IMAGE
-        // ----------------------------------------------------
-
-        const imageWrap =
-            document.createElement("div");
-
-        imageWrap.className =
-            "product-image-wrap";
+            card.className =
+                "product-card";
 
 
-        const image =
-            document.createElement("img");
+            // =================================================
+            // IMAGE CONTAINER
+            // =================================================
 
-        image.className =
-            "product-image";
+            const imageContainer =
+                document.createElement(
+                    "div"
+                );
 
-        image.src =
-            "images/" +
-            encodeURIComponent(
-                product.filename
+            imageContainer.className =
+                "product-image-container";
+
+
+            const image =
+                document.createElement(
+                    "img"
+                );
+
+            image.className =
+                "product-image";
+
+            image.src =
+                "images/" +
+                encodeURIComponent(
+                    product.filename
+                );
+
+            image.alt =
+                product.category;
+
+            image.loading =
+                "lazy";
+
+
+            // =================================================
+            // PHOTO INFORMATION TAG
+            // =================================================
+
+            const photoTag =
+                document.createElement(
+                    "div"
+                );
+
+            photoTag.className =
+                "photo-tag";
+
+
+            const category =
+                document.createElement(
+                    "div"
+                );
+
+            category.className =
+                "photo-category";
+
+            category.textContent =
+                product.category;
+
+
+            const price =
+                document.createElement(
+                    "div"
+                );
+
+            price.className =
+                "photo-price";
+
+            price.textContent =
+                "MRP ₹" +
+                product.price;
+
+
+            const serial =
+                document.createElement(
+                    "div"
+                );
+
+            serial.className =
+                "photo-serial";
+
+            serial.textContent =
+                "Serial No. " +
+                product.serial;
+
+
+            const code =
+                document.createElement(
+                    "div"
+                );
+
+            code.className =
+                "photo-code";
+
+            code.textContent =
+                "Code: " +
+                product.productCode;
+
+
+            photoTag.appendChild(
+                category
             );
 
-        image.alt =
-            product.category;
+            photoTag.appendChild(
+                price
+            );
 
-        image.loading =
-            "lazy";
+            photoTag.appendChild(
+                serial
+            );
 
-
-        const overlay =
-            document.createElement("div");
-
-        overlay.className =
-            "image-overlay";
-
-
-        imageWrap.appendChild(image);
-
-        imageWrap.appendChild(overlay);
+            photoTag.appendChild(
+                code
+            );
 
 
-        // ----------------------------------------------------
-        // DETAILS
-        // ----------------------------------------------------
+            imageContainer.appendChild(
+                image
+            );
 
-        const details =
-            document.createElement("div");
-
-        details.className =
-            "product-details";
+            imageContainer.appendChild(
+                photoTag
+            );
 
 
-        const category =
-            document.createElement("h3");
+            // =================================================
+            // BUY BUTTON
+            // =================================================
 
-        category.className =
-            "product-category";
+            const footer =
+                document.createElement(
+                    "div"
+                );
 
-        category.textContent =
-            product.category;
-
-
-        const serial =
-            document.createElement("p");
-
-        serial.className =
-            "product-serial";
-
-        serial.textContent =
-            "Product No. " +
-            product.serial;
+            footer.className =
+                "product-footer";
 
 
-        const price =
-            document.createElement("p");
+            const buyButton =
+                document.createElement(
+                    "button"
+                );
 
-        price.className =
-            "product-price";
+            buyButton.type =
+                "button";
 
-        price.textContent =
-            product.price
-                ? "MRP ₹" + product.price
-                : "Price on request";
+            buyButton.className =
+                "buy-button";
 
-
-        const buyButton =
-            document.createElement("button");
-
-        buyButton.className =
-            "buy-button";
-
-        buyButton.type =
-            "button";
-
-        buyButton.textContent =
-            "Buy This Jewellery";
+            buyButton.textContent =
+                "ORDER THIS PRODUCT";
 
 
-        buyButton.addEventListener(
-            "click",
-            () => openBuyModal(product)
-        );
+            buyButton.addEventListener(
+                "click",
+                function() {{
+
+                    openOrderModal(
+                        product
+                    );
+
+                }}
+            );
 
 
-        details.appendChild(category);
-
-        details.appendChild(serial);
-
-        details.appendChild(price);
-
-        details.appendChild(buyButton);
+            footer.appendChild(
+                buyButton
+            );
 
 
-        card.appendChild(imageWrap);
+            // =================================================
+            // CARD
+            // =================================================
 
-        card.appendChild(details);
+            card.appendChild(
+                imageContainer
+            );
 
-        productsGrid.appendChild(card);
+            card.appendChild(
+                footer
+            );
 
-    }});
+
+            productsGrid.appendChild(
+                card
+            );
+
+        }}
+    );
 }}
 
 
 // ============================================================
-// OPEN BUY MODAL
+// OPEN ORDER MODAL
 // ============================================================
 
-function openBuyModal(product) {{
+function openOrderModal(product) {{
 
-    selectedProductData =
+    currentProduct =
         product;
 
 
     selectedProduct.innerHTML = `
+
         <strong>
             ${{escapeHtml(product.category)}}
         </strong>
 
         <span>
-            Product No. ${{escapeHtml(product.serial)}}
+
+            MRP ₹${{
+                escapeHtml(
+                    product.price
+                )
+            }}
+
             &nbsp; • &nbsp;
-            MRP ₹${{escapeHtml(product.price)}}
+
+            Serial No.
+            ${{
+                escapeHtml(
+                    product.serial
+                )
+            }}
+
+            &nbsp; • &nbsp;
+
+            Code:
+            ${{
+                escapeHtml(
+                    product.productCode
+                )
+            }}
+
         </span>
+
     `;
 
 
     orderForm.reset();
 
 
-    modal.classList.add("active");
+    modal.classList.add(
+        "active"
+    );
+
 
     modal.setAttribute(
         "aria-hidden",
@@ -1835,27 +2421,63 @@ function openBuyModal(product) {{
     );
 
 
+    /*
+       Prevent page scrolling while
+       the order window is open.
+    */
+
     document.body.style.overflow =
         "hidden";
 
 
-    setTimeout(() => {{
+    /*
+       Focus the first field after
+       the modal is visible.
+    */
 
-        document
-            .getElementById("customerName")
-            .focus();
+    setTimeout(
+        function() {{
 
-    }}, 100);
+            document
+                .getElementById(
+                    "customerName"
+                )
+                .focus();
+
+        }},
+        100
+    );
 }}
 
 
 // ============================================================
-// CLOSE MODAL
+// CLOSE ORDER MODAL
 // ============================================================
 
-function closeModal() {{
+function closeOrderModal() {{
 
-    modal.classList.remove("active");
+    /*
+       Remove focus from any input.
+
+       This helps prevent the mobile
+       keyboard from remaining active.
+    */
+
+    if (
+        document.activeElement
+    ) {{
+
+        document
+            .activeElement
+            .blur();
+
+    }}
+
+
+    modal.classList.remove(
+        "active"
+    );
+
 
     modal.setAttribute(
         "aria-hidden",
@@ -1865,32 +2487,40 @@ function closeModal() {{
 
     document.body.style.overflow =
         "";
+
+
+    currentProduct =
+        null;
 }}
 
 
-modalClose.addEventListener(
+closeModalButton.addEventListener(
     "click",
-    closeModal
+    closeOrderModal
 );
 
 
 modalOverlay.addEventListener(
     "click",
-    closeModal
+    closeOrderModal
 );
 
 
 document.addEventListener(
     "keydown",
-    event => {{
+    function(event) {{
 
         if (
             event.key === "Escape" &&
-            modal.classList.contains("active")
+            modal.classList.contains(
+                "active"
+            )
         ) {{
 
-            closeModal();
+            closeOrderModal();
+
         }}
+
     }}
 );
 
@@ -1906,40 +2536,46 @@ orderForm.addEventListener(
         event.preventDefault();
 
 
-        if (!selectedProductData) {{
+        if (!currentProduct) {{
             return;
         }}
 
 
         const customerName =
             document
-                .getElementById("customerName")
+                .getElementById(
+                    "customerName"
+                )
                 .value
                 .trim();
 
 
         const customerNumber =
             document
-                .getElementById("customerNumber")
+                .getElementById(
+                    "customerNumber"
+                )
                 .value
                 .trim();
 
 
         const deliveryAddress =
             document
-                .getElementById("deliveryAddress")
+                .getElementById(
+                    "deliveryAddress"
+                )
                 .value
                 .trim();
 
 
         // ----------------------------------------------------
-        // Basic validation
+        // VALIDATION
         // ----------------------------------------------------
 
         if (
-            customerName === "" ||
-            customerNumber === "" ||
-            deliveryAddress === ""
+            !customerName ||
+            !customerNumber ||
+            !deliveryAddress
         ) {{
 
             alert(
@@ -1957,7 +2593,9 @@ orderForm.addEventListener(
             );
 
 
-        if (cleanedNumber.length < 8) {{
+        if (
+            cleanedNumber.length < 8
+        ) {{
 
             alert(
                 "Please enter a valid WhatsApp/mobile number."
@@ -1968,7 +2606,7 @@ orderForm.addEventListener(
 
 
         // ----------------------------------------------------
-        // CUSTOM MESSAGE
+        // CREATE ORDER MESSAGE
         // ----------------------------------------------------
 
         const message =
@@ -1977,27 +2615,37 @@ orderForm.addEventListener(
 
             customerName +
 
-            ", wish to buy the Jewellery Product No. " +
+            ", wish to buy Product Code " +
 
-            selectedProductData.category +
+            currentProduct.productCode +
 
-            " " +
+            " (" +
 
-            selectedProductData.serial +
+            currentProduct.category +
 
-            " MRP Price ₹" +
+            ", MRP ₹" +
 
-            selectedProductData.price +
+            currentProduct.price +
 
-            ". Kindly deliver the package to my delivery address " +
+            "). " +
+
+            "My WhatsApp number is " +
+
+            customerNumber +
+
+            ". " +
+
+            "Kindly deliver the package to my delivery address: " +
 
             deliveryAddress +
 
-            ". For the same pls provide me your QR code scanner for payment";
+            ". " +
+
+            "For the same, please provide me your QR code scanner for payment.";
 
 
         // ----------------------------------------------------
-        // WHATSAPP URL
+        // CREATE WHATSAPP URL
         // ----------------------------------------------------
 
         const whatsappURL =
@@ -2008,74 +2656,69 @@ orderForm.addEventListener(
 
             "?text=" +
 
-            encodeURIComponent(message);
-
-
-        // ----------------------------------------------------
-        // Close modal first
-        // ----------------------------------------------------
-
-        closeModal();
-
-
-        // ----------------------------------------------------
-        // Tell customer what is happening
-        // ----------------------------------------------------
-
-        alert(
-            "Your custom WhatsApp message is ready.\\\\n\\\\n" +
-
-            "Please allow popups if your browser asks.\\\\n\\\\n" +
-
-            "WhatsApp will now open with your purchase " +
-            "message addressed to the seller. " +
-
-            "Please review the message and press Send."
-        );
-
-
-        // ----------------------------------------------------
-        // Open WhatsApp
-        // ----------------------------------------------------
-
-        const whatsappWindow =
-            window.open(
-                whatsappURL,
-                "_blank"
+            encodeURIComponent(
+                message
             );
 
 
         // ----------------------------------------------------
-        // Popup blocked
+        // IMPORTANT MOBILE UX
+        //
+        // Remove focus and close modal BEFORE
+        // opening WhatsApp.
         // ----------------------------------------------------
 
-        if (!whatsappWindow) {{
+        if (
+            document.activeElement
+        ) {{
 
-            alert(
-                "The browser blocked the WhatsApp popup.\\\\n\\\\n" +
+            document
+                .activeElement
+                .blur();
 
-                "Please allow popups for this website " +
-                "and click the Buy button again."
-            );
         }}
+
+
+        closeOrderModal();
+
+
+        /*
+           Small delay allows the keyboard to
+           disappear before opening WhatsApp.
+        */
+
+        setTimeout(
+            function() {{
+
+                const whatsappWindow =
+                    window.open(
+                        whatsappURL,
+                        "_blank"
+                    );
+
+
+                /*
+                   Popup blocked
+                */
+
+                if (!whatsappWindow) {{
+
+                    alert(
+                        "Your browser blocked the WhatsApp window. " +
+
+                        "Please allow popups for this website " +
+
+                        "and try again."
+                    );
+
+                }}
+
+            }},
+            150
+        );
 
     }}
 );
-
-
-// ============================================================
-// HTML ESCAPING
-// ============================================================
-
-function escapeHtml(value) {{
-
-    return String(value)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-}}
 
 
 // ============================================================
@@ -2096,7 +2739,9 @@ with open(
     encoding="utf-8"
 ) as file:
 
-    file.write(html_content)
+    file.write(
+        html_content
+    )
 
 
 with open(
@@ -2105,7 +2750,9 @@ with open(
     encoding="utf-8"
 ) as file:
 
-    file.write(css_content)
+    file.write(
+        css_content
+    )
 
 
 with open(
@@ -2114,29 +2761,70 @@ with open(
     encoding="utf-8"
 ) as file:
 
-    file.write(js_content)
+    file.write(
+        js_content
+    )
 
 
 # ============================================================
-# RESULT
+# SUMMARY
 # ============================================================
 
 print()
-print("==============================================")
-print("  JEWELLERY WEBSITE GENERATED SUCCESSFULLY")
-print("==============================================")
+print("================================================")
+print(" PRESENT PERFECT STORE")
+print(" PRODUCT CATALOGUE GENERATED")
+print("================================================")
 print()
-print(f"Products found : {len(products)}")
-print(f"Seller WhatsApp: {SELLER_WHATSAPP}")
+
+print(
+    f"Products found : {len(products)}"
+)
+
+print(
+    f"WhatsApp       : {SELLER_WHATSAPP}"
+)
+
 print()
-print("Generated files:")
-print(f"  {HTML_FILE}")
-print(f"  {CSS_FILE}")
-print(f"  {JS_FILE}")
+
+print("Generated:")
+
+print(
+    f"  {HTML_FILE}"
+)
+
+print(
+    f"  {CSS_FILE}"
+)
+
+print(
+    f"  {JS_FILE}"
+)
+
 print()
-print("Product images:")
-print(f"  {IMAGE_FOLDER}/")
+
+print("Filename format:")
+print(
+    "  Product_Category_MRP.jpg"
+)
+
 print()
-print("Open index.html in your browser.")
+
+print("Examples:")
+print(
+    "  Necklace_5999.jpg"
+)
+
+print(
+    "  Wall_Decor_1499.jpg"
+)
+
+print(
+    "  Coffee_Mug_499.jpg"
+)
+
+print()
+
+print("Open index.html to view the catalogue.")
 print()
 

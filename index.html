@@ -6,13 +6,17 @@
 
 <meta charset="UTF-8">
 
-<meta name="viewport"
-      content="width=device-width, initial-scale=1.0">
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0">
 
-<meta name="description"
-      content="Elegant jewellery collection">
+<meta
+    name="description"
+    content="Present Perfect Store - The Products Catalogue">
 
-<title>Jewellery Collection</title>
+<title>
+Present Perfect Store | The Products Catalogue
+</title>
 
 <link
     rel="stylesheet"
@@ -34,23 +38,34 @@
 
         <div class="brand">
 
-            <span class="brand-mark">✦</span>
+            <div class="brand-symbol">
+                ✦
+            </div>
 
             <div>
 
-                <h1>PRESENT PERFECT</h1>
+                <h1>
+                    PRESENT PERFECT
+                </h1>
 
-                <p>JEWELLERY COLLECTION</p>
+                <p>
+                    STORE
+                </p>
 
             </div>
 
         </div>
 
 
-        <div class="header-tagline">
+        <div class="header-description">
 
-            Timeless Beauty<br>
-            <span>Made For You</span>
+            <span>
+                THOUGHTFUL THINGS
+            </span>
+
+            <span>
+                FOR EVERY SPACE & OCCASION
+            </span>
 
         </div>
 
@@ -65,91 +80,113 @@
 
 <section class="hero">
 
+    <div class="hero-decoration left">
+        ✦
+    </div>
+
     <div class="hero-content">
 
-        <span class="hero-small">
-            THE ART OF ADORNMENT
+        <span class="eyebrow">
+            PRESENT PERFECT STORE
         </span>
 
         <h2>
-            Jewellery That<br>
-            <em>Tells Your Story</em>
+            The Products
+            <em>Catalogue</em>
         </h2>
 
+        <div class="gold-line"></div>
+
         <p>
-            Discover our carefully selected collection
-            of elegant pieces designed to celebrate
-            life's beautiful moments.
+
+            Discover carefully selected products
+            for gifting, decorating, celebrating
+            and making everyday moments special.
+
         </p>
 
-        <a
-            href="#products"
-            class="hero-button">
 
-            Explore Collection
+        <a
+            href="#catalogue"
+            class="explore-button">
+
+            VIEW CATALOGUE
 
         </a>
 
+    </div>
+
+
+    <div class="hero-decoration right">
+        ✦
     </div>
 
 </section>
 
 
 <!-- ========================================================
-     PRODUCTS
+     CATALOGUE
 ========================================================= -->
 
 <main>
 
-    <section
-        class="collection-section"
-        id="products">
-
-        <div class="section-heading">
-
-            <span>
-                OUR COLLECTION
-            </span>
-
-            <h2>
-                Timeless Pieces
-            </h2>
-
-            <div class="gold-line"></div>
-
-            <p>
-                Crafted to make every moment memorable.
-            </p>
-
-        </div>
+<section
+    class="catalogue"
+    id="catalogue">
 
 
-        <div id="products-grid">
+    <div class="section-heading">
 
-        </div>
+        <span>
+            PRESENT PERFECT STORE
+        </span>
 
-    </section>
+        <h2>
+            The Products Catalogue
+        </h2>
+
+        <div class="heading-line"></div>
+
+        <p>
+            Find something perfect for every occasion.
+        </p>
+
+    </div>
+
+
+    <div id="products-grid">
+
+    </div>
+
+
+</section>
 
 </main>
 
 
 <!-- ========================================================
-     BUY MODAL
+     ORDER MODAL
 ========================================================= -->
 
 <div
-    id="buyModal"
+    id="orderModal"
     class="modal"
     aria-hidden="true">
+
 
     <div class="modal-overlay"></div>
 
 
-    <div class="modal-box">
+    <div
+        class="modal-box"
+        role="dialog"
+        aria-modal="true">
+
 
         <button
+            type="button"
+            id="closeModal"
             class="modal-close"
-            id="modalClose"
             aria-label="Close">
 
             ×
@@ -157,69 +194,86 @@
         </button>
 
 
-        <div class="modal-icon">
+        <div class="modal-symbol">
             ✦
         </div>
 
 
         <h2>
-            Complete Your Order
+            Place Your Order
         </h2>
 
 
-        <p class="modal-intro">
+        <p class="modal-subtitle">
 
             Please provide your details.
-            A personalized WhatsApp message
-            will then be prepared for the seller.
+            A custom WhatsApp message will
+            be prepared for the store.
 
         </p>
 
 
+        <!-- Selected product -->
+
         <div
-            class="selected-product"
-            id="selectedProduct">
+            id="selectedProduct"
+            class="selected-product">
 
         </div>
 
 
-        <div class="notice">
+        <!-- Notice -->
 
-            <strong>Important</strong>
+        <div class="popup-notice">
+
+            <strong>
+                WhatsApp Order
+            </strong>
 
             <p>
-                Please allow popups if your browser
-                asks. After submitting your details,
-                WhatsApp will open with a custom
-                purchase message. Please review it
+
+                After submitting your details,
+                WhatsApp will open with your
+                order message. Please review it
                 and press <strong>Send</strong>.
+
+                If your browser asks,
+                please allow popups for this site.
+
             </p>
 
         </div>
 
 
+        <!-- Order form -->
+
         <form id="orderForm">
 
 
             <label for="customerName">
-                Full Name
+                Your Name
             </label>
 
             <input
                 id="customerName"
+                name="customerName"
                 type="text"
-                placeholder="Your full name"
+                autocomplete="name"
+                placeholder="Enter your name"
                 required>
 
 
             <label for="customerNumber">
-                WhatsApp / Mobile Number
+                WhatsApp Number
             </label>
 
             <input
                 id="customerNumber"
+                name="customerNumber"
                 type="tel"
-                placeholder="Your WhatsApp number"
+                inputmode="tel"
+                autocomplete="tel"
+                placeholder="Enter your WhatsApp number"
                 required>
 
 
@@ -229,8 +283,10 @@
 
             <textarea
                 id="deliveryAddress"
+                name="deliveryAddress"
+                autocomplete="street-address"
                 rows="4"
-                placeholder="Complete delivery address"
+                placeholder="Enter complete delivery address"
                 required></textarea>
 
 
@@ -238,11 +294,14 @@
                 type="submit"
                 class="whatsapp-button">
 
-                <span>☏</span>
+                <span>
+                    ☏
+                </span>
 
-                Continue to WhatsApp
+                PREPARE WHATSAPP ORDER
 
             </button>
+
 
         </form>
 
@@ -257,25 +316,28 @@
 
 <footer class="site-footer">
 
-    <div class="footer-logo">
+    <div class="footer-brand">
 
-        <span>✦</span>
+        <span>
+            ✦
+        </span>
 
-        PRESENT PERFECT
+        PRESENT PERFECT STORE
 
     </div>
 
 
     <p>
-        Jewellery that celebrates you.
+        Thoughtful products for every space,
+        occasion and moment.
     </p>
 
 
-    <div class="footer-line"></div>
+    <div class="footer-divider"></div>
 
 
     <small>
-        © 2026 PRESENT PERFECT JEWELLERY
+        © 2026 PRESENT PERFECT STORE
     </small>
 
 </footer>
