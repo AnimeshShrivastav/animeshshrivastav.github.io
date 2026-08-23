@@ -1,15 +1,16 @@
 import os
 import json
-import html
 
-# --------------------------------------------------
+# ============================================================
 # SETTINGS
-# --------------------------------------------------
+# ============================================================
 
 IMAGE_FOLDER = "images"
 OUTPUT_FILE = "index.html"
 
-# Supported image types
+# WhatsApp number that receives purchase enquiries
+SELLER_WHATSAPP = "918902411270"
+
 IMAGE_EXTENSIONS = {
     ".jpg",
     ".jpeg",
@@ -19,39 +20,64 @@ IMAGE_EXTENSIONS = {
 }
 
 
-# --------------------------------------------------
+# ============================================================
 # FIND PRODUCTS
-# --------------------------------------------------
+# ============================================================
 
 products = []
 
+if not os.path.isdir(IMAGE_FOLDER):
+    print(f"ERROR: Folder '{IMAGE_FOLDER}' does not exist.")
+    exit(1)
+
+
 for filename in sorted(os.listdir(IMAGE_FOLDER)):
 
-    filepath = os.path.join(IMAGE_FOLDER, filename)
+    filepath = os.path.join(
+        IMAGE_FOLDER,
+        filename
+    )
 
-    # Ignore folders
     if not os.path.isfile(filepath):
         continue
 
-    # Check extension
-    extension = os.path.splitext(filename)[1].lower()
+    extension = os.path.splitext(
+        filename
+    )[1].lower()
 
     if extension not in IMAGE_EXTENSIONS:
         continue
 
     # Remove extension
-    name_without_extension = os.path.splitext(filename)[0]
+    name_without_extension = os.path.splitext(
+        filename
+    )[0]
 
-    # Split filename using _
+    # --------------------------------------------------------
+    # Filename:
+    #
+    # Blue_Cotton_Shirt_599.jpg
+    #
+    # Product = Blue Cotton Shirt
+    # Price   = 599
+    # --------------------------------------------------------
+
     parts = name_without_extension.split("_")
 
-    # Last part is price
     if len(parts) >= 2:
+
         price = parts[-1]
-        product_name = " ".join(parts[:-1])
+
+        product_name = " ".join(
+            parts[:-1]
+        )
+
     else:
-        price = ""
+
         product_name = name_without_extension
+
+        price = ""
+
 
     products.append({
         "filename": filename,
@@ -60,16 +86,19 @@ for filename in sorted(os.listdir(IMAGE_FOLDER)):
     })
 
 
-# --------------------------------------------------
-# CONVERT PRODUCT DATA TO JAVASCRIPT
-# --------------------------------------------------
+# ============================================================
+# PRODUCT DATA FOR JAVASCRIPT
+# ============================================================
 
-products_json = json.dumps(products, ensure_ascii=False)
+products_json = json.dumps(
+    products,
+    ensure_ascii=False
+)
 
 
-# --------------------------------------------------
+# ============================================================
 # HTML
-# --------------------------------------------------
+# ============================================================
 
 html_content = f"""<!DOCTYPE html>
 
@@ -77,91 +106,407 @@ html_content = f"""<!DOCTYPE html>
 
 <head>
 
-    <meta charset="UTF-8">
+<meta charset="UTF-8">
 
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0">
 
-    <title>My Products</title>
+<title>My Products</title>
 
-    <style>
 
-        * {{
-            box-sizing: border-box;
-        }}
+<style>
 
-        body {{
-            margin: 0;
-            font-family: Arial, sans-serif;
-            background: #f5f5f5;
-        }}
+/* =========================================================
+   GLOBAL
+========================================================= */
 
-        header {{
-            background: white;
-            padding: 20px;
-            text-align: center;
-        }}
+* {{
+    box-sizing: border-box;
+}}
 
-        h1 {{
-            margin: 0;
-        }}
+html {{
+    scroll-behavior: smooth;
+}}
 
-        #products {{
-            display: grid;
-            grid-template-columns:
-                repeat(auto-fill, minmax(220px, 1fr));
+body {{
 
-            gap: 20px;
+    margin: 0;
 
-            padding: 20px;
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
 
-            max-width: 1400px;
+    color: #252525;
 
-            margin: auto;
-        }}
+    background:
+        linear-gradient(
+            135deg,
+            #fff5f7 0%,
+            #f4f7ff 50%,
+            #fff8ed 100%
+        );
 
-        .product-card {{
-            background: white;
+    min-height: 100vh;
+}}
 
-            border-radius: 10px;
 
-            overflow: hidden;
+/* =========================================================
+   HEADER
+========================================================= */
 
-            box-shadow:
-                0 2px 8px rgba(0,0,0,0.1);
-        }}
+header {{
 
-        .product-card img {{
-            width: 100%;
+    padding: 35px 20px;
 
-            aspect-ratio: 1 / 1;
+    text-align: center;
 
-            object-fit: cover;
+    color: white;
 
-            display: block;
-        }}
+    background:
+        linear-gradient(
+            135deg,
+            #6a11cb,
+            #2575fc
+        );
 
-        .product-info {{
-            padding: 15px;
-        }}
+    box-shadow:
+        0 4px 15px
+        rgba(0, 0, 0, 0.15);
+}}
 
-        .product-name {{
-            margin: 0 0 10px;
+header h1 {{
 
-            font-size: 18px;
-        }}
+    margin: 0;
 
-        .product-price {{
-            margin: 0;
+    font-size:
+        clamp(28px, 5vw, 46px);
 
-            font-size: 20px;
+    font-weight: 800;
 
-            font-weight: bold;
+    letter-spacing: 1px;
 
-            color: #d35400;
-        }}
+    text-shadow:
+        0 2px 5px
+        rgba(0, 0, 0, 0.25);
+}}
 
-    </style>
+
+/* =========================================================
+   PRODUCT GRID
+========================================================= */
+
+#products {{
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            auto-fill,
+            minmax(220px, 1fr)
+        );
+
+    gap: 25px;
+
+    padding: 35px 25px;
+
+    width: 100%;
+
+    max-width: 1500px;
+
+    margin: auto;
+}}
+
+
+/* =========================================================
+   PRODUCT CARD
+========================================================= */
+
+.product-card {{
+
+    background:
+        rgba(255, 255, 255, 0.97);
+
+    border-radius: 18px;
+
+    overflow: hidden;
+
+    box-shadow:
+        0 5px 20px
+        rgba(40, 50, 100, 0.12);
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.8);
+
+    transition:
+        transform 0.25s ease,
+        box-shadow 0.25s ease;
+}}
+
+
+.product-card:hover {{
+
+    transform:
+        translateY(-8px);
+
+    box-shadow:
+        0 15px 35px
+        rgba(40, 50, 100, 0.22);
+}}
+
+
+/* =========================================================
+   PRODUCT IMAGE
+========================================================= */
+
+.product-card img {{
+
+    width: 100%;
+
+    aspect-ratio: 1 / 1;
+
+    object-fit: cover;
+
+    display: block;
+
+    background: #f1f1f1;
+
+    transition:
+        transform 0.4s ease;
+}}
+
+
+.product-card:hover img {{
+
+    transform:
+        scale(1.05);
+}}
+
+
+/* =========================================================
+   PRODUCT INFORMATION
+========================================================= */
+
+.product-info {{
+
+    padding:
+        18px 18px 20px;
+
+    background: white;
+}}
+
+
+.product-name {{
+
+    margin:
+        0 0 10px;
+
+    font-size: 19px;
+
+    line-height: 1.35;
+
+    font-weight: 700;
+
+    color: #292929;
+}}
+
+
+.product-price {{
+
+    margin:
+        0 0 15px;
+
+    display: inline-block;
+
+    padding:
+        7px 13px;
+
+    border-radius: 20px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #ff512f,
+            #f09819
+        );
+
+    color: white;
+
+    font-size: 18px;
+
+    font-weight: 800;
+
+    box-shadow:
+        0 3px 8px
+        rgba(240, 100, 30, 0.25);
+}}
+
+
+/* =========================================================
+   BUY BUTTON
+========================================================= */
+
+.buy-button {{
+
+    display: block;
+
+    width: 100%;
+
+    border: none;
+
+    border-radius: 10px;
+
+    padding: 12px 15px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #25D366,
+            #128C7E
+        );
+
+    color: white;
+
+    font-size: 16px;
+
+    font-weight: bold;
+
+    cursor: pointer;
+
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease,
+        background 0.2s ease;
+}}
+
+
+.buy-button:hover {{
+
+    transform:
+        translateY(-2px);
+
+    box-shadow:
+        0 6px 15px
+        rgba(18, 140, 126, 0.3);
+
+    background:
+        linear-gradient(
+            135deg,
+            #20bd5b,
+            #0d796c
+        );
+}}
+
+
+.buy-button:active {{
+
+    transform:
+        translateY(0);
+}}
+
+
+/* =========================================================
+   EMPTY STORE
+========================================================= */
+
+.empty-store {{
+
+    grid-column:
+        1 / -1;
+
+    text-align: center;
+
+    padding: 60px 20px;
+
+    color: #777;
+
+    font-size: 20px;
+}}
+
+
+/* =========================================================
+   FOOTER
+========================================================= */
+
+footer {{
+
+    text-align: center;
+
+    padding: 25px;
+
+    color: #777;
+
+    font-size: 14px;
+}}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 600px) {{
+
+    header {{
+        padding: 25px 15px;
+    }}
+
+    #products {{
+
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+
+        gap: 12px;
+
+        padding:
+            15px 10px;
+    }}
+
+    .product-card {{
+        border-radius: 12px;
+    }}
+
+    .product-info {{
+        padding: 12px;
+    }}
+
+    .product-name {{
+        font-size: 15px;
+    }}
+
+    .product-price {{
+
+        font-size: 15px;
+
+        padding:
+            6px 10px;
+
+        margin-bottom: 10px;
+    }}
+
+    .buy-button {{
+
+        padding: 10px 8px;
+
+        font-size: 14px;
+
+        border-radius: 8px;
+    }}
+}}
+
+
+/* =========================================================
+   VERY SMALL PHONES
+========================================================= */
+
+@media (max-width: 360px) {{
+
+    #products {{
+        grid-template-columns: 1fr;
+    }}
+}}
+
+</style>
 
 </head>
 
@@ -179,81 +524,272 @@ html_content = f"""<!DOCTYPE html>
 <main id="products"></main>
 
 
+<footer>
+
+    <p>© My Products</p>
+
+</footer>
+
+
 <script>
 
-    // Product information generated by Python
-    const products = {products_json};
+/* =========================================================
+   SETTINGS
+========================================================= */
+
+const SELLER_WHATSAPP =
+    "{SELLER_WHATSAPP}";
 
 
-    const container =
-        document.getElementById("products");
+/* =========================================================
+   PRODUCT DATA
+========================================================= */
+
+const products =
+    {products_json};
 
 
-    // Create product cards
-    products.forEach(product => {{
-
-        const card =
-            document.createElement("div");
-
-        card.className =
-            "product-card";
+const container =
+    document.getElementById("products");
 
 
-        // Image
-        const image =
-            document.createElement("img");
+/* =========================================================
+   EMPTY STORE
+========================================================= */
 
-        image.src =
-            "images/" + encodeURIComponent(product.filename);
+if (products.length === 0) {{
 
-        image.alt =
-            product.name;
+    const empty =
+        document.createElement("div");
 
+    empty.className =
+        "empty-store";
 
-        // Information container
-        const info =
-            document.createElement("div");
+    empty.textContent =
+        "No products available.";
 
-        info.className =
-            "product-info";
-
-
-        // Product name
-        const name =
-            document.createElement("h2");
-
-        name.className =
-            "product-name";
-
-        name.textContent =
-            product.name;
+    container.appendChild(empty);
+}}
 
 
-        // Price
-        const price =
-            document.createElement("p");
+/* =========================================================
+   BUY PRODUCT
+========================================================= */
 
-        price.className =
-            "product-price";
+function buyProduct(product) {{
 
-        price.textContent =
+    /*
+       Ask customer for their mobile number.
+    */
+
+    const customerNumber =
+        prompt(
+            "Please enter your WhatsApp/mobile number:"
+        );
+
+
+    /*
+       Customer cancelled.
+    */
+
+    if (customerNumber === null) {{
+        return;
+    }}
+
+
+    /*
+       Remove spaces and other common
+       formatting characters.
+    */
+
+    const cleanedNumber =
+        customerNumber.replace(
+            /[^0-9+]/g,
+            ""
+        );
+
+
+    /*
+       Basic validation.
+    */
+
+    if (cleanedNumber.length < 8) {{
+
+        alert(
+            "Please enter a valid mobile number."
+        );
+
+        return;
+    }}
+
+
+    /*
+       Create purchase message.
+    */
+
+    let message =
+        "Purchase Alert%0A%0A" +
+
+        "Customer WhatsApp/Mobile: " +
+        encodeURIComponent(cleanedNumber) +
+
+        "%0A%0A" +
+
+        "Product: " +
+        encodeURIComponent(product.name) +
+
+        "%0A" +
+
+        "Price: " +
+        encodeURIComponent(
             product.price
                 ? "₹" + product.price
-                : "Price unavailable";
+                : "Price unavailable"
+        );
 
 
-        // Assemble card
-        info.appendChild(name);
+    /*
+       WhatsApp link.
+    */
 
-        info.appendChild(price);
+    const whatsappURL =
+        "https://wa.me/" +
+        SELLER_WHATSAPP +
+        "?text=" +
+        message;
 
-        card.appendChild(image);
 
-        card.appendChild(info);
+    /*
+       Open WhatsApp.
+    */
 
-        container.appendChild(card);
+    window.open(
+        whatsappURL,
+        "_blank"
+    );
+}}
 
-    }});
+
+/* =========================================================
+   CREATE PRODUCT CARDS
+========================================================= */
+
+products.forEach(product => {{
+
+    const card =
+        document.createElement("div");
+
+    card.className =
+        "product-card";
+
+
+    /* -------------------------
+       IMAGE
+    ------------------------- */
+
+    const image =
+        document.createElement("img");
+
+    image.src =
+        "images/" +
+        encodeURIComponent(
+            product.filename
+        );
+
+    image.alt =
+        product.name;
+
+    image.loading =
+        "lazy";
+
+
+    /* -------------------------
+       INFORMATION
+    ------------------------- */
+
+    const info =
+        document.createElement("div");
+
+    info.className =
+        "product-info";
+
+
+    /* -------------------------
+       PRODUCT NAME
+    ------------------------- */
+
+    const name =
+        document.createElement("h2");
+
+    name.className =
+        "product-name";
+
+    name.textContent =
+        product.name;
+
+
+    /* -------------------------
+       PRICE
+    ------------------------- */
+
+    const price =
+        document.createElement("p");
+
+    price.className =
+        "product-price";
+
+
+    if (product.price) {{
+
+        price.textContent =
+            "₹" + product.price;
+
+    }} else {{
+
+        price.textContent =
+            "Price unavailable";
+    }}
+
+
+    /* -------------------------
+       BUY BUTTON
+    ------------------------- */
+
+    const buyButton =
+        document.createElement("button");
+
+    buyButton.className =
+        "buy-button";
+
+    buyButton.textContent =
+        "🛒 Buy on WhatsApp";
+
+
+    buyButton.addEventListener(
+        "click",
+        function() {{
+            buyProduct(product);
+        }}
+    );
+
+
+    /* -------------------------
+       ASSEMBLE CARD
+    ------------------------- */
+
+    info.appendChild(name);
+
+    info.appendChild(price);
+
+    info.appendChild(buyButton);
+
+    card.appendChild(image);
+
+    card.appendChild(info);
+
+    container.appendChild(card);
+
+}});
 
 </script>
 
@@ -264,9 +800,9 @@ html_content = f"""<!DOCTYPE html>
 """
 
 
-# --------------------------------------------------
-# WRITE HTML
-# --------------------------------------------------
+# ============================================================
+# WRITE FILE
+# ============================================================
 
 with open(
     OUTPUT_FILE,
@@ -277,6 +813,20 @@ with open(
     file.write(html_content)
 
 
-print("HTML generated successfully!")
-print("Products found:", len(products))
-print("Output:", OUTPUT_FILE)
+# ============================================================
+# RESULT
+# ============================================================
+
+print()
+print("==========================================")
+print(" Website generated successfully!")
+print("==========================================")
+print()
+print(f"Products found : {len(products)}")
+print(f"Image folder   : {IMAGE_FOLDER}/")
+print(f"Seller WhatsApp: {SELLER_WHATSAPP}")
+print(f"Generated file : {OUTPUT_FILE}")
+print()
+print("Open index.html in your browser.")
+print()
+
