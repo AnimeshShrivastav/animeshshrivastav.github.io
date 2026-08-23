@@ -9,402 +9,14 @@
 <meta name="viewport"
       content="width=device-width, initial-scale=1.0">
 
-<title>My Products</title>
+<meta name="description"
+      content="Elegant jewellery collection">
 
+<title>Jewellery Collection</title>
 
-<style>
-
-/* =========================================================
-   GLOBAL
-========================================================= */
-
-* {
-    box-sizing: border-box;
-}
-
-html {
-    scroll-behavior: smooth;
-}
-
-body {
-
-    margin: 0;
-
-    font-family:
-        Arial,
-        Helvetica,
-        sans-serif;
-
-    color: #252525;
-
-    background:
-        linear-gradient(
-            135deg,
-            #fff5f7 0%,
-            #f4f7ff 50%,
-            #fff8ed 100%
-        );
-
-    min-height: 100vh;
-}
-
-
-/* =========================================================
-   HEADER
-========================================================= */
-
-header {
-
-    padding: 35px 20px;
-
-    text-align: center;
-
-    color: white;
-
-    background:
-        linear-gradient(
-            135deg,
-            #6a11cb,
-            #2575fc
-        );
-
-    box-shadow:
-        0 4px 15px
-        rgba(0, 0, 0, 0.15);
-}
-
-header h1 {
-
-    margin: 0;
-
-    font-size:
-        clamp(28px, 5vw, 46px);
-
-    font-weight: 800;
-
-    letter-spacing: 1px;
-
-    text-shadow:
-        0 2px 5px
-        rgba(0, 0, 0, 0.25);
-}
-
-
-/* =========================================================
-   PRODUCT GRID
-========================================================= */
-
-#products {
-
-    display: grid;
-
-    grid-template-columns:
-        repeat(
-            auto-fill,
-            minmax(220px, 1fr)
-        );
-
-    gap: 25px;
-
-    padding: 35px 25px;
-
-    width: 100%;
-
-    max-width: 1500px;
-
-    margin: auto;
-}
-
-
-/* =========================================================
-   PRODUCT CARD
-========================================================= */
-
-.product-card {
-
-    background:
-        rgba(255, 255, 255, 0.97);
-
-    border-radius: 18px;
-
-    overflow: hidden;
-
-    box-shadow:
-        0 5px 20px
-        rgba(40, 50, 100, 0.12);
-
-    border:
-        1px solid
-        rgba(255, 255, 255, 0.8);
-
-    transition:
-        transform 0.25s ease,
-        box-shadow 0.25s ease;
-}
-
-
-.product-card:hover {
-
-    transform:
-        translateY(-8px);
-
-    box-shadow:
-        0 15px 35px
-        rgba(40, 50, 100, 0.22);
-}
-
-
-/* =========================================================
-   PRODUCT IMAGE
-========================================================= */
-
-.product-card img {
-
-    width: 100%;
-
-    aspect-ratio: 1 / 1;
-
-    object-fit: cover;
-
-    display: block;
-
-    background: #f1f1f1;
-
-    transition:
-        transform 0.4s ease;
-}
-
-
-.product-card:hover img {
-
-    transform:
-        scale(1.05);
-}
-
-
-/* =========================================================
-   PRODUCT INFORMATION
-========================================================= */
-
-.product-info {
-
-    padding:
-        18px 18px 20px;
-
-    background: white;
-}
-
-
-.product-name {
-
-    margin:
-        0 0 10px;
-
-    font-size: 19px;
-
-    line-height: 1.35;
-
-    font-weight: 700;
-
-    color: #292929;
-}
-
-
-.product-price {
-
-    margin:
-        0 0 15px;
-
-    display: inline-block;
-
-    padding:
-        7px 13px;
-
-    border-radius: 20px;
-
-    background:
-        linear-gradient(
-            135deg,
-            #ff512f,
-            #f09819
-        );
-
-    color: white;
-
-    font-size: 18px;
-
-    font-weight: 800;
-
-    box-shadow:
-        0 3px 8px
-        rgba(240, 100, 30, 0.25);
-}
-
-
-/* =========================================================
-   BUY BUTTON
-========================================================= */
-
-.buy-button {
-
-    display: block;
-
-    width: 100%;
-
-    border: none;
-
-    border-radius: 10px;
-
-    padding: 12px 15px;
-
-    background:
-        linear-gradient(
-            135deg,
-            #25D366,
-            #128C7E
-        );
-
-    color: white;
-
-    font-size: 16px;
-
-    font-weight: bold;
-
-    cursor: pointer;
-
-    transition:
-        transform 0.2s ease,
-        box-shadow 0.2s ease,
-        background 0.2s ease;
-}
-
-
-.buy-button:hover {
-
-    transform:
-        translateY(-2px);
-
-    box-shadow:
-        0 6px 15px
-        rgba(18, 140, 126, 0.3);
-
-    background:
-        linear-gradient(
-            135deg,
-            #20bd5b,
-            #0d796c
-        );
-}
-
-
-.buy-button:active {
-
-    transform:
-        translateY(0);
-}
-
-
-/* =========================================================
-   EMPTY STORE
-========================================================= */
-
-.empty-store {
-
-    grid-column:
-        1 / -1;
-
-    text-align: center;
-
-    padding: 60px 20px;
-
-    color: #777;
-
-    font-size: 20px;
-}
-
-
-/* =========================================================
-   FOOTER
-========================================================= */
-
-footer {
-
-    text-align: center;
-
-    padding: 25px;
-
-    color: #777;
-
-    font-size: 14px;
-}
-
-
-/* =========================================================
-   MOBILE
-========================================================= */
-
-@media (max-width: 600px) {
-
-    header {
-        padding: 25px 15px;
-    }
-
-    #products {
-
-        grid-template-columns:
-            repeat(2, minmax(0, 1fr));
-
-        gap: 12px;
-
-        padding:
-            15px 10px;
-    }
-
-    .product-card {
-        border-radius: 12px;
-    }
-
-    .product-info {
-        padding: 12px;
-    }
-
-    .product-name {
-        font-size: 15px;
-    }
-
-    .product-price {
-
-        font-size: 15px;
-
-        padding:
-            6px 10px;
-
-        margin-bottom: 10px;
-    }
-
-    .buy-button {
-
-        padding: 10px 8px;
-
-        font-size: 14px;
-
-        border-radius: 8px;
-    }
-}
-
-
-/* =========================================================
-   VERY SMALL PHONES
-========================================================= */
-
-@media (max-width: 360px) {
-
-    #products {
-        grid-template-columns: 1fr;
-    }
-}
-
-</style>
+<link
+    rel="stylesheet"
+    href="style.css">
 
 </head>
 
@@ -412,285 +24,264 @@ footer {
 <body>
 
 
-<header>
+<!-- ========================================================
+     HEADER
+========================================================= -->
 
-    <h1>My Products</h1>
+<header class="site-header">
+
+    <div class="header-inner">
+
+        <div class="brand">
+
+            <span class="brand-mark">✦</span>
+
+            <div>
+
+                <h1>ÉLÉGANCE</h1>
+
+                <p>JEWELLERY COLLECTION</p>
+
+            </div>
+
+        </div>
+
+
+        <div class="header-tagline">
+
+            Timeless Beauty<br>
+            <span>Made For You</span>
+
+        </div>
+
+    </div>
 
 </header>
 
 
-<main id="products"></main>
+<!-- ========================================================
+     HERO
+========================================================= -->
+
+<section class="hero">
+
+    <div class="hero-content">
+
+        <span class="hero-small">
+            THE ART OF ADORNMENT
+        </span>
+
+        <h2>
+            Jewellery That<br>
+            <em>Tells Your Story</em>
+        </h2>
+
+        <p>
+            Discover our carefully selected collection
+            of elegant pieces designed to celebrate
+            life's beautiful moments.
+        </p>
+
+        <a
+            href="#products"
+            class="hero-button">
+
+            Explore Collection
+
+        </a>
+
+    </div>
+
+</section>
 
 
-<footer>
+<!-- ========================================================
+     PRODUCTS
+========================================================= -->
 
-    <p>© My Products</p>
+<main>
+
+    <section
+        class="collection-section"
+        id="products">
+
+        <div class="section-heading">
+
+            <span>
+                OUR COLLECTION
+            </span>
+
+            <h2>
+                Timeless Pieces
+            </h2>
+
+            <div class="gold-line"></div>
+
+            <p>
+                Crafted to make every moment memorable.
+            </p>
+
+        </div>
+
+
+        <div id="products-grid">
+
+        </div>
+
+    </section>
+
+</main>
+
+
+<!-- ========================================================
+     BUY MODAL
+========================================================= -->
+
+<div
+    id="buyModal"
+    class="modal"
+    aria-hidden="true">
+
+    <div class="modal-overlay"></div>
+
+
+    <div class="modal-box">
+
+        <button
+            class="modal-close"
+            id="modalClose"
+            aria-label="Close">
+
+            ×
+
+        </button>
+
+
+        <div class="modal-icon">
+            ✦
+        </div>
+
+
+        <h2>
+            Complete Your Order
+        </h2>
+
+
+        <p class="modal-intro">
+
+            Please provide your details.
+            A personalized WhatsApp message
+            will then be prepared for the seller.
+
+        </p>
+
+
+        <div
+            class="selected-product"
+            id="selectedProduct">
+
+        </div>
+
+
+        <div class="notice">
+
+            <strong>Important</strong>
+
+            <p>
+                Please allow popups if your browser
+                asks. After submitting your details,
+                WhatsApp will open with a custom
+                purchase message. Please review it
+                and press <strong>Send</strong>.
+            </p>
+
+        </div>
+
+
+        <form id="orderForm">
+
+
+            <label for="customerName">
+                Full Name
+            </label>
+
+            <input
+                id="customerName"
+                type="text"
+                placeholder="Your full name"
+                required>
+
+
+            <label for="customerNumber">
+                WhatsApp / Mobile Number
+            </label>
+
+            <input
+                id="customerNumber"
+                type="tel"
+                placeholder="Your WhatsApp number"
+                required>
+
+
+            <label for="deliveryAddress">
+                Delivery Address
+            </label>
+
+            <textarea
+                id="deliveryAddress"
+                rows="4"
+                placeholder="Complete delivery address"
+                required></textarea>
+
+
+            <button
+                type="submit"
+                class="whatsapp-button">
+
+                <span>☏</span>
+
+                Continue to WhatsApp
+
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<!-- ========================================================
+     FOOTER
+========================================================= -->
+
+<footer class="site-footer">
+
+    <div class="footer-logo">
+
+        <span>✦</span>
+
+        ÉLÉGANCE
+
+    </div>
+
+
+    <p>
+        Jewellery that celebrates you.
+    </p>
+
+
+    <div class="footer-line"></div>
+
+
+    <small>
+        © 2026 ÉLÉGANCE JEWELLERY
+    </small>
 
 </footer>
 
 
-<script>
-
-/* =========================================================
-   SETTINGS
-========================================================= */
-
-const SELLER_WHATSAPP =
-    "918902411270";
-
-
-/* =========================================================
-   PRODUCT DATA
-========================================================= */
-
-const products =
-    [{"filename": "bangle_1000.png", "name": "bangle", "price": "1000"}, {"filename": "necklace_2000.png", "name": "necklace", "price": "2000"}, {"filename": "necklace_3000.png", "name": "necklace", "price": "3000"}];
-
-
-const container =
-    document.getElementById("products");
-
-
-/* =========================================================
-   EMPTY STORE
-========================================================= */
-
-if (products.length === 0) {
-
-    const empty =
-        document.createElement("div");
-
-    empty.className =
-        "empty-store";
-
-    empty.textContent =
-        "No products available.";
-
-    container.appendChild(empty);
-}
-
-
-/* =========================================================
-   BUY PRODUCT
-========================================================= */
-
-function buyProduct(product) {
-
-    /*
-       Ask customer for their mobile number.
-    */
-
-    const customerNumber =
-        prompt(
-            "Please enter your WhatsApp/mobile number:"
-        );
-
-
-    /*
-       Customer cancelled.
-    */
-
-    if (customerNumber === null) {
-        return;
-    }
-
-
-    /*
-       Remove spaces and other common
-       formatting characters.
-    */
-
-    const cleanedNumber =
-        customerNumber.replace(
-            /[^0-9+]/g,
-            ""
-        );
-
-
-    /*
-       Basic validation.
-    */
-
-    if (cleanedNumber.length < 8) {
-
-        alert(
-            "Please enter a valid mobile number."
-        );
-
-        return;
-    }
-
-
-    /*
-       Create purchase message.
-    */
-
-    let message =
-        "Purchase Alert%0A%0A" +
-
-        "Customer WhatsApp/Mobile: " +
-        encodeURIComponent(cleanedNumber) +
-
-        "%0A%0A" +
-
-        "Product: " +
-        encodeURIComponent(product.name) +
-
-        "%0A" +
-
-        "Price: " +
-        encodeURIComponent(
-            product.price
-                ? "₹" + product.price
-                : "Price unavailable"
-        );
-
-
-    /*
-       WhatsApp link.
-    */
-
-    const whatsappURL =
-        "https://wa.me/" +
-        SELLER_WHATSAPP +
-        "?text=" +
-        message;
-
-
-    /*
-       Open WhatsApp.
-    */
-
-    window.open(
-        whatsappURL,
-        "_blank"
-    );
-}
-
-
-/* =========================================================
-   CREATE PRODUCT CARDS
-========================================================= */
-
-products.forEach(product => {
-
-    const card =
-        document.createElement("div");
-
-    card.className =
-        "product-card";
-
-
-    /* -------------------------
-       IMAGE
-    ------------------------- */
-
-    const image =
-        document.createElement("img");
-
-    image.src =
-        "images/" +
-        encodeURIComponent(
-            product.filename
-        );
-
-    image.alt =
-        product.name;
-
-    image.loading =
-        "lazy";
-
-
-    /* -------------------------
-       INFORMATION
-    ------------------------- */
-
-    const info =
-        document.createElement("div");
-
-    info.className =
-        "product-info";
-
-
-    /* -------------------------
-       PRODUCT NAME
-    ------------------------- */
-
-    const name =
-        document.createElement("h2");
-
-    name.className =
-        "product-name";
-
-    name.textContent =
-        product.name;
-
-
-    /* -------------------------
-       PRICE
-    ------------------------- */
-
-    const price =
-        document.createElement("p");
-
-    price.className =
-        "product-price";
-
-
-    if (product.price) {
-
-        price.textContent =
-            "₹" + product.price;
-
-    } else {
-
-        price.textContent =
-            "Price unavailable";
-    }
-
-
-    /* -------------------------
-       BUY BUTTON
-    ------------------------- */
-
-    const buyButton =
-        document.createElement("button");
-
-    buyButton.className =
-        "buy-button";
-
-    buyButton.textContent =
-        "🛒 Buy on WhatsApp";
-
-
-    buyButton.addEventListener(
-        "click",
-        function() {
-            buyProduct(product);
-        }
-    );
-
-
-    /* -------------------------
-       ASSEMBLE CARD
-    ------------------------- */
-
-    info.appendChild(name);
-
-    info.appendChild(price);
-
-    info.appendChild(buyButton);
-
-    card.appendChild(image);
-
-    card.appendChild(info);
-
-    container.appendChild(card);
-
-});
-
-</script>
-
+<script src="script.js"></script>
 
 </body>
 
