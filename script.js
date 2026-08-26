@@ -1,9 +1,6 @@
 /* ============================================================
    PRESENT PERFECT STORE
    Static GitHub Pages Store
-   No Flask
-   No Python
-   No Database
 ============================================================ */
 
 
@@ -11,45 +8,13 @@
    CONFIGURATION
 ============================================================ */
 
-/*
-   IMPORTANT:
-   Replace this with the WhatsApp number that should
-   receive customer orders.
+const WHATSAPP_NUMBER = "918902411270";
 
-   Include country code.
+const PRODUCTS_URL = "products.json";
 
-   India example:
-   919876543210
+const IMAGE_FOLDER = "images/thumbnails";
 
-   Do NOT use +, spaces or hyphens.
-*/
-
-const WHATSAPP_NUMBER =
-    "918902411270";
-
-
-/*
-   Product JSON file
-*/
-
-const PRODUCTS_URL =
-    "products.json";
-
-
-/*
-   Product image folder
-*/
-
-const IMAGE_FOLDER =
-    "images/thumbnails";
-
-
-/*
-   Currency
-*/
-
-const CURRENCY =
-    "₹";
+const CURRENCY = "₹";
 
 
 /* ============================================================
@@ -70,94 +35,77 @@ let searchText = "";
 ============================================================ */
 
 const productGrid =
-    document.getElementById(
-        "productGrid"
-    );
+    document.getElementById("productGrid");
 
 const productCount =
-    document.getElementById(
-        "productCount"
-    );
+    document.getElementById("productCount");
 
 const emptyMessage =
-    document.getElementById(
-        "emptyMessage"
-    );
+    document.getElementById("emptyMessage");
 
 const searchInput =
-    document.getElementById(
-        "searchInput"
-    );
+    document.getElementById("searchInput");
 
 const categoryList =
-    document.getElementById(
-        "categoryList"
-    );
+    document.getElementById("categoryList");
 
 const cartButton =
-    document.getElementById(
-        "cartButton"
-    );
+    document.getElementById("cartButton");
 
 const cartCount =
-    document.getElementById(
-        "cartCount"
-    );
+    document.getElementById("cartCount");
 
 const cartDrawer =
-    document.getElementById(
-        "cartDrawer"
-    );
+    document.getElementById("cartDrawer");
 
 const cartOverlay =
-    document.getElementById(
-        "cartOverlay"
-    );
+    document.getElementById("cartOverlay");
 
 const closeCart =
-    document.getElementById(
-        "closeCart"
-    );
+    document.getElementById("closeCart");
 
 const cartItems =
-    document.getElementById(
-        "cartItems"
-    );
+    document.getElementById("cartItems");
 
 const cartTotal =
-    document.getElementById(
-        "cartTotal"
-    );
+    document.getElementById("cartTotal");
 
 const checkoutButton =
-    document.getElementById(
-        "checkoutButton"
-    );
+    document.getElementById("checkoutButton");
 
 const clearCartButton =
-    document.getElementById(
-        "clearCart"
-    );
+    document.getElementById("clearCart");
 
 const checkoutModal =
-    document.getElementById(
-        "checkoutModal"
-    );
+    document.getElementById("checkoutModal");
 
 const closeCheckout =
-    document.getElementById(
-        "closeCheckout"
-    );
+    document.getElementById("closeCheckout");
 
 const checkoutForm =
-    document.getElementById(
-        "checkoutForm"
-    );
+    document.getElementById("checkoutForm");
 
 const checkoutSummary =
-    document.getElementById(
-        "checkoutSummary"
+    document.getElementById("checkoutSummary");
+
+
+/* ============================================================
+   BODY SCROLL CONTROL
+============================================================ */
+
+function updateBodyScroll() {
+
+    const cartOpen =
+        cartDrawer.classList.contains("open");
+
+    const checkoutOpen =
+        !checkoutModal.hidden;
+
+    document.body.classList.toggle(
+        "no-scroll",
+        cartOpen || checkoutOpen
     );
+}
 
 
 /* ============================================================
@@ -175,9 +123,13 @@ function loadCart() {
 
         if (saved) {
 
-            cart =
+            const parsed =
                 JSON.parse(saved);
 
+            if (Array.isArray(parsed)) {
+
+                cart = parsed;
+            }
         }
 
     } catch (error) {
@@ -255,22 +207,34 @@ async function loadProducts() {
 
     } catch (error) {
 
-        console.error(error);
+        console.error(
+            "Product loading error:",
+            error
+        );
+
 
         productGrid.innerHTML = "";
 
         productCount.textContent =
             "Could not load products.";
 
-        emptyMessage.hidden = false;
+        emptyMessage.hidden =
+            false;
+
 
         emptyMessage.innerHTML = `
+
             <div>⚠</div>
-            <h3>Products could not be loaded</h3>
+
+            <h3>
+                Products could not be loaded
+            </h3>
+
             <p>
                 Please check that products.json
-                exists in the same GitHub repository.
+                exists in the GitHub repository.
             </p>
+
         `;
     }
 }
@@ -281,14 +245,6 @@ async function loadProducts() {
 ============================================================ */
 
 function getImageURL(product) {
-
-    /*
-       Main expected filename:
-       PRODUCT_CODE.jpg
-
-       Example:
-       AJ001.jpg
-    */
 
     const code =
         product.product_code ||
@@ -334,13 +290,10 @@ function createCategories() {
     );
 
 
-    const categories =
-        [
-            "All",
-            ...Array.from(
-                categorySet
-            ).sort()
-        ];
+    const categories = [
+        "All",
+        ...Array.from(categorySet).sort()
+    ];
 
 
     categoryList.innerHTML = "";
@@ -431,32 +384,28 @@ function getFilteredProducts() {
         product => {
 
             const categoryMatch =
-                activeCategory ===
-                "All" ||
+                activeCategory === "All" ||
                 String(
                     product.category || ""
                 ).toLowerCase() ===
                 activeCategory.toLowerCase();
 
 
-            const searchableText =
-                [
-                    product.product_code,
-                    product.name,
-                    product.category,
-                    product.tag,
-                    product.description
-                ]
-                    .filter(Boolean)
-                    .join(" ")
-                    .toLowerCase();
+            const searchableText = [
+                product.product_code,
+                product.name,
+                product.category,
+                product.tag,
+                product.description
+            ]
+                .filter(Boolean)
+                .join(" ")
+                .toLowerCase();
 
 
             const searchMatch =
                 !search ||
-                searchableText.includes(
-                    search
-                );
+                searchableText.includes(search);
 
 
             return (
@@ -483,9 +432,11 @@ function renderProducts() {
 
     productCount.textContent =
         `${filtered.length} product` +
-        (filtered.length === 1
-            ? ""
-            : "s");
+        (
+            filtered.length === 1
+                ? ""
+                : "s"
+        );
 
 
     if (!filtered.length) {
@@ -494,21 +445,18 @@ function renderProducts() {
             false;
 
         return;
-
-    } else {
-
-        emptyMessage.hidden =
-            true;
     }
+
+
+    emptyMessage.hidden =
+        true;
 
 
     filtered.forEach(
         product => {
 
             productGrid.appendChild(
-                createProductCard(
-                    product
-                )
+                createProductCard(product)
             );
         }
     );
@@ -594,9 +542,11 @@ function createProductCard(product) {
                 ${escapeHTML(category)}
             </p>
 
+
             <h3 class="product-name">
                 ${escapeHTML(name)}
             </h3>
+
 
             ${
                 description
@@ -685,6 +635,12 @@ function addToCart(
 
 
     if (!product) {
+
+        console.error(
+            "Product not found:",
+            productCode
+        );
+
         return;
     }
 
@@ -761,12 +717,12 @@ function updateCart() {
 
 
             totalQuantity +=
-                item.quantity;
+                Number(item.quantity) || 0;
 
 
             totalAmount +=
                 price *
-                item.quantity;
+                (Number(item.quantity) || 0);
         }
     );
 
@@ -850,6 +806,7 @@ function renderCartItems() {
                 </p>
 
             </div>
+
         `;
 
         return;
@@ -866,9 +823,7 @@ function renderCartItems() {
 
 
             const price =
-                getProductPrice(
-                    product
-                );
+                getProductPrice(product);
 
 
             const name =
@@ -877,9 +832,7 @@ function renderCartItems() {
 
 
             const image =
-                getImageURL(
-                    product
-                );
+                getImageURL(product);
 
 
             const row =
@@ -899,6 +852,7 @@ function renderCartItems() {
                     <img
                         src="${escapeHTML(image)}"
                         alt="${escapeHTML(name)}"
+                        onerror="this.src='images/placeholder.jpg'"
                     >
 
                 </div>
@@ -910,6 +864,7 @@ function renderCartItems() {
                         ${escapeHTML(name)}
                     </h3>
 
+
                     <div class="cart-item-price">
                         ${formatPrice(price)}
                     </div>
@@ -920,17 +875,21 @@ function renderCartItems() {
                         <button
                             type="button"
                             data-action="minus"
+                            aria-label="Decrease quantity"
                         >
                             −
                         </button>
+
 
                         <span>
                             ${item.quantity}
                         </span>
 
+
                         <button
                             type="button"
                             data-action="plus"
+                            aria-label="Increase quantity"
                         >
                             +
                         </button>
@@ -947,6 +906,7 @@ function renderCartItems() {
                 >
                     Remove
                 </button>
+
             `;
 
 
@@ -1017,7 +977,8 @@ function changeQuantity(
     }
 
 
-    item.quantity +=
+    item.quantity =
+        Number(item.quantity) +
         change;
 
 
@@ -1041,7 +1002,7 @@ function changeQuantity(
 
 
 /* ============================================================
-   REMOVE
+   REMOVE ITEM
 ============================================================ */
 
 function removeFromCart(
@@ -1092,17 +1053,26 @@ clearCartButton.addEventListener(
 
 function openCart() {
 
+    checkoutModal.hidden =
+        true;
+
+
     cartDrawer.classList.add(
         "open"
     );
 
+
     cartOverlay.hidden =
         false;
+
 
     cartDrawer.setAttribute(
         "aria-hidden",
         "false"
     );
+
+
+    updateBodyScroll();
 }
 
 
@@ -1116,15 +1086,24 @@ function closeCartDrawer() {
         "open"
     );
 
+
     cartOverlay.hidden =
         true;
+
 
     cartDrawer.setAttribute(
         "aria-hidden",
         "true"
     );
+
+
+    updateBodyScroll();
 }
 
+
+/* ============================================================
+   CART EVENTS
+============================================================ */
 
 cartButton.addEventListener(
     "click",
@@ -1145,7 +1124,7 @@ cartOverlay.addEventListener(
 
 
 /* ============================================================
-   CHECKOUT
+   OPEN CHECKOUT
 ============================================================ */
 
 checkoutButton.addEventListener(
@@ -1164,8 +1143,45 @@ checkoutButton.addEventListener(
 
         renderCheckoutSummary();
 
+
+        /*
+           Close cart drawer first.
+        */
+
+        closeCartDrawer();
+
+
+        /*
+           Open checkout modal.
+        */
+
         checkoutModal.hidden =
             false;
+
+
+        updateBodyScroll();
+
+
+        /*
+           Put cursor in name field.
+        */
+
+        setTimeout(
+            () => {
+
+                const nameInput =
+                    document.getElementById(
+                        "customerName"
+                    );
+
+                if (nameInput) {
+
+                    nameInput.focus();
+                }
+
+            },
+            100
+        );
     }
 );
 
@@ -1174,12 +1190,45 @@ checkoutButton.addEventListener(
    CLOSE CHECKOUT
 ============================================================ */
 
+function closeCheckoutModal() {
+
+    checkoutModal.hidden =
+        true;
+
+
+    updateBodyScroll();
+}
+
+
 closeCheckout.addEventListener(
     "click",
-    () => {
+    closeCheckoutModal
+);
 
-        checkoutModal.hidden =
-            true;
+
+/* ============================================================
+   CLICK OUTSIDE CHECKOUT CARD
+============================================================ */
+
+checkoutModal.addEventListener(
+    "click",
+    event => {
+
+        /*
+           If the user clicks the dark
+           background, close the modal.
+
+           Clicking inside .modal-card
+           does nothing.
+        */
+
+        if (
+            event.target ===
+            checkoutModal
+        ) {
+
+            closeCheckoutModal();
+        }
     }
 );
 
@@ -1235,11 +1284,13 @@ function renderCheckoutSummary() {
                         × ${item.quantity}
                     </span>
 
+
                     <strong>
                         ${formatPrice(amount)}
                     </strong>
 
                 </div>
+
             `;
         }
     );
@@ -1253,11 +1304,13 @@ function renderCheckoutSummary() {
                 Total
             </span>
 
+
             <strong>
                 ${formatPrice(total)}
             </strong>
 
         </div>
+
     `;
 
 
@@ -1279,9 +1332,11 @@ checkoutForm.addEventListener(
 
         if (!cart.length) {
 
-            alert(
+            showTemporaryMessage(
                 "Your cart is empty."
             );
+
+            closeCheckoutModal();
 
             return;
         }
@@ -1325,6 +1380,7 @@ checkoutForm.addEventListener(
 
         let total = 0;
 
+
         let orderText =
             "NEW ORDER - PRESENT PERFECT STORE\n\n";
 
@@ -1332,8 +1388,10 @@ checkoutForm.addEventListener(
         orderText +=
             `Customer: ${name}\n`;
 
+
         orderText +=
             `Mobile: ${phone}\n`;
+
 
         orderText +=
             `Address: ${address}\n`;
@@ -1381,14 +1439,18 @@ checkoutForm.addEventListener(
                 orderText +=
                     `\n${product.name || item.productCode}`;
 
+
                 orderText +=
                     `\nCode: ${item.productCode}`;
+
 
                 orderText +=
                     `\nQty: ${item.quantity}`;
 
+
                 orderText +=
                     `\nPrice: ${formatPrice(price)}`;
+
 
                 orderText +=
                     `\nAmount: ${formatPrice(amount)}\n`;
@@ -1413,6 +1475,18 @@ checkoutForm.addEventListener(
             );
 
 
+        /*
+           Close checkout before
+           opening WhatsApp.
+        */
+
+        closeCheckoutModal();
+
+
+        /*
+           Open WhatsApp.
+        */
+
         window.open(
             whatsappURL,
             "_blank"
@@ -1432,7 +1506,55 @@ searchInput.addEventListener(
         searchText =
             event.target.value;
 
+
         renderProducts();
+    }
+);
+
+
+/* ============================================================
+   ESCAPE KEY
+============================================================ */
+
+document.addEventListener(
+    "keydown",
+    event => {
+
+        if (
+            event.key !==
+            "Escape"
+        ) {
+
+            return;
+        }
+
+
+        /*
+           Checkout gets priority.
+        */
+
+        if (
+            !checkoutModal.hidden
+        ) {
+
+            closeCheckoutModal();
+
+            return;
+        }
+
+
+        /*
+           Otherwise close cart.
+        */
+
+        if (
+            cartDrawer.classList.contains(
+                "open"
+            )
+        ) {
+
+            closeCartDrawer();
+        }
     }
 );
 
@@ -1562,7 +1684,10 @@ function showTemporaryMessage(
     setTimeout(
         () => {
 
-            toast.remove();
+            if (toast) {
+
+                toast.remove();
+            }
 
         },
         1800
@@ -1581,10 +1706,9 @@ document.getElementById(
 
 
 /* ============================================================
-   START
+   START APPLICATION
 ============================================================ */
 
 loadCart();
 
 loadProducts();
-

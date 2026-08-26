@@ -16,8 +16,7 @@
     --accent: #9a5b48;
     --accent-dark: #754333;
 
-    --shadow:
-        0 12px 35px rgba(40, 25, 15, 0.09);
+    --shadow: 0 12px 35px rgba(40, 25, 15, 0.09);
 
     --radius: 18px;
 
@@ -58,6 +57,10 @@ body {
         sans-serif;
 }
 
+body.no-scroll {
+    overflow: hidden;
+}
+
 img {
     display: block;
     max-width: 100%;
@@ -85,35 +88,25 @@ a {
 
 .site-header {
     position: sticky;
-
     top: 0;
-
     z-index: 100;
 
-    background:
-        rgba(250, 248, 245, 0.94);
+    background: rgba(250, 248, 245, 0.94);
 
-    backdrop-filter:
-        blur(15px);
+    backdrop-filter: blur(15px);
 
-    border-bottom:
-        1px solid var(--border);
+    border-bottom: 1px solid var(--border);
 }
 
 .header-inner {
-    width: min(
-        var(--max-width),
-        94%
-    );
+    width: min(var(--max-width), 94%);
 
     min-height: 74px;
 
     margin: auto;
 
     display: flex;
-
     align-items: center;
-
     justify-content: space-between;
 
     gap: 20px;
@@ -121,7 +114,6 @@ a {
 
 .brand {
     display: flex;
-
     flex-direction: column;
 }
 
@@ -150,7 +142,6 @@ a {
     position: relative;
 
     display: flex;
-
     align-items: center;
 
     gap: 8px;
@@ -165,8 +156,7 @@ a {
 
     color: var(--text);
 
-    box-shadow:
-        0 4px 15px rgba(0, 0, 0, 0.04);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
 }
 
 .cart-button b {
@@ -175,7 +165,6 @@ a {
     height: 21px;
 
     display: grid;
-
     place-items: center;
 
     border-radius: 50%;
@@ -193,20 +182,15 @@ a {
 ============================================================ */
 
 .hero {
-    width: min(
-        var(--max-width),
-        94%
-    );
+    width: min(var(--max-width), 94%);
 
     margin: 24px auto 0;
 
     min-height: 330px;
 
-    border-radius:
-        28px;
+    border-radius: 28px;
 
     display: grid;
-
     align-items: center;
 
     background:
@@ -228,7 +212,6 @@ a {
     position: absolute;
 
     right: 8%;
-
     top: 12%;
 
     font-size: 9rem;
@@ -239,10 +222,7 @@ a {
 }
 
 .hero-content {
-    width: min(
-        600px,
-        90%
-    );
+    width: min(600px, 90%);
 
     padding: 55px;
 }
@@ -252,12 +232,7 @@ a {
 
     font-family: Georgia, serif;
 
-    font-size:
-        clamp(
-            2.4rem,
-            6vw,
-            4.6rem
-        );
+    font-size: clamp(2.4rem, 6vw, 4.6rem);
 
     line-height: 0.98;
 
@@ -301,25 +276,20 @@ a {
 ============================================================ */
 
 .shop-tools {
-    width: min(
-        var(--max-width),
-        94%
-    );
+    width: min(var(--max-width), 94%);
 
     margin: 28px auto 0;
 }
 
 .search-box {
     display: flex;
-
     align-items: center;
 
     gap: 10px;
 
     background: white;
 
-    border:
-        1px solid var(--border);
+    border: 1px solid var(--border);
 
     border-radius: 14px;
 
@@ -359,8 +329,7 @@ a {
 .category-button {
     white-space: nowrap;
 
-    border:
-        1px solid var(--border);
+    border: 1px solid var(--border);
 
     background: white;
 
@@ -387,17 +356,13 @@ a {
 ============================================================ */
 
 .products-section {
-    width: min(
-        var(--max-width),
-        94%
-    );
+    width: min(var(--max-width), 94%);
 
     margin: 45px auto;
 }
 
 .section-heading {
     display: flex;
-
     align-items: end;
 
     justify-content: space-between;
@@ -432,10 +397,7 @@ a {
     grid-template-columns:
         repeat(
             auto-fill,
-            minmax(
-                190px,
-                1fr
-            )
+            minmax(190px, 1fr)
         );
 
     gap: 18px;
@@ -449,14 +411,11 @@ a {
 .product-card {
     min-width: 0;
 
-    background:
-        var(--surface);
+    background: var(--surface);
 
-    border:
-        1px solid var(--border);
+    border: 1px solid var(--border);
 
-    border-radius:
-        var(--radius);
+    border-radius: var(--radius);
 
     overflow: hidden;
 
@@ -469,11 +428,9 @@ a {
 }
 
 .product-card:hover {
-    transform:
-        translateY(-4px);
+    transform: translateY(-4px);
 
-    box-shadow:
-        var(--shadow);
+    box-shadow: var(--shadow);
 }
 
 .product-image {
@@ -481,27 +438,22 @@ a {
 
     aspect-ratio: 1 / 1;
 
-    background:
-        var(--surface-soft);
+    background: var(--surface-soft);
 
     overflow: hidden;
 }
 
 .product-image img {
     width: 100%;
-
     height: 100%;
 
     object-fit: cover;
 
-    transition:
-        transform 0.35s ease;
+    transition: transform 0.35s ease;
 }
 
-.product-card:hover
-.product-image img {
-    transform:
-        scale(1.04);
+.product-card:hover .product-image img {
+    transform: scale(1.04);
 }
 
 .product-info {
@@ -539,8 +491,7 @@ a {
 
     line-height: 1.4;
 
-    display:
-        -webkit-box;
+    display: -webkit-box;
 
     -webkit-line-clamp: 2;
 
@@ -596,13 +547,12 @@ a {
 }
 
 .add-button:hover {
-    background:
-        var(--accent-dark);
+    background: var(--accent-dark);
 }
 
 
 /* ============================================================
-   EMPTY
+   EMPTY PRODUCTS
 ============================================================ */
 
 .empty-message {
@@ -633,11 +583,9 @@ a {
 
     z-index: 199;
 
-    background:
-        rgba(0, 0, 0, 0.35);
+    background: rgba(0, 0, 0, 0.35);
 
-    backdrop-filter:
-        blur(3px);
+    backdrop-filter: blur(3px);
 }
 
 
@@ -651,28 +599,20 @@ a {
     z-index: 200;
 
     right: 0;
-
     top: 0;
 
     height: 100dvh;
 
-    width:
-        min(
-            430px,
-            94vw
-        );
+    width: min(430px, 94vw);
 
-    background:
-        var(--surface);
+    background: var(--surface);
 
     box-shadow:
-        -10px 0 40px rgba(0,0,0,0.18);
+        -10px 0 40px rgba(0, 0, 0, 0.18);
 
-    transform:
-        translateX(100%);
+    transform: translateX(100%);
 
-    transition:
-        transform 0.3s ease;
+    transition: transform 0.3s ease;
 
     display: flex;
 
@@ -680,8 +620,7 @@ a {
 }
 
 .cart-drawer.open {
-    transform:
-        translateX(0);
+    transform: translateX(0);
 }
 
 .cart-header {
@@ -691,8 +630,7 @@ a {
 
     justify-content: space-between;
 
-    border-bottom:
-        1px solid var(--border);
+    border-bottom: 1px solid var(--border);
 }
 
 .cart-header h2 {
@@ -702,20 +640,27 @@ a {
 }
 
 .close-button {
-    width: 38px;
+    width: 42px;
 
-    height: 38px;
+    height: 42px;
 
     border: 0;
 
     border-radius: 50%;
 
-    background:
-        var(--surface-soft);
+    background: var(--surface-soft);
 
-    font-size: 1.6rem;
+    font-size: 28px;
 
     line-height: 1;
+
+    cursor: pointer;
+
+    flex-shrink: 0;
+}
+
+.close-button:hover {
+    background: var(--border);
 }
 
 
@@ -734,15 +679,13 @@ a {
 .cart-item {
     display: grid;
 
-    grid-template-columns:
-        70px 1fr auto;
+    grid-template-columns: 70px 1fr auto;
 
     gap: 12px;
 
     padding: 12px 0;
 
-    border-bottom:
-        1px solid var(--border);
+    border-bottom: 1px solid var(--border);
 }
 
 .cart-item-image {
@@ -754,8 +697,7 @@ a {
 
     overflow: hidden;
 
-    background:
-        var(--surface-soft);
+    background: var(--surface-soft);
 }
 
 .cart-item-image img {
@@ -793,11 +735,9 @@ a {
 
     height: 25px;
 
-    border:
-        1px solid var(--border);
+    border: 1px solid var(--border);
 
-    background:
-        white;
+    background: white;
 
     border-radius: 6px;
 }
@@ -830,11 +770,9 @@ a {
 .cart-footer {
     padding: 18px;
 
-    border-top:
-        1px solid var(--border);
+    border-top: 1px solid var(--border);
 
-    background:
-        var(--surface);
+    background: var(--surface);
 }
 
 .cart-total {
@@ -870,25 +808,21 @@ a {
 .primary-button {
     border: 0;
 
-    background:
-        var(--accent);
+    background: var(--accent);
 
     color: white;
 }
 
 .primary-button:hover {
-    background:
-        var(--accent-dark);
+    background: var(--accent-dark);
 }
 
 .secondary-button {
     margin-top: 8px;
 
-    border:
-        1px solid var(--border);
+    border: 1px solid var(--border);
 
-    background:
-        white;
+    background: white;
 
     color: var(--muted);
 }
@@ -903,42 +837,34 @@ a {
 
     inset: 0;
 
-    z-index: 300;
-
-    padding: 15px;
-
-    background:
-        rgba(0,0,0,0.45);
+    z-index: 1000;
 
     display: grid;
 
     place-items: center;
 
+    padding: 20px;
+
+    background: rgba(0, 0, 0, 0.55);
+
     overflow-y: auto;
 }
 
 .modal-card {
-    width:
-        min(
-            540px,
-            100%
-        );
+    width: min(560px, 100%);
 
-    max-height:
-        94dvh;
+    max-height: 90vh;
 
     overflow-y: auto;
 
-    background:
-        var(--surface);
+    background: var(--surface);
 
-    border-radius:
-        20px;
+    border-radius: 18px;
 
-    padding: 22px;
+    padding: 24px;
 
     box-shadow:
-        0 25px 70px rgba(0,0,0,0.25);
+        0 25px 70px rgba(0, 0, 0, 0.25);
 }
 
 .modal-header {
@@ -946,7 +872,9 @@ a {
 
     justify-content: space-between;
 
-    gap: 20px;
+    align-items: flex-start;
+
+    gap: 15px;
 
     margin-bottom: 20px;
 }
@@ -965,8 +893,7 @@ a {
 #checkoutForm label {
     display: block;
 
-    margin:
-        15px 0 7px;
+    margin: 15px 0 7px;
 
     font-size: 0.85rem;
 
@@ -977,15 +904,13 @@ a {
 #checkoutForm textarea {
     width: 100%;
 
-    border:
-        1px solid var(--border);
+    border: 1px solid var(--border);
 
     border-radius: 10px;
 
     padding: 12px;
 
-    background:
-        #fff;
+    background: #fff;
 
     color: var(--text);
 
@@ -996,8 +921,7 @@ a {
 
 #checkoutForm input:focus,
 #checkoutForm textarea:focus {
-    border-color:
-        var(--accent);
+    border-color: var(--accent);
 }
 
 
@@ -1006,13 +930,11 @@ a {
 ============================================================ */
 
 .checkout-summary {
-    margin:
-        20px 0;
+    margin: 20px 0;
 
     padding: 15px;
 
-    background:
-        var(--surface-soft);
+    background: var(--surface-soft);
 
     border-radius: 12px;
 
@@ -1034,8 +956,7 @@ a {
 
     padding-top: 10px;
 
-    border-top:
-        1px solid var(--border);
+    border-top: 1px solid var(--border);
 
     font-weight: 800;
 }
@@ -1056,18 +977,13 @@ a {
 ============================================================ */
 
 .site-footer {
-    width: min(
-        var(--max-width),
-        94%
-    );
+    width: min(var(--max-width), 94%);
 
     margin: 70px auto 0;
 
-    padding:
-        35px 0;
+    padding: 35px 0;
 
-    border-top:
-        1px solid var(--border);
+    border-top: 1px solid var(--border);
 
     display: flex;
 
@@ -1094,6 +1010,15 @@ a {
 
 
 /* ============================================================
+   HIDDEN ELEMENTS
+============================================================ */
+
+[hidden] {
+    display: none !important;
+}
+
+
+/* ============================================================
    RESPONSIVE
 ============================================================ */
 
@@ -1111,10 +1036,7 @@ a {
 
     .product-grid {
         grid-template-columns:
-            repeat(
-                2,
-                minmax(0, 1fr)
-            );
+            repeat(2, minmax(0, 1fr));
 
         gap: 10px;
     }
@@ -1153,6 +1075,15 @@ a {
         flex-direction: column;
     }
 
+    .modal {
+        padding: 12px;
+    }
+
+    .modal-card {
+        max-height: 94vh;
+
+        padding: 18px;
+    }
 }
 
 
@@ -1170,49 +1101,7 @@ a {
         gap: 8px;
     }
 
-}
-
-[hidden] {
-    display: none !important;
-}
-
-.modal {
-    position: fixed;
-    inset: 0;
-    z-index: 1000;
-    display: grid;
-    place-items: center;
-    padding: 20px;
-    background: rgba(0, 0, 0, 0.55);
-}
-
-.modal-card {
-    width: min(560px, 100%);
-    max-height: 90vh;
-    overflow-y: auto;
-    background: white;
-    border-radius: 18px;
-    padding: 24px;
-}
-
-.modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 15px;
-}
-
-.close-button {
-    width: 42px;
-    height: 42px;
-    border: 0;
-    border-radius: 50%;
-    background: #f1ece7;
-    font-size: 28px;
-    line-height: 1;
-    cursor: pointer;
-}
-
-.no-scroll {
-    overflow: hidden;
+    .modal-card {
+        padding: 15px;
+    }
 }
