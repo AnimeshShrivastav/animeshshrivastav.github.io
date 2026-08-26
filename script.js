@@ -1,4 +1,3 @@
-```javascript
 /* ============================================================
    PRESENT PERFECT STORE
    Static GitHub Pages Store
@@ -26,7 +25,7 @@
 */
 
 const WHATSAPP_NUMBER =
-    "919XXXXXXXXX";
+    "918902411270";
 
 
 /*
@@ -1588,5 +1587,4 @@ document.getElementById(
 loadCart();
 
 loadProducts();
-```
 
