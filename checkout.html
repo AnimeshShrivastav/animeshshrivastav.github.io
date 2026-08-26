@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        Checkout - Present Perfect Store
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
+
+</head>
+
+
+<body>
+
+
+<header class="site-header">
+
+    <div class="header-inner">
+
+        <a
+            href="./"
+            class="brand"
+        >
+            Present Perfect
+        </a>
+
+
+        <a
+            href="./"
+            class="cart-link"
+        >
+            ← Store
+        </a>
+
+    </div>
+
+</header>
+
+
+
+<main class="products-section">
+
+    <div class="section-title">
+
+        <h2>
+            Your Cart
+        </h2>
+
+    </div>
+
+
+    <div id="cartItems"></div>
+
+
+    <div id="cartTotal"></div>
+
+
+
+    <hr>
+
+
+    <h2>
+        Delivery Details
+    </h2>
+
+
+    <form id="checkoutForm">
+
+
+        <p>
+
+            <label>
+                Name
+            </label>
+
+            <input
+                id="customerName"
+                type="text"
+                required
+                placeholder="Your name"
+            >
+
+        </p>
+
+
+
+        <p>
+
+            <label>
+                Mobile number
+            </label>
+
+            <input
+                id="customerPhone"
+                type="tel"
+                required
+                placeholder="Your mobile number"
+            >
+
+        </p>
+
+
+
+        <p>
+
+            <label>
+                Delivery address
+            </label>
+
+            <textarea
+                id="customerAddress"
+                rows="5"
+                required
+                placeholder="Complete delivery address"
+            ></textarea>
+
+        </p>
+
+
+
+        <p>
+
+            <label>
+                Note
+            </label>
+
+            <textarea
+                id="customerNote"
+                rows="3"
+                placeholder="Optional"
+            ></textarea>
+
+        </p>
+
+
+
+        <button
+            type="submit"
+            class="add-button"
+        >
+            Send Order on WhatsApp
+        </button>
+
+
+    </form>
+
+
+    <p id="checkoutMessage"></p>
+
+</main>
+
+
+
+<script src="checkout.js"></script>
+
+</body>
+
+</html>

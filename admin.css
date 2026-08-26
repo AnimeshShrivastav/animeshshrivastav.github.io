@@ -1,43 +1,10 @@
-/* ============================================================
-   PRESENT PERFECT STORE
-   ADMIN PANEL
-============================================================ */
-
-:root {
-
-    --background: #f6f2ed;
-
-    --surface: #ffffff;
-
-    --surface-soft: #f0ebe5;
-
-    --text: #211d1a;
-
-    --muted: #746b63;
-
-    --border: #e3dbd3;
-
-    --accent: #9a5b48;
-
-    --accent-dark: #754333;
-
-    --danger: #a33b3b;
-
-    --success: #3c7650;
-
-    --radius: 16px;
-
-    --max-width: 1100px;
-
-}
-
-
-/* ============================================================
-   RESET
-============================================================ */
+/* =========================================================
+   ADMIN
+========================================================= */
 
 * {
-    box-sizing: border-box;
+    box-sizing:
+        border-box;
 }
 
 
@@ -46,763 +13,313 @@ body {
     margin: 0;
 
     background:
-        radial-gradient(
-            circle at top right,
-            rgba(154, 91, 72, .07),
-            transparent 30rem
-        ),
-        var(--background);
+        #faf8f5;
 
-    color: var(--text);
+    color:
+        #211d1a;
 
     font-family:
-        system-ui,
-        -apple-system,
-        BlinkMacSystemFont,
-        "Segoe UI",
+        Arial,
+        Helvetica,
         sans-serif;
-
 }
 
 
-button,
-input,
-textarea {
-
-    font: inherit;
-
-}
-
-
-button {
-
-    cursor: pointer;
-
-}
-
-
-a {
-
-    text-decoration: none;
-
-    color: inherit;
-
-}
-
-
-/* ============================================================
-   HEADER
-============================================================ */
-
-.admin-header {
-
-    width:
-        min(
-            var(--max-width),
-            94%
-        );
-
-    margin:
-        30px auto;
-
-    display: flex;
-
-    justify-content: space-between;
-
-    align-items: center;
-
-    gap: 20px;
-
-}
-
-
-.admin-header h1 {
-
-    margin:
-        5px 0;
-
-    font-family:
-        Georgia,
-        serif;
-
-    font-size:
-        clamp(
-            2rem,
-            5vw,
-            3rem
-        );
-
-}
-
-
-.admin-header p:not(.eyebrow) {
-
-    color: var(--muted);
-
-}
-
-
-.eyebrow {
-
-    margin: 0;
-
-    color: var(--accent);
-
-    font-size: .7rem;
-
-    font-weight: 800;
-
-    letter-spacing: .15em;
-
-}
-
-
-.store-link {
-
-    padding:
-        11px 16px;
-
-    border:
-        1px solid var(--border);
-
-    border-radius:
-        999px;
+header {
 
     background:
         white;
 
-}
-
-
-/* ============================================================
-   MAIN
-============================================================ */
-
-.admin-container {
-
-    width:
-        min(
-            var(--max-width),
-            94%
-        );
-
-    margin:
-        auto;
-
-}
-
-
-/* ============================================================
-   PANEL
-============================================================ */
-
-.panel {
-
-    margin-bottom: 22px;
-
-    padding: 24px;
-
-    background:
-        var(--surface);
-
-    border:
-        1px solid var(--border);
-
-    border-radius:
-        var(--radius);
-
-    box-shadow:
-        0 5px 20px rgba(40, 25, 15, .04);
-
-}
-
-
-.panel-heading {
-
-    display: flex;
-
-    justify-content: space-between;
-
-    align-items: center;
-
-    gap: 15px;
-
-    margin-bottom: 22px;
-
-}
-
-
-.panel-heading h2 {
-
-    margin:
-        5px 0 0;
-
-    font-family:
-        Georgia,
-        serif;
-
-}
-
-
-#editingStatus {
-
-    color: var(--muted);
-
-    font-size: .85rem;
-
-}
-
-
-/* ============================================================
-   STATUS
-============================================================ */
-
-.status {
+    border-bottom:
+        1px solid #ddd;
 
     padding:
-        6px 11px;
-
-    border-radius:
-        999px;
-
-    font-size: .75rem;
-
-    font-weight: 700;
-
-}
-
-
-.status.disconnected {
-
-    background:
-        #f5e4e4;
-
-    color:
-        var(--danger);
-
-}
-
-
-.status.connected {
-
-    background:
-        #e3f2e8;
-
-    color:
-        var(--success);
-
-}
-
-
-/* ============================================================
-   FORM
-============================================================ */
-
-.form-grid {
-
-    display: grid;
-
-    grid-template-columns:
-        repeat(
-            2,
-            minmax(
-                0,
-                1fr
-            )
-        );
-
-    gap: 18px;
-
-}
-
-
-.full-width {
-
-    grid-column:
-        1 / -1;
-
-}
-
-
-label {
-
-    display: block;
-
-    margin-bottom: 7px;
-
-    font-size: .82rem;
-
-    font-weight: 700;
-
-}
-
-
-input,
-textarea {
-
-    width: 100%;
-
-    padding:
-        12px;
-
-    border:
-        1px solid var(--border);
-
-    border-radius:
-        10px;
-
-    background:
-        white;
-
-    color:
-        var(--text);
-
-    outline: none;
-
-}
-
-
-input:focus,
-textarea:focus {
-
-    border-color:
-        var(--accent);
-
-}
-
-
-textarea {
-
-    resize:
-        vertical;
-
-}
-
-
-/* ============================================================
-   BUTTONS
-============================================================ */
-
-.button-row {
-
-    display: flex;
-
-    flex-wrap: wrap;
-
-    gap: 10px;
-
-    margin-top: 20px;
-
-}
-
-
-.primary-button,
-.secondary-button,
-.danger-button {
-
-    border-radius:
-        10px;
-
-    padding:
-        11px 16px;
-
-    font-weight:
-        700;
-
-}
-
-
-.primary-button {
-
-    border:
-        0;
-
-    background:
-        var(--accent);
-
-    color:
-        white;
-
-}
-
-
-.primary-button:hover {
-
-    background:
-        var(--accent-dark);
-
-}
-
-
-.secondary-button {
-
-    border:
-        1px solid var(--border);
-
-    background:
-        white;
-
-    color:
-        var(--text);
-
-}
-
-
-.danger-button {
-
-    border:
-        0;
-
-    background:
-        #f4dddd;
-
-    color:
-        var(--danger);
-
-}
-
-
-/* ============================================================
-   HELP
-============================================================ */
-
-.help-text {
-
-    margin:
-        8px 0 0;
-
-    color:
-        var(--muted);
-
-    font-size:
-        .75rem;
-
-    line-height:
-        1.5;
-
-}
-
-
-/* ============================================================
-   IMAGE PREVIEW
-============================================================ */
-
-.image-preview-container {
-
-    margin-top:
-        20px;
-
-    padding:
-        15px;
-
-    background:
-        var(--surface-soft);
-
-    border-radius:
-        12px;
-
-}
-
-
-.image-preview-container p {
-
-    margin-top:
-        0;
-
-    font-size:
-        .8rem;
-
-    font-weight:
-        700;
-
-}
-
-
-#imagePreview {
-
-    width:
-        220px;
-
-    max-width:
-        100%;
-
-    aspect-ratio:
-        1 / 1;
-
-    object-fit:
-        cover;
-
-    border-radius:
-        12px;
-
-}
-
-
-/* ============================================================
-   CATALOGUE TOOLS
-============================================================ */
-
-.catalogue-tools {
-
-    display: flex;
-
-    gap: 10px;
-
-    margin-bottom:
-        18px;
-
-}
-
-
-.catalogue-tools input {
-
-    flex:
-        1;
-
-}
-
-
-/* ============================================================
-   PRODUCT TABLE
-============================================================ */
-
-.product-table {
+        18px 5%;
 
     display:
-        grid;
-
-    gap:
-        10px;
-
-}
-
-
-.product-row {
-
-    display:
-        grid;
-
-    grid-template-columns:
-        65px
-        1fr
-        auto;
+        flex;
 
     align-items:
         center;
 
     gap:
-        14px;
-
-    padding:
-        10px;
-
-    border:
-        1px solid var(--border);
-
-    border-radius:
-        12px;
-
+        25px;
 }
 
 
-.product-row-image {
-
-    width:
-        65px;
-
-    height:
-        65px;
-
-    border-radius:
-        9px;
-
-    overflow:
-        hidden;
-
-    background:
-        var(--surface-soft);
-
-}
-
-
-.product-row-image img {
-
-    width:
-        100%;
-
-    height:
-        100%;
-
-    object-fit:
-        cover;
-
-}
-
-
-.product-row-info h3 {
+header h1 {
 
     margin:
-        0 0 4px;
+        0;
+
+    font-family:
+        Georgia,
+        serif;
 
     font-size:
-        .95rem;
-
+        1.4rem;
 }
 
 
-.product-row-info p {
-
-    margin:
-        2px 0;
+header a {
 
     color:
-        var(--muted);
+        #9a5b48;
 
-    font-size:
-        .75rem;
-
+    font-weight:
+        bold;
 }
 
 
-.product-row-actions {
+main {
 
-    display:
-        flex;
+    width:
+        min(
+            700px,
+            92%
+        );
 
-    gap:
-        7px;
-
-    flex-wrap:
-        wrap;
-
-    justify-content:
-        flex-end;
-
+    margin:
+        30px auto;
 }
 
 
-.small-button {
-
-    padding:
-        7px 10px;
-
-    border:
-        1px solid var(--border);
+section {
 
     background:
         white;
 
+    padding:
+        22px;
+
+    margin-bottom:
+        20px;
+
+    border:
+        1px solid #e3dcd5;
+
     border-radius:
-        7px;
-
-    font-size:
-        .75rem;
-
+        15px;
 }
 
 
-/* ============================================================
-   STATUS LOG
-============================================================ */
+section h2 {
 
-.status-log {
+    margin-top:
+        0;
 
-    min-height:
-        80px;
+    font-family:
+        Georgia,
+        serif;
+}
+
+
+label {
+
+    display:
+        block;
+
+    margin:
+        16px 0;
+
+    font-weight:
+        bold;
+}
+
+
+input {
+
+    display:
+        block;
+
+    width:
+        100%;
+
+    margin-top:
+        7px;
 
     padding:
-        15px;
+        12px;
+
+    border:
+        1px solid #d8d0c9;
+
+    border-radius:
+        9px;
 
     background:
-        #201c19;
+        white;
+}
+
+
+button {
+
+    width:
+        100%;
+
+    padding:
+        12px;
+
+    margin-top:
+        8px;
+
+    border:
+        0;
+
+    border-radius:
+        9px;
+
+    background:
+        #9a5b48;
 
     color:
-        #eee;
+        white;
+
+    font-weight:
+        bold;
+
+    cursor:
+        pointer;
+}
+
+
+button:hover {
+
+    background:
+        #754333;
+}
+
+
+.warning {
+
+    padding:
+        12px;
+
+    border-radius:
+        8px;
+
+    background:
+        #fff4d8;
+
+    color:
+        #684f16;
+
+    font-size:
+        0.85rem;
+}
+
+
+.hint {
+
+    color:
+        #777;
+
+    font-size:
+        0.8rem;
+}
+
+
+#preview {
+
+    display:
+        block;
+
+    width:
+        min(
+            300px,
+            100%
+        );
+
+    max-height:
+        300px;
+
+    object-fit:
+        contain;
+
+    margin:
+        15px auto;
 
     border-radius:
         10px;
 
-    white-space:
-        pre-wrap;
-
-    font-family:
-        monospace;
-
-    font-size:
-        .75rem;
-
+    background:
+        #eee;
 }
 
 
-/* ============================================================
-   RESPONSIVE
-============================================================ */
+#imageList {
 
-@media (max-width: 700px) {
-
-    .admin-header {
-
-        align-items:
-            flex-start;
-
-        flex-direction:
-            column;
-
-    }
+    margin-top:
+        15px;
+}
 
 
-    .form-grid {
+.image-row {
 
-        grid-template-columns:
-            1fr;
+    display:
+        flex;
 
-    }
+    align-items:
+        center;
 
+    gap:
+        12px;
 
-    .full-width {
+    padding:
+        10px 0;
 
-        grid-column:
-            auto;
-
-    }
-
-
-    .catalogue-tools {
-
-        flex-direction:
-            column;
-
-    }
+    border-bottom:
+        1px solid #eee;
+}
 
 
-    .product-row {
+.image-row img {
 
-        grid-template-columns:
-            55px
-            1fr;
+    width:
+        70px;
 
-    }
+    height:
+        70px;
 
+    object-fit:
+        cover;
 
-    .product-row-image {
-
-        width:
-            55px;
-
-        height:
-            55px;
-
-    }
+    border-radius:
+        8px;
+}
 
 
-    .product-row-actions {
+.image-name {
 
-        grid-column:
-            1 / -1;
+    flex:
+        1;
 
-        justify-content:
-            flex-start;
+    word-break:
+        break-word;
 
-    }
+    font-size:
+        0.85rem;
+}
 
+
+.delete-button {
+
+    width:
+        auto;
+
+    margin:
+        0;
+
+    background:
+        #a33;
+}
+
+
+#uploadMessage {
+
+    white-space:
+        pre-wrap;
+
+    font-size:
+        0.85rem;
 }

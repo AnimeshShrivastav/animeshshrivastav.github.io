@@ -2,32 +2,157 @@
 <html lang="en">
 
 <head>
+
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <meta
+        name="description"
+        content="Present Perfect Store"
+    >
 
     <title>Present Perfect Store</title>
 
-    <link rel="stylesheet" href="style.css">
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
+
 </head>
+
 
 <body>
 
-<header>
-    <h1>Present Perfect</h1>
-    <p>Jewellery • Gifts • Fashion • Home Decor</p>
+
+<header class="site-header">
+
+    <div class="header-inner">
+
+        <a
+            href="./"
+            class="brand"
+        >
+            Present Perfect
+        </a>
+
+
+        <a
+            href="checkout.html"
+            class="cart-link"
+        >
+            🛒 Cart
+
+            <span id="cartCount">
+                0
+            </span>
+
+        </a>
+
+    </div>
+
 </header>
+
+
 
 <main>
 
-    <h2>Our Products</h2>
 
-    <div id="status">
-        Loading images...
-    </div>
+    <!-- HERO -->
 
-    <div id="products"></div>
+    <section class="hero">
+
+        <p class="eyebrow">
+            PRESENT PERFECT STORE
+        </p>
+
+        <h1>
+            Find something
+            <span>beautiful.</span>
+        </h1>
+
+        <p>
+            Artificial jewellery, gifts,
+            fashion accessories and home decor.
+        </p>
+
+    </section>
+
+
+
+    <!-- SEARCH -->
+
+    <section class="shop-controls">
+
+        <input
+            id="searchInput"
+            type="search"
+            placeholder="Search products..."
+            autocomplete="off"
+        >
+
+
+        <div
+            id="categories"
+            class="categories"
+        ></div>
+
+    </section>
+
+
+
+    <!-- PRODUCTS -->
+
+    <section class="products-section">
+
+        <div class="section-title">
+
+            <h2>
+                Products
+            </h2>
+
+            <span id="productCount">
+                Loading...
+            </span>
+
+        </div>
+
+
+        <div
+            id="productGrid"
+            class="product-grid"
+        ></div>
+
+
+        <p
+            id="message"
+            class="message"
+        ></p>
+
+    </section>
+
 
 </main>
+
+
+
+<footer>
+
+    <p>
+        © <span id="year"></span>
+        Present Perfect Store
+    </p>
+
+    <a href="admin.html">
+        Admin
+    </a>
+
+</footer>
+
+
 
 <script src="script.js"></script>
 

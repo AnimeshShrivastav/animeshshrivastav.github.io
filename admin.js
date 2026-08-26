@@ -1,1166 +1,185 @@
-/* ============================================================
-   PRESENT PERFECT STORE
-   STATIC GITHUB ADMIN
-   NO PYTHON
-   NO FLASK
-   NO DATABASE
-============================================================ */
+/* =========================================================
+   PRESENT PERFECT ADMIN
+   GitHub API
+========================================================= */
 
 
-/* ============================================================
-   CONFIGURATION
-============================================================ */
-
-const PRODUCTS_PATH =
-    "products.json";
-
-
-const IMAGE_FOLDER =
-    "images/thumbnails";
-
-
-const IMAGE_WIDTH =
-    600;
-
-
-const IMAGE_QUALITY =
-    0.82;
-
-
-const GITHUB_API =
-    "https://api.github.com";
-
-
-/* ============================================================
-   STATE
-============================================================ */
-
-let products = [];
-
-let editingCode = null;
-
-let selectedImage = null;
-
-
-/* ============================================================
+/* ---------------------------------------------------------
    DOM
-============================================================ */
+--------------------------------------------------------- */
 
-const ownerInput =
+const repository =
     document.getElementById(
-        "githubOwner"
+        "repository"
     );
 
 
-const repoInput =
-    document.getElementById(
-        "githubRepo"
-    );
-
-
-const branchInput =
-    document.getElementById(
-        "githubBranch"
-    );
-
-
-const tokenInput =
+const githubToken =
     document.getElementById(
         "githubToken"
     );
 
 
-const connectButton =
+const imageFile =
     document.getElementById(
-        "connectButton"
+        "imageFile"
     );
 
 
-const disconnectButton =
+const preview =
     document.getElementById(
-        "disconnectButton"
+        "preview"
     );
 
 
-const connectionStatus =
+const filename =
     document.getElementById(
-        "connectionStatus"
+        "filename"
     );
 
 
-const productForm =
+const uploadButton =
     document.getElementById(
-        "productForm"
+        "uploadButton"
     );
 
 
-const productCode =
+const uploadMessage =
     document.getElementById(
-        "productCode"
+        "uploadMessage"
     );
 
 
-const productName =
+const refreshButton =
     document.getElementById(
-        "productName"
+        "refreshButton"
     );
 
 
-const productCategory =
+const imageList =
     document.getElementById(
-        "productCategory"
+        "imageList"
     );
 
 
-const productPrice =
-    document.getElementById(
-        "productPrice"
-    );
-
-
-const productOldPrice =
-    document.getElementById(
-        "productOldPrice"
-    );
-
-
-const productTag =
-    document.getElementById(
-        "productTag"
-    );
-
-
-const productDescription =
-    document.getElementById(
-        "productDescription"
-    );
-
-
-const productImage =
-    document.getElementById(
-        "productImage"
-    );
-
-
-const imagePreview =
-    document.getElementById(
-        "imagePreview"
-    );
-
-
-const imagePreviewContainer =
-    document.getElementById(
-        "imagePreviewContainer"
-    );
-
-
-const newProductButton =
-    document.getElementById(
-        "newProductButton"
-    );
-
-
-const productTable =
-    document.getElementById(
-        "productTable"
-    );
-
-
-const catalogueCount =
-    document.getElementById(
-        "catalogueCount"
-    );
-
-
-const adminSearch =
-    document.getElementById(
-        "adminSearch"
-    );
-
-
-const reloadButton =
-    document.getElementById(
-        "reloadButton"
-    );
-
-
-const statusLog =
-    document.getElementById(
-        "statusLog"
-    );
-
-
-const editingStatus =
-    document.getElementById(
-        "editingStatus"
-    );
-
-
-/* ============================================================
-   SESSION STORAGE
-============================================================ */
-
-function loadSettings() {
-
-    ownerInput.value =
-        sessionStorage.getItem(
-            "githubOwner"
-        ) || "";
-
-
-    repoInput.value =
-        sessionStorage.getItem(
-            "githubRepo"
-        ) || "";
-
-
-    branchInput.value =
-        sessionStorage.getItem(
-            "githubBranch"
-        ) || "main";
-
-
-    tokenInput.value =
-        sessionStorage.getItem(
-            "githubToken"
-        ) || "";
-}
-
-
-/* ============================================================
-   SAVE SETTINGS
-============================================================ */
-
-function saveSettings() {
-
-    sessionStorage.setItem(
-        "githubOwner",
-        ownerInput.value.trim()
-    );
-
-
-    sessionStorage.setItem(
-        "githubRepo",
-        repoInput.value.trim()
-    );
-
-
-    sessionStorage.setItem(
-        "githubBranch",
-        branchInput.value.trim() ||
-        "main"
-    );
-
-
-    sessionStorage.setItem(
-        "githubToken",
-        tokenInput.value.trim()
-    );
-}
-
-
-/* ============================================================
-   GITHUB CONFIG
-============================================================ */
-
-function getConfig() {
-
-    return {
-
-        owner:
-            ownerInput.value.trim(),
-
-        repo:
-            repoInput.value.trim(),
-
-        branch:
-            branchInput.value.trim() ||
-            "main",
-
-        token:
-            tokenInput.value.trim()
-    };
-}
-
-
-/* ============================================================
-   VALIDATE CONFIG
-============================================================ */
-
-function validateConfig() {
-
-    const config =
-        getConfig();
-
-
-    if (!config.owner) {
-
-        throw new Error(
-            "GitHub owner is missing."
-        );
-    }
-
-
-    if (!config.repo) {
-
-        throw new Error(
-            "GitHub repository is missing."
-        );
-    }
-
-
-    if (!config.token) {
-
-        throw new Error(
-            "GitHub token is missing."
-        );
-    }
-
-
-    return config;
-}
-
-
-/* ============================================================
-   GITHUB REQUEST
-============================================================ */
-
-async function githubRequest(
-    path,
-    options = {}
-) {
-
-    const config =
-        validateConfig();
-
-
-    const response =
-        await fetch(
-            GITHUB_API +
-            path,
-            {
-
-                ...options,
-
-                headers: {
-
-                    "Accept":
-                        "application/vnd.github+json",
-
-                    "Authorization":
-                        `Bearer ${config.token}`,
-
-                    "X-GitHub-Api-Version":
-                        "2026-03-10",
-
-                    ...(options.headers || {})
-                }
-            }
-        );
-
-
-    let data = null;
-
-
-    try {
-
-        data =
-            await response.json();
-
-    } catch {
-
-        data = null;
-    }
-
-
-    if (!response.ok) {
-
-        const message =
-            data?.message ||
-            `GitHub error ${response.status}`;
-
-
-        throw new Error(
-            message
-        );
-    }
-
-
-    return data;
-}
-
-
-/* ============================================================
-   GET REPOSITORY FILE
-============================================================ */
-
-async function getGitHubFile(
-    path
-) {
-
-    const config =
-        validateConfig();
-
-
-    const encodedPath =
-        path
-            .split("/")
-            .map(
-                encodeURIComponent
-            )
-            .join("/");
-
-
-    return githubRequest(
-        `/repos/${encodeURIComponent(config.owner)}/${encodeURIComponent(config.repo)}/contents/${encodedPath}?ref=${encodeURIComponent(config.branch)}`
-    );
-}
-
-
-/* ============================================================
-   DECODE GITHUB CONTENT
-============================================================ */
-
-function decodeBase64(
-    base64
-) {
-
-    const binary =
-        atob(
-            base64.replace(
-                /\n/g,
-                ""
-            )
-        );
-
-
-    const bytes =
-        new Uint8Array(
-            binary.length
-        );
-
-
-    for (
-        let i = 0;
-        i < binary.length;
-        i++
-    ) {
-
-        bytes[i] =
-            binary.charCodeAt(i);
-    }
-
-
-    return new TextDecoder(
-        "utf-8"
-    ).decode(
-        bytes
-    );
-}
-
-
-/* ============================================================
-   ENCODE UTF-8 TO BASE64
-============================================================ */
-
-function encodeBase64(
-    text
-) {
-
-    const bytes =
-        new TextEncoder()
-            .encode(
-                text
-            );
-
-
-    let binary = "";
-
-
-    const chunkSize =
-        0x8000;
-
-
-    for (
-        let i = 0;
-        i < bytes.length;
-        i += chunkSize
-    ) {
-
-        binary +=
-            String.fromCharCode(
-                ...bytes.subarray(
-                    i,
-                    i + chunkSize
-                )
-            );
-    }
-
-
-    return btoa(
-        binary
-    );
-}
-
-
-/* ============================================================
-   UPLOAD / UPDATE GITHUB FILE
-============================================================ */
-
-async function putGitHubFile(
-    path,
-    contentBase64,
-    message,
-    existingSha = null
-) {
-
-    const config =
-        validateConfig();
-
-
-    const encodedPath =
-        path
-            .split("/")
-            .map(
-                encodeURIComponent
-            )
-            .join("/");
-
-
-    const body = {
-
-        message:
-            message,
-
-        content:
-            contentBase64,
-
-        branch:
-            config.branch
-    };
-
-
-    if (existingSha) {
-
-        body.sha =
-            existingSha;
-    }
-
-
-    return githubRequest(
-
-        `/repos/${encodeURIComponent(config.owner)}/${encodeURIComponent(config.repo)}/contents/${encodedPath}`,
-
-        {
-
-            method:
-                "PUT",
-
-            body:
-                JSON.stringify(
-                    body
-                )
-        }
-    );
-}
-
-
-/* ============================================================
-   CONNECT
-============================================================ */
-
-connectButton.addEventListener(
-    "click",
-    async () => {
-
-        try {
-
-            validateConfig();
-
-            saveSettings();
-
-
-            setConnectionStatus(
-                "Connecting...",
-                false
-            );
-
-
-            log(
-                "Connecting to GitHub..."
-            );
-
-
-            await getGitHubFile(
-                PRODUCTS_PATH
-            );
-
-
-            setConnectionStatus(
-                "Connected",
-                true
-            );
-
-
-            log(
-                "GitHub connection successful."
-            );
-
-
-            await loadProducts();
-
-
-        } catch (error) {
-
-            setConnectionStatus(
-                "Connection failed",
-                false
-            );
-
-
-            log(
-                "ERROR: " +
-                error.message
-            );
-        }
-    }
-);
-
-
-/* ============================================================
-   DISCONNECT
-============================================================ */
-
-disconnectButton.addEventListener(
-    "click",
-    () => {
-
-        sessionStorage.removeItem(
-            "githubToken"
-        );
-
-        tokenInput.value =
-            "";
-
-        setConnectionStatus(
-            "Not connected",
-            false
-        );
-
-        log(
-            "GitHub token removed from this browser session."
-        );
-    }
-);
-
-
-/* ============================================================
-   CONNECTION STATUS
-============================================================ */
-
-function setConnectionStatus(
-    text,
-    connected
-) {
-
-    connectionStatus.textContent =
-        text;
-
-
-    connectionStatus.className =
-        connected
-            ? "status connected"
-            : "status disconnected";
-}
-
-
-/* ============================================================
-   LOAD PRODUCTS FROM GITHUB
-============================================================ */
-
-async function loadProducts() {
-
-    try {
-
-        const file =
-            await getGitHubFile(
-                PRODUCTS_PATH
-            );
-
-
-        const json =
-            decodeBase64(
-                file.content
-            );
-
-
-        const data =
-            JSON.parse(
-                json
-            );
-
-
-        products =
-            Array.isArray(data)
-                ? data
-                : [];
-
-
-        renderProductTable();
-
-
-        log(
-            `Loaded ${products.length} products.`
-        );
-
-
-    } catch (error) {
-
-        /*
-           404 means products.json does not exist.
-           We will create it when the first product is saved.
-        */
-
-        if (
-            error.message
-                .toLowerCase()
-                .includes(
-                    "not found"
-                )
-        ) {
-
-            products = [];
-
-            renderProductTable();
-
-
-            log(
-                "products.json does not exist yet. It will be created when you save the first product."
-            );
-
-
-            return;
-        }
-
-
-        throw error;
-    }
-}
-
-
-/* ============================================================
-   SAVE PRODUCTS.JSON
-============================================================ */
-
-async function saveProducts() {
-
-    let existingSha =
-        null;
-
-
-    try {
-
-        const file =
-            await getGitHubFile(
-                PRODUCTS_PATH
-            );
-
-
-        existingSha =
-            file.sha;
-
-    } catch (error) {
-
-        if (
-            !error.message
-                .toLowerCase()
-                .includes(
-                    "not found"
-                )
-        ) {
-
-            throw error;
-        }
-    }
-
-
-    const json =
-        JSON.stringify(
-            products,
-            null,
-            4
-        );
-
-
-    const encoded =
-        encodeBase64(
-            json
-        );
-
-
-    await putGitHubFile(
-
-        PRODUCTS_PATH,
-
-        encoded,
-
-        existingSha
-            ? "Update products.json"
-            : "Create products.json",
-
-        existingSha
-    );
-
-
-    log(
-        "products.json saved successfully."
-    );
-}
-
-
-/* ============================================================
-   PRODUCT FORM SUBMIT
-============================================================ */
-
-productForm.addEventListener(
-    "submit",
-    async event => {
-
-        event.preventDefault();
-
-
-        try {
-
-            validateConfig();
-
-
-            const code =
-                productCode.value
-                    .trim();
-
-
-            const name =
-                productName.value
-                    .trim();
-
-
-            const category =
-                productCategory.value
-                    .trim();
-
-
-            const price =
-                Number(
-                    productPrice.value
-                );
-
-
-            const oldPrice =
-                Number(
-                    productOldPrice.value
-                ) || 0;
-
-
-            const tag =
-                productTag.value
-                    .trim();
-
-
-            const description =
-                productDescription.value
-                    .trim();
-
-
-            if (!code) {
-
-                throw new Error(
-                    "Product code is required."
-                );
-            }
-
-
-            if (!name) {
-
-                throw new Error(
-                    "Product name is required."
-                );
-            }
-
-
-            if (!category) {
-
-                throw new Error(
-                    "Category is required."
-                );
-            }
-
-
-            if (
-                !Number.isFinite(price) ||
-                price < 0
-            ) {
-
-                throw new Error(
-                    "Invalid price."
-                );
-            }
-
-
-            /*
-               Check duplicate codes.
-            */
-
-            const existingIndex =
-                products.findIndex(
-                    product =>
-                        String(
-                            product.product_code
-                        ).toLowerCase() ===
-                        code.toLowerCase()
-                );
-
-
-            /*
-               If adding a new product,
-               duplicate codes are not allowed.
-            */
-
-            if (
-                editingCode === null &&
-                existingIndex !== -1
-            ) {
-
-                throw new Error(
-                    "This product code already exists."
-                );
-            }
-
-
-            const product = {
-
-                product_code:
-                    code,
-
-                name:
-                    name,
-
-                category:
-                    category,
-
-                price:
-                    price,
-
-                old_price:
-                    oldPrice,
-
-                tag:
-                    tag,
-
-                description:
-                    description
-            };
-
-
-            /*
-               Upload image first if selected.
-            */
-
-            if (selectedImage) {
-
-                log(
-                    "Preparing thumbnail..."
-                );
-
-
-                const imageBlob =
-                    await createThumbnail(
-                        selectedImage
-                    );
-
-
-                log(
-                    "Uploading thumbnail to GitHub..."
-                );
-
-
-                await uploadThumbnail(
-                    code,
-                    imageBlob
-                );
-
-
-                product.image =
-                    `${IMAGE_FOLDER}/${code}.jpg`;
-
-
-                log(
-                    "Thumbnail uploaded."
-                );
-            }
-
-
-            /*
-               EDIT
-            */
-
-            if (
-                editingCode !== null
-            ) {
-
-                const index =
-                    products.findIndex(
-                        item =>
-                            String(
-                                item.product_code
-                            ) ===
-                            String(
-                                editingCode
-                            )
-                    );
-
-
-                if (index === -1) {
-
-                    throw new Error(
-                        "Product being edited was not found."
-                    );
-                }
-
-
-                /*
-                   Preserve old image if
-                   no new image was selected.
-                */
-
-                if (
-                    !product.image &&
-                    products[index].image
-                ) {
-
-                    product.image =
-                        products[index].image;
-                }
-
-
-                products[index] =
-                    product;
-
-
-                log(
-                    "Product information updated."
-                );
-
-            } else {
-
-                products.push(
-                    product
-                );
-
-
-                log(
-                    "New product added."
-                );
-            }
-
-
-            /*
-               Save JSON
-            */
-
-            log(
-                "Updating products.json..."
-            );
-
-
-            await saveProducts();
-
-
-            /*
-               Reset
-            */
-
-            resetProductForm();
-
-
-            renderProductTable();
-
-
-            log(
-                "PRODUCT SAVED SUCCESSFULLY."
-            );
-
-
-        } catch (error) {
-
-            log(
-                "ERROR: " +
-                error.message
-            );
-
-
-            alert(
-                error.message
-            );
-        }
-    }
-);
-
-
-/* ============================================================
-   IMAGE FILE
-============================================================ */
-
-productImage.addEventListener(
+/* ---------------------------------------------------------
+   IMAGE SELECTION
+--------------------------------------------------------- */
+
+imageFile.addEventListener(
     "change",
-    event => {
+    function () {
 
         const file =
-            event.target.files[0];
+            imageFile.files[0];
 
 
         if (!file) {
 
-            selectedImage =
-                null;
-
-            imagePreviewContainer.hidden =
-                true;
-
             return;
         }
 
 
-        selectedImage =
-            file;
+        preview.src =
+            URL.createObjectURL(
+                file
+            );
 
 
-        const reader =
-            new FileReader();
+        preview.hidden =
+            false;
 
 
-        reader.onload =
-            event => {
+        if (
+            !filename.value
+        ) {
 
-                imagePreview.src =
-                    event.target.result;
+            filename.value =
+                file.name
+                    .replace(
+                        /\s+/g,
+                        "_"
+                    );
+        }
 
-                imagePreviewContainer.hidden =
-                    false;
-            };
-
-
-        reader.readAsDataURL(
-            file
-        );
     }
 );
 
 
-/* ============================================================
-   CREATE THUMBNAIL
-============================================================ */
+/* ---------------------------------------------------------
+   GITHUB HEADERS
+--------------------------------------------------------- */
 
-async function createThumbnail(
+function githubHeaders() {
+
+    return {
+
+        "Authorization":
+            "Bearer " +
+            githubToken.value.trim(),
+
+        "Accept":
+            "application/vnd.github+json",
+
+        "X-GitHub-Api-Version":
+            "2022-11-28"
+
+    };
+}
+
+
+/* ---------------------------------------------------------
+   CHECK INPUT
+--------------------------------------------------------- */
+
+function validateAdminInput() {
+
+    if (
+        !repository.value.trim()
+    ) {
+
+        throw new Error(
+            "Repository is required."
+        );
+    }
+
+
+    if (
+        !githubToken.value.trim()
+    ) {
+
+        throw new Error(
+            "GitHub token is required."
+        );
+    }
+
+
+    if (
+        !imageFile.files[0]
+    ) {
+
+        throw new Error(
+            "Please select or capture an image."
+        );
+    }
+
+
+    if (
+        !filename.value.trim()
+    ) {
+
+        throw new Error(
+            "Filename is required."
+        );
+    }
+}
+
+
+/* ---------------------------------------------------------
+   RESIZE IMAGE
+--------------------------------------------------------- */
+
+async function resizeImage(
     file
 ) {
 
@@ -1170,50 +189,33 @@ async function createThumbnail(
         );
 
 
-    let width =
-        bitmap.width;
+    const maximumSize =
+        800;
 
 
-    let height =
-        bitmap.height;
+    const scale =
+        Math.min(
+            1,
+            maximumSize /
+                Math.max(
+                    bitmap.width,
+                    bitmap.height
+                )
+        );
 
 
-    /*
-       Keep maximum dimension at 600px.
-    */
+    const width =
+        Math.round(
+            bitmap.width *
+            scale
+        );
 
-    if (
-        width > IMAGE_WIDTH ||
-        height > IMAGE_WIDTH
-    ) {
 
-        if (
-            width >= height
-        ) {
-
-            height =
-                Math.round(
-                    height *
-                    IMAGE_WIDTH /
-                    width
-                );
-
-            width =
-                IMAGE_WIDTH;
-
-        } else {
-
-            width =
-                Math.round(
-                    width *
-                    IMAGE_WIDTH /
-                    height
-                );
-
-            height =
-                IMAGE_WIDTH;
-        }
-    }
+    const height =
+        Math.round(
+            bitmap.height *
+            scale
+        );
 
 
     const canvas =
@@ -1224,6 +226,7 @@ async function createThumbnail(
 
     canvas.width =
         width;
+
 
     canvas.height =
         height;
@@ -1245,632 +248,630 @@ async function createThumbnail(
 
 
     return new Promise(
-        (resolve, reject) => {
+        resolve => {
 
             canvas.toBlob(
                 blob => {
 
-                    if (blob) {
-
-                        resolve(
-                            blob
-                        );
-
-                    } else {
-
-                        reject(
-                            new Error(
-                                "Could not create thumbnail."
-                            )
-                        );
-                    }
+                    resolve(
+                        blob
+                    );
 
                 },
 
                 "image/jpeg",
 
-                IMAGE_QUALITY
+                0.82
             );
+
         }
     );
 }
 
 
-/* ============================================================
+/* ---------------------------------------------------------
    BLOB TO BASE64
-============================================================ */
+--------------------------------------------------------- */
 
-function blobToBase64(
+async function blobToBase64(
     blob
 ) {
 
-    return new Promise(
-        (
-            resolve,
-            reject
-        ) => {
-
-            const reader =
-                new FileReader();
+    const arrayBuffer =
+        await blob.arrayBuffer();
 
 
-            reader.onloadend =
-                () => {
-
-                    const result =
-                        reader.result;
-
-
-                    const base64 =
-                        result.split(
-                            ","
-                        )[1];
+    const bytes =
+        new Uint8Array(
+            arrayBuffer
+        );
 
 
-                    resolve(
-                        base64
-                    );
-                };
+    let binary = "";
 
 
-            reader.onerror =
-                reject;
+    const chunkSize =
+        0x8000;
 
 
-            reader.readAsDataURL(
-                blob
-            );
-        }
+    for (
+        let i = 0;
+        i < bytes.length;
+        i += chunkSize
+    ) {
+
+        binary += String.fromCharCode(
+            ...bytes.subarray(
+                i,
+                i + chunkSize
+            )
+        );
+    }
+
+
+    return btoa(
+        binary
     );
 }
 
 
-/* ============================================================
-   UPLOAD THUMBNAIL
-============================================================ */
+/* ---------------------------------------------------------
+   NORMALIZE FILENAME
+--------------------------------------------------------- */
 
-async function uploadThumbnail(
-    code,
-    blob
+function normalizeFilename(
+    name
 ) {
 
-    const path =
-        `${IMAGE_FOLDER}/${code}.jpg`;
+    name =
+        name.trim();
 
 
-    let existingSha =
-        null;
+    name =
+        name.replace(
+            /\s+/g,
+            "_"
+        );
+
+
+    name =
+        name.replace(
+            /\.(png|webp|jpeg)$/i,
+            ".jpg"
+        );
+
+
+    if (
+        !/\.jpg$/i.test(
+            name
+        )
+    ) {
+
+        name +=
+            ".jpg";
+    }
+
+
+    return name;
+}
+
+
+/* ---------------------------------------------------------
+   UPLOAD
+--------------------------------------------------------- */
+
+async function uploadImage() {
+
+    try {
+
+        validateAdminInput();
+
+
+        uploadMessage.textContent =
+            "Preparing image...";
+
+
+        const file =
+            imageFile.files[0];
+
+
+        const finalFilename =
+            normalizeFilename(
+                filename.value
+            );
+
+
+        const resizedBlob =
+            await resizeImage(
+                file
+            );
+
+
+        if (!resizedBlob) {
+
+            throw new Error(
+                "Image resizing failed."
+            );
+        }
+
+
+        uploadMessage.textContent =
+            "Converting image...";
+
+
+        const base64 =
+            await blobToBase64(
+                resizedBlob
+            );
+
+
+        const repo =
+            repository.value.trim();
+
+
+        const apiURL =
+            "https://api.github.com/repos/" +
+            repo +
+            "/contents/images/" +
+            encodeURIComponent(
+                finalFilename
+            );
+
+
+        /* -------------------------------------------------
+           CHECK WHETHER FILE ALREADY EXISTS
+        ------------------------------------------------- */
+
+        uploadMessage.textContent =
+            "Checking GitHub...";
+
+
+        const existingResponse =
+            await fetch(
+                apiURL,
+                {
+                    method:
+                        "GET",
+
+                    headers:
+                        githubHeaders(),
+
+                    cache:
+                        "no-store"
+                }
+            );
+
+
+        let existingSHA =
+            null;
+
+
+        if (
+            existingResponse.ok
+        ) {
+
+            const existing =
+                await existingResponse.json();
+
+
+            existingSHA =
+                existing.sha;
+        }
+
+
+        /* -------------------------------------------------
+           UPLOAD
+        ------------------------------------------------- */
+
+        uploadMessage.textContent =
+            existingSHA
+                ? "Updating image..."
+                : "Uploading image...";
+
+
+        const body = {
+
+            message:
+                existingSHA
+                    ? "Update product image " +
+                      finalFilename
+                    : "Add product image " +
+                      finalFilename,
+
+            content:
+                base64
+
+        };
+
+
+        if (
+            existingSHA
+        ) {
+
+            body.sha =
+                existingSHA;
+        }
+
+
+        const uploadResponse =
+            await fetch(
+                apiURL,
+                {
+
+                    method:
+                        "PUT",
+
+                    headers:
+                        {
+                            ...githubHeaders(),
+
+                            "Content-Type":
+                                "application/json"
+                        },
+
+                    body:
+                        JSON.stringify(
+                            body
+                        )
+                }
+            );
+
+
+        const result =
+            await uploadResponse.json();
+
+
+        if (
+            !uploadResponse.ok
+        ) {
+
+            throw new Error(
+                result.message ||
+                "GitHub upload failed."
+            );
+        }
+
+
+        uploadMessage.textContent =
+            "SUCCESS\n\n" +
+            finalFilename +
+            "\n\n" +
+            "GitHub has accepted the image.";
+
+
+        await loadImages();
+
+    }
+    catch (error) {
+
+        console.error(
+            "UPLOAD ERROR:",
+            error
+        );
+
+
+        uploadMessage.textContent =
+            "ERROR:\n\n" +
+            error.message;
+    }
+}
+
+
+/* ---------------------------------------------------------
+   LIST IMAGES
+--------------------------------------------------------- */
+
+async function loadImages() {
+
+    imageList.innerHTML =
+        "Loading...";
 
 
     try {
 
-        const existing =
-            await getGitHubFile(
-                path
-            );
-
-
-        existingSha =
-            existing.sha;
-
-    } catch (error) {
-
         if (
-            !error.message
-                .toLowerCase()
-                .includes(
-                    "not found"
-                )
+            !repository.value.trim()
         ) {
 
-            throw error;
+            throw new Error(
+                "Repository is required."
+            );
         }
+
+
+        const url =
+            "https://api.github.com/repos/" +
+            repository.value.trim() +
+            "/contents/images?t=" +
+            Date.now();
+
+
+        const response =
+            await fetch(
+                url,
+                {
+
+                    headers:
+                        githubToken.value.trim()
+                            ? githubHeaders()
+                            : {},
+
+                    cache:
+                        "no-store"
+                }
+            );
+
+
+        if (
+            !response.ok
+        ) {
+
+            const error =
+                await response.json();
+
+
+            throw new Error(
+                error.message ||
+                "Could not read images."
+            );
+        }
+
+
+        const files =
+            await response.json();
+
+
+        imageList.innerHTML =
+            "";
+
+
+        files
+            .filter(
+                file =>
+                    file.type ===
+                    "file"
+            )
+            .forEach(
+                file => {
+
+                    createImageRow(
+                        file
+                    );
+                }
+            );
+
+
+        if (
+            imageList.children.length ===
+            0
+        ) {
+
+            imageList.textContent =
+                "No images found.";
+        }
+
     }
+    catch (error) {
 
-
-    const base64 =
-        await blobToBase64(
-            blob
+        console.error(
+            "LIST ERROR:",
+            error
         );
 
 
-    await putGitHubFile(
-
-        path,
-
-        base64,
-
-        existingSha
-            ? `Update thumbnail ${code}`
-            : `Add thumbnail ${code}`,
-
-        existingSha
-    );
+        imageList.textContent =
+            "ERROR: " +
+            error.message;
+    }
 }
 
 
-/* ============================================================
-   RENDER PRODUCT TABLE
-============================================================ */
+/* ---------------------------------------------------------
+   IMAGE ROW
+--------------------------------------------------------- */
 
-function renderProductTable() {
-
-    const search =
-        adminSearch.value
-            .trim()
-            .toLowerCase();
-
-
-    const filtered =
-        products.filter(
-            product => {
-
-                const text =
-                    [
-                        product.product_code,
-                        product.name,
-                        product.category,
-                        product.tag
-                    ]
-                        .filter(Boolean)
-                        .join(" ")
-                        .toLowerCase();
-
-
-                return text.includes(
-                    search
-                );
-            }
-        );
-
-
-    catalogueCount.textContent =
-        `${products.length} product` +
-        (
-            products.length === 1
-                ? ""
-                : "s"
-        );
-
-
-    productTable.innerHTML =
-        "";
-
-
-    if (!filtered.length) {
-
-        productTable.innerHTML = `
-
-            <div class="help-text">
-
-                No products found.
-
-            </div>
-        `;
-
-        return;
-    }
-
-
-    filtered.forEach(
-        product => {
-
-            const row =
-                document.createElement(
-                    "div"
-                );
-
-
-            row.className =
-                "product-row";
-
-
-            const code =
-                product.product_code ||
-                "";
-
-
-            const image =
-                product.image ||
-                `${IMAGE_FOLDER}/${code}.jpg`;
-
-
-            row.innerHTML = `
-
-                <div class="product-row-image">
-
-                    <img
-                        src="${escapeHTML(image)}"
-                        alt=""
-                        loading="lazy"
-                        onerror="this.style.display='none'"
-                    >
-
-                </div>
-
-
-                <div class="product-row-info">
-
-                    <h3>
-                        ${escapeHTML(
-                            product.name ||
-                            "Unnamed"
-                        )}
-                    </h3>
-
-                    <p>
-                        Code:
-                        ${escapeHTML(code)}
-                    </p>
-
-                    <p>
-                        ${escapeHTML(
-                            product.category ||
-                            ""
-                        )}
-                        ·
-                        ₹${Number(
-                            product.price || 0
-                        ).toLocaleString("en-IN")}
-                    </p>
-
-                </div>
-
-
-                <div class="product-row-actions">
-
-                    <button
-                        type="button"
-                        class="small-button edit-button"
-                    >
-                        Edit
-                    </button>
-
-                    <button
-                        type="button"
-                        class="small-button delete-button"
-                    >
-                        Delete
-                    </button>
-
-                </div>
-            `;
-
-
-            row.querySelector(
-                ".edit-button"
-            ).addEventListener(
-                "click",
-                () =>
-                    editProduct(code)
-            );
-
-
-            row.querySelector(
-                ".delete-button"
-            ).addEventListener(
-                "click",
-                () =>
-                    deleteProduct(code)
-            );
-
-
-            productTable.appendChild(
-                row
-            );
-        }
-    );
-}
-
-
-/* ============================================================
-   EDIT PRODUCT
-============================================================ */
-
-function editProduct(
-    code
+function createImageRow(
+    file
 ) {
 
-    const product =
-        products.find(
-            item =>
-                String(
-                    item.product_code
-                ) ===
-                String(code)
+    const row =
+        document.createElement(
+            "div"
         );
 
 
-    if (!product) {
-        return;
-    }
+    row.className =
+        "image-row";
 
 
-    editingCode =
-        code;
+    const image =
+        document.createElement(
+            "img"
+        );
 
 
-    productCode.value =
-        product.product_code ||
-        "";
+    image.src =
+        "images/" +
+        encodeURIComponent(
+            file.name
+        );
 
 
-    productName.value =
-        product.name ||
-        "";
+    image.alt =
+        file.name;
 
 
-    productCategory.value =
-        product.category ||
-        "";
+    const name =
+        document.createElement(
+            "div"
+        );
 
 
-    productPrice.value =
-        product.price ??
-        "";
+    name.className =
+        "image-name";
 
 
-    productOldPrice.value =
-        product.old_price ??
-        "";
+    name.textContent =
+        file.name;
 
 
-    productTag.value =
-        product.tag ||
-        "";
+    const deleteButton =
+        document.createElement(
+            "button"
+        );
 
 
-    productDescription.value =
-        product.description ||
-        "";
+    deleteButton.className =
+        "delete-button";
 
 
-    selectedImage =
-        null;
+    deleteButton.textContent =
+        "Delete";
 
 
-    productImage.value =
-        "";
+    deleteButton.onclick =
+        function () {
+
+            deleteImage(
+                file.name,
+                file.sha
+            );
+        };
 
 
-    editingStatus.textContent =
-        `Editing ${code}`;
-
-
-    window.scrollTo(
-        {
-            top: 0,
-            behavior: "smooth"
-        }
+    row.appendChild(
+        image
     );
 
 
-    log(
-        `Editing product ${code}.`
+    row.appendChild(
+        name
+    );
+
+
+    row.appendChild(
+        deleteButton
+    );
+
+
+    imageList.appendChild(
+        row
     );
 }
 
 
-/* ============================================================
-   DELETE PRODUCT
-============================================================ */
+/* ---------------------------------------------------------
+   DELETE
+--------------------------------------------------------- */
 
-async function deleteProduct(
-    code
+async function deleteImage(
+    name,
+    sha
 ) {
-
-    const product =
-        products.find(
-            item =>
-                String(
-                    item.product_code
-                ) ===
-                String(code)
-        );
-
-
-    if (!product) {
-        return;
-    }
-
 
     const confirmed =
         confirm(
-            `Delete ${product.name || code}?`
+            "Delete " +
+            name +
+            "?"
         );
 
 
-    if (!confirmed) {
+    if (
+        !confirmed
+    ) {
+
         return;
     }
 
 
     try {
 
-        products =
-            products.filter(
-                item =>
-                    String(
-                        item.product_code
-                    ) !==
-                    String(code)
+        const url =
+            "https://api.github.com/repos/" +
+            repository.value.trim() +
+            "/contents/images/" +
+            encodeURIComponent(
+                name
             );
 
 
-        await saveProducts();
+        const response =
+            await fetch(
+                url,
+                {
+
+                    method:
+                        "DELETE",
+
+                    headers:
+                        {
+                            ...githubHeaders(),
+
+                            "Content-Type":
+                                "application/json"
+                        },
+
+                    body:
+                        JSON.stringify({
+
+                            message:
+                                "Delete " +
+                                name,
+
+                            sha:
+                                sha
+
+                        })
+                }
+            );
 
 
-        renderProductTable();
+        const result =
+            await response.json();
 
 
-        log(
-            `Product ${code} deleted from products.json.`
-        );
+        if (
+            !response.ok
+        ) {
 
-
-    } catch (error) {
-
-        log(
-            "ERROR: " +
-            error.message
-        );
-
-
-        alert(
-            error.message
-        );
-
-
-        await loadProducts();
-    }
-}
-
-
-/* ============================================================
-   NEW PRODUCT
-============================================================ */
-
-newProductButton.addEventListener(
-    "click",
-    resetProductForm
-);
-
-
-function resetProductForm() {
-
-    editingCode =
-        null;
-
-
-    selectedImage =
-        null;
-
-
-    productForm.reset();
-
-
-    editingStatus.textContent =
-        "New product";
-
-
-    imagePreviewContainer.hidden =
-        true;
-
-
-    imagePreview.src =
-        "";
-
-
-    log(
-        "Ready for a new product."
-    );
-}
-
-
-/* ============================================================
-   SEARCH
-============================================================ */
-
-adminSearch.addEventListener(
-    "input",
-    renderProductTable
-);
-
-
-/* ============================================================
-   RELOAD
-============================================================ */
-
-reloadButton.addEventListener(
-    "click",
-    async () => {
-
-        try {
-
-            await loadProducts();
-
-        } catch (error) {
-
-            log(
-                "ERROR: " +
-                error.message
+            throw new Error(
+                result.message ||
+                "Delete failed."
             );
         }
+
+
+        uploadMessage.textContent =
+            "Deleted: " +
+            name;
+
+
+        await loadImages();
+
     }
-);
+    catch (error) {
 
-
-/* ============================================================
-   LOG
-============================================================ */
-
-function log(
-    message
-) {
-
-    const now =
-        new Date()
-            .toLocaleTimeString();
-
-
-    statusLog.textContent =
-        `[${now}] ${message}\n` +
-        statusLog.textContent;
-}
-
-
-/* ============================================================
-   ESCAPE HTML
-============================================================ */
-
-function escapeHTML(
-    value
-) {
-
-    return String(value)
-        .replace(
-            /&/g,
-            "&amp;"
-        )
-        .replace(
-            /</g,
-            "&lt;"
-        )
-        .replace(
-            />/g,
-            "&gt;"
-        )
-        .replace(
-            /"/g,
-            "&quot;"
-        )
-        .replace(
-            /'/g,
-            "&#039;"
+        console.error(
+            "DELETE ERROR:",
+            error
         );
+
+
+        uploadMessage.textContent =
+            "DELETE ERROR:\n" +
+            error.message;
+    }
 }
 
 
-/* ============================================================
-   INITIALIZATION
-============================================================ */
+/* ---------------------------------------------------------
+   BUTTONS
+--------------------------------------------------------- */
 
-loadSettings();
+uploadButton.onclick =
+    uploadImage;
 
 
-/*
-   If a previous session exists,
-   don't automatically send the token anywhere.
-   Just show that settings are available.
-*/
-
-if (
-    tokenInput.value &&
-    ownerInput.value &&
-    repoInput.value
-) {
-
-    log(
-        "Previous GitHub session found. Click Connect to continue."
-    );
-}
+refreshButton.onclick =
+    loadImages;
