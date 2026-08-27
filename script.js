@@ -9,7 +9,7 @@
 --------------------------------------------------------- */
 
 const GITHUB_IMAGES_API =
-    "https://api.github.com/repos/AnimeshShrivastav/animeshrivastav.github.io/contents/images?ref=main";
+    "https://api.github.com/repos/AnimeshShrivastav/animeshshrivastav.github.io/contents/images?ref=main";
 
 
 /* ---------------------------------------------------------
