@@ -12,10 +12,6 @@ const GITHUB_IMAGES_API =
     "https://api.github.com/repos/AnimeshShrivastav/animeshrivastav.github.io/contents/images";
 
 
-const IMAGE_FOLDER =
-    "images";
-
-
 /* ---------------------------------------------------------
    STATE
 --------------------------------------------------------- */
@@ -24,13 +20,10 @@ let products = [];
 
 let cart =
     JSON.parse(
-        localStorage.getItem(
-            "presentPerfectCart"
-        ) || "[]"
+        localStorage.getItem("presentPerfectCart") || "[]"
     );
 
-let selectedCategory =
-    "All";
+let selectedCategory = "All";
 
 
 /* ---------------------------------------------------------
@@ -38,146 +31,86 @@ let selectedCategory =
 --------------------------------------------------------- */
 
 const productGrid =
-    document.getElementById(
-        "productGrid"
-    );
-
+    document.getElementById("productGrid");
 
 const productCount =
-    document.getElementById(
-        "productCount"
-    );
-
+    document.getElementById("productCount");
 
 const message =
-    document.getElementById(
-        "message"
-    );
-
+    document.getElementById("message");
 
 const searchInput =
-    document.getElementById(
-        "searchInput"
-    );
-
+    document.getElementById("searchInput");
 
 const categories =
-    document.getElementById(
-        "categories"
-    );
-
+    document.getElementById("categories");
 
 const cartCount =
-    document.getElementById(
-        "cartCount"
-    );
+    document.getElementById("cartCount");
 
 
 /* ---------------------------------------------------------
-   PARSE FILENAME
+   PARSE GITHUB FILE
 --------------------------------------------------------- */
 
-/*
+function parseFilename(file) {
 
-Example:
-
-AJ001_Necklace_MRP799.jpg
-
-becomes:
-
-code     = AJ001
-category = Necklace
-price    = 799
-
-Another:
-
-GD001_Home_Decor_MRP1299.jpg
-
-becomes:
-
-code     = GD001
-category = Home Decor
-price    = 1299
-
-*/
-
-function parseFilename(filename) {
+    const filename = file.name;
 
     const withoutExtension =
-        filename.replace(
-            /\.[^/.]+$/,
-            ""
-        );
-
+        filename.replace(/\.[^/.]+$/, "");
 
     const parts =
-        withoutExtension.split(
-            "_"
-        );
-
+        withoutExtension.split("_");
 
     const code =
         parts.shift() ||
         withoutExtension;
-
 
     const priceMatch =
         withoutExtension.match(
             /(?:MRP|PRICE)[-_]?(\d+(?:\.\d+)?)/i
         );
 
-
     const price =
         priceMatch
-            ? Number(
-                priceMatch[1]
-            )
+            ? Number(priceMatch[1])
             : 0;
-
 
     const categoryParts =
         parts.filter(
             part =>
-                !/^(MRP|PRICE)[-_]?\d+/i.test(
-                    part
-                )
+                !/^(MRP|PRICE)[-_]?\d+/i.test(part)
         );
-
 
     const category =
         categoryParts
             .join(" ")
-            .replace(
-                /-/g,
-                " "
-            )
+            .replace(/-/g, " ")
             .trim() ||
         "Product";
 
 
     return {
 
-        code:
-            code,
+        code: code,
 
-        name:
-            category,
+        name: category,
 
-        category:
-            category,
+        category: category,
 
-        price:
-            price,
+        price: price,
 
-        filename:
-            filename,
+        filename: filename,
 
-        image:
-            IMAGE_FOLDER +
-            "/" +
-            encodeURIComponent(
-                filename
-            )
+        /*
+         * IMPORTANT:
+         * Use GitHub's actual download URL.
+         * This avoids problems with relative paths,
+         * spaces and special characters in filenames.
+         */
+        image: file.download_url
+
     };
 }
 
@@ -190,6 +123,10 @@ async function loadProducts() {
 
     message.textContent =
         "Loading products...";
+
+    productGrid.innerHTML = "";
+
+    productCount.textContent = "";
 
 
     try {
@@ -208,6 +145,7 @@ async function loadProducts() {
                 "GitHub API returned HTTP " +
                 response.status
             );
+
         }
 
 
@@ -220,6 +158,7 @@ async function loadProducts() {
             throw new Error(
                 "GitHub response is not an array."
             );
+
         }
 
 
@@ -234,10 +173,31 @@ async function loadProducts() {
                 )
                 .map(
                     file =>
-                        parseFilename(
-                            file.name
-                        )
+                        parseFilename(file)
                 );
+
+
+        console.log(
+            "GitHub files:",
+            files
+        );
+
+        console.log(
+            "Products:",
+            products
+        );
+
+
+        if (products.length === 0) {
+
+            productCount.textContent =
+                "0 products";
+
+            message.textContent =
+                "No product images found in the GitHub images folder.";
+
+            return;
+        }
 
 
         createCategories();
@@ -256,9 +216,7 @@ async function loadProducts() {
         );
 
 
-        productGrid.innerHTML =
-            "";
-
+        productGrid.innerHTML = "";
 
         productCount.textContent =
             "Error";
@@ -266,6 +224,16 @@ async function loadProducts() {
 
         message.textContent =
             "Could not read the GitHub images folder.";
+
+
+        /*
+         * Show the actual error in the browser console.
+         */
+        console.error(
+            "Check this URL:",
+            GITHUB_IMAGES_API
+        );
+
     }
 }
 
@@ -294,45 +262,35 @@ function createCategories() {
     const categoryArray =
         [
             "All",
-            ...Array.from(
-                categorySet
-            ).sort()
+            ...Array.from(categorySet).sort()
         ];
 
 
-    categories.innerHTML =
-        "";
+    categories.innerHTML = "";
 
 
     categoryArray.forEach(
         category => {
 
             const button =
-                document.createElement(
-                    "button"
-                );
+                document.createElement("button");
 
 
-            button.type =
-                "button";
-
+            button.type = "button";
 
             button.className =
                 "category-button";
-
 
             button.textContent =
                 category;
 
 
             if (
-                category ===
-                selectedCategory
+                category === selectedCategory
             ) {
 
-                button.classList.add(
-                    "active"
-                );
+                button.classList.add("active");
+
             }
 
 
@@ -345,6 +303,7 @@ function createCategories() {
                     createCategories();
 
                     renderProducts();
+
                 };
 
 
@@ -374,10 +333,8 @@ function getFilteredProducts() {
         product => {
 
             const categoryMatch =
-                selectedCategory ===
-                "All" ||
-                product.category ===
-                selectedCategory;
+                selectedCategory === "All" ||
+                product.category === selectedCategory;
 
 
             const searchText =
@@ -387,28 +344,26 @@ function getFilteredProducts() {
                     product.name +
                     " " +
                     product.category
-                )
-                    .toLowerCase();
+                ).toLowerCase();
 
 
             const searchMatch =
                 !search ||
-                searchText.includes(
-                    search
-                );
+                searchText.includes(search);
 
 
             return (
                 categoryMatch &&
                 searchMatch
             );
+
         }
     );
 }
 
 
 /* ---------------------------------------------------------
-   RENDER
+   RENDER PRODUCTS
 --------------------------------------------------------- */
 
 function renderProducts() {
@@ -417,8 +372,7 @@ function renderProducts() {
         getFilteredProducts();
 
 
-    productGrid.innerHTML =
-        "";
+    productGrid.innerHTML = "";
 
 
     productCount.textContent =
@@ -431,9 +385,7 @@ function renderProducts() {
         );
 
 
-    if (
-        filtered.length === 0
-    ) {
+    if (filtered.length === 0) {
 
         message.textContent =
             "No products found.";
@@ -442,17 +394,14 @@ function renderProducts() {
     }
 
 
-    message.textContent =
-        "";
+    message.textContent = "";
 
 
     filtered.forEach(
         product => {
 
             const card =
-                document.createElement(
-                    "article"
-                );
+                document.createElement("article");
 
 
             card.className =
@@ -462,69 +411,104 @@ function renderProducts() {
             const price =
                 product.price > 0
                     ? "₹" +
-                      product.price.toLocaleString(
-                          "en-IN"
-                      )
+                      product.price.toLocaleString("en-IN")
                     : "Price on request";
 
 
-            card.innerHTML = `
+            /*
+             * Create elements instead of inserting
+             * the image URL through innerHTML.
+             */
+            const image =
+                document.createElement("img");
 
-                <img
-                    src="${escapeHTML(product.image)}"
-                    alt="${escapeHTML(product.name)}"
-                    loading="lazy"
-                >
+            image.src =
+                product.image;
 
-                <div class="product-info">
+            image.alt =
+                product.name;
 
-                    <div class="product-category">
-                        ${escapeHTML(product.category)}
-                    </div>
+            image.loading =
+                "lazy";
 
-                    <div class="product-name">
-                        ${escapeHTML(product.name)}
-                    </div>
 
-                    <div class="product-code">
-                        ${escapeHTML(product.code)}
-                    </div>
+            /*
+             * Helpful error handling if an image
+             * cannot be loaded.
+             */
+            image.onerror =
+                function () {
 
-                    <div class="product-bottom">
+                    console.error(
+                        "IMAGE FAILED:",
+                        product.filename,
+                        product.image
+                    );
 
-                        <span class="product-price">
-                            ${price}
-                        </span>
+                    image.alt =
+                        "Image unavailable";
 
-                        <button
-                            class="add-button"
-                            type="button"
-                        >
-                            Add
-                        </button>
+                };
 
-                    </div>
+
+            const info =
+                document.createElement("div");
+
+            info.className =
+                "product-info";
+
+
+            info.innerHTML = `
+
+                <div class="product-category">
+                    ${escapeHTML(product.category)}
+                </div>
+
+                <div class="product-name">
+                    ${escapeHTML(product.name)}
+                </div>
+
+                <div class="product-code">
+                    ${escapeHTML(product.code)}
+                </div>
+
+                <div class="product-bottom">
+
+                    <span class="product-price">
+                        ${price}
+                    </span>
+
+                    <button
+                        class="add-button"
+                        type="button"
+                    >
+                        Add
+                    </button>
 
                 </div>
+
             `;
 
 
-            card
-                .querySelector(
-                    ".add-button"
-                )
-                .onclick =
+            const addButton =
+                info.querySelector(".add-button");
+
+
+            addButton.onclick =
                 function () {
 
                     addToCart(
                         product.code
                     );
+
                 };
 
 
-            productGrid.appendChild(
-                card
-            );
+            card.appendChild(image);
+
+            card.appendChild(info);
+
+            productGrid.appendChild(card);
 
         }
     );
@@ -553,12 +537,12 @@ function addToCart(code) {
 
         cart.push({
 
-            code:
-                code,
+            code: code,
 
-            quantity:
-                1
+            quantity: 1
+
         });
+
     }
 
 
@@ -573,16 +557,23 @@ function addToCart(code) {
 }
 
 
+/* ---------------------------------------------------------
+   SAVE CART
+--------------------------------------------------------- */
+
 function saveCart() {
 
     localStorage.setItem(
         "presentPerfectCart",
-        JSON.stringify(
-            cart
-        )
+        JSON.stringify(cart)
     );
+
 }
 
+
+/* ---------------------------------------------------------
+   CART COUNT
+--------------------------------------------------------- */
 
 function updateCartCount() {
 
@@ -592,14 +583,14 @@ function updateCartCount() {
                 sum,
                 item
             ) =>
-                sum +
-                item.quantity,
+                sum + item.quantity,
             0
         );
 
 
     cartCount.textContent =
         total;
+
 }
 
 
@@ -610,26 +601,32 @@ function updateCartCount() {
 function escapeHTML(value) {
 
     return String(value)
+
         .replace(
             /&/g,
             "&amp;"
         )
+
         .replace(
             /</g,
             "&lt;"
         )
+
         .replace(
             />/g,
             "&gt;"
         )
+
         .replace(
             /"/g,
             "&quot;"
         )
+
         .replace(
             /'/g,
             "&#039;"
         );
+
 }
 
 
@@ -647,10 +644,16 @@ searchInput.addEventListener(
    YEAR
 --------------------------------------------------------- */
 
-document.getElementById(
-    "year"
-).textContent =
-    new Date().getFullYear();
+const yearElement =
+    document.getElementById("year");
+
+
+if (yearElement) {
+
+    yearElement.textContent =
+        new Date().getFullYear();
+
+}
 
 
 /* ---------------------------------------------------------
