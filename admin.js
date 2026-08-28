@@ -19,7 +19,7 @@
  * Do not put "Bearer" here.
  */
 const GITHUB_TOKEN =
-    "YOUR_GITHUB_TOKEN_HERE";
+    "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";
 
 
 /*
