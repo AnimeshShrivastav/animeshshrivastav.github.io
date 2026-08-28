@@ -31,7 +31,7 @@
  */
 
 const GITHUB_TOKEN =
-    "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";
+    "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";
 
 
 const GITHUB_REPOSITORY =
@@ -99,7 +99,7 @@ function tokenConfigured() {
     return (
         typeof GITHUB_TOKEN === "string" &&
         GITHUB_TOKEN.trim() !== "" &&
-        GITHUB_TOKEN.trim() !== "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"
+        GITHUB_TOKEN.trim() !== "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"
     );
 }
 
