@@ -50,65 +50,124 @@ const cartCount =
 
 
 /* ---------------------------------------------------------
-   PARSE GITHUB FILE
+   PARSE FILENAME
+   Format:
+
+   ItemName_Price.extension
+
+   Examples:
+
+   Shirt_499.jpg
+   Blue Jeans_799.png
+   Kurta Set_1299.webp
 --------------------------------------------------------- */
 
 function parseFilename(file) {
 
     const filename = file.name;
 
+    /*
+     * Remove the file extension.
+     *
+     * Example:
+     * "Blue Jeans_799.jpg"
+     * becomes
+     * "Blue Jeans_799"
+     */
     const withoutExtension =
         filename.replace(/\.[^/.]+$/, "");
 
-    const parts =
-        withoutExtension.split("_");
 
-    const code =
-        parts.shift() ||
-        withoutExtension;
+    /*
+     * Split ONLY at the underscore.
+     *
+     * Since filenames have one underscore:
+     *
+     * "Blue Jeans_799"
+     *
+     * becomes:
+     *
+     * ["Blue Jeans", "799"]
+     */
+    const underscoreIndex =
+        withoutExtension.lastIndexOf("_");
 
-    const priceMatch =
-        withoutExtension.match(
-            /(?:MRP|PRICE)[-_]?(\d+(?:\.\d+)?)/i
+
+    /*
+     * If there is no underscore,
+     * the filename cannot be parsed correctly.
+     */
+    if (underscoreIndex === -1) {
+
+        console.warn(
+            "Filename does not contain an underscore:",
+            filename
         );
 
+        return null;
+    }
+
+
+    /*
+     * Everything BEFORE the underscore
+     * is the product name.
+     */
+    const name =
+        withoutExtension
+            .substring(0, underscoreIndex)
+            .trim();
+
+
+    /*
+     * Everything AFTER the underscore
+     * is the price.
+     */
+    const priceText =
+        withoutExtension
+            .substring(underscoreIndex + 1)
+            .trim();
+
+
+    /*
+     * Convert price to a number.
+     *
+     * Example:
+     * "799" -> 799
+     */
     const price =
-        priceMatch
-            ? Number(priceMatch[1])
-            : 0;
+        Number(priceText);
 
-    const categoryParts =
-        parts.filter(
-            part =>
-                !/^(MRP|PRICE)[-_]?\d+/i.test(part)
+
+    /*
+     * Reject invalid filenames/prices.
+     */
+    if (!name || !Number.isFinite(price)) {
+
+        console.warn(
+            "Invalid product filename:",
+            filename
         );
 
-    const category =
-        categoryParts
-            .join(" ")
-            .replace(/-/g, " ")
-            .trim() ||
-        "Product";
+        return null;
+    }
 
 
+    /*
+     * GitHub provides the correct raw image URL
+     * through download_url.
+     */
     return {
 
-        code: code,
+        code: name,
 
-        name: category,
+        name: name,
 
-        category: category,
+        category: "Product",
 
         price: price,
 
         filename: filename,
 
-        /*
-         * IMPORTANT:
-         * Use GitHub's actual download URL.
-         * This avoids problems with relative paths,
-         * spaces and special characters in filenames.
-         */
         image: file.download_url
 
     };
@@ -131,10 +190,18 @@ async function loadProducts() {
 
     try {
 
+        /*
+         * IMPORTANT:
+         *
+         * GITHUB_IMAGES_API already contains "?ref=main",
+         * so use "&t=" here instead of "?t=".
+         *
+         * The timestamp prevents browser caching.
+         */
         const response =
             await fetch(
                 GITHUB_IMAGES_API +
-                "?t=" +
+                "&t=" +
                 Date.now()
             );
 
@@ -162,6 +229,15 @@ async function loadProducts() {
         }
 
 
+        console.log(
+            "GitHub files:",
+            files
+        );
+
+
+        /*
+         * Keep only image files.
+         */
         products =
             files
                 .filter(
@@ -174,13 +250,12 @@ async function loadProducts() {
                 .map(
                     file =>
                         parseFilename(file)
+                )
+                .filter(
+                    product =>
+                        product !== null
                 );
 
-
-        console.log(
-            "GitHub files:",
-            files
-        );
 
         console.log(
             "Products:",
@@ -194,7 +269,7 @@ async function loadProducts() {
                 "0 products";
 
             message.textContent =
-                "No product images found in the GitHub images folder.";
+                "No valid product images found in the GitHub images folder.";
 
             return;
         }
@@ -224,15 +299,6 @@ async function loadProducts() {
 
         message.textContent =
             "Could not read the GitHub images folder.";
-
-
-        /*
-         * Show the actual error in the browser console.
-         */
-        console.error(
-            "Check this URL:",
-            GITHUB_IMAGES_API
-        );
 
     }
 }
@@ -415,26 +481,31 @@ function renderProducts() {
                     : "Price on request";
 
 
-            /*
-             * Create elements instead of inserting
-             * the image URL through innerHTML.
-             */
+            /* ------------------------------------------------
+               IMAGE
+            ------------------------------------------------ */
+
             const image =
                 document.createElement("img");
 
+
+            /*
+             * This is the actual GitHub image URL.
+             */
             image.src =
                 product.image;
 
+
             image.alt =
                 product.name;
+
 
             image.loading =
                 "lazy";
 
 
             /*
-             * Helpful error handling if an image
-             * cannot be loaded.
+             * If image fails, show a useful console message.
              */
             image.onerror =
                 function () {
@@ -451,8 +522,13 @@ function renderProducts() {
                 };
 
 
+            /* ------------------------------------------------
+               PRODUCT INFO
+            ------------------------------------------------ */
+
             const info =
                 document.createElement("div");
+
 
             info.className =
                 "product-info";
