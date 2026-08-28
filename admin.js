@@ -18,7 +18,7 @@
  * JavaScript exposes it to anyone who can access this page.
  */
 const GITHUB_TOKEN =
-    "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";
+    "5wXqVq4C2eSQ7FV9QomQZHsnuqQRDfTbpfZPimCFdzQYLRWZME5jGbkCWC8";
 
 
 /*
