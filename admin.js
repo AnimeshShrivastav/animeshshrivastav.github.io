@@ -1,6 +1,6 @@
 /* =========================================================
    PRESENT PERFECT ADMIN
-   GitHub API
+   GitHub API — Image Upload / Update / Delete
 ========================================================= */
 
 
@@ -11,62 +11,39 @@
 /*
  * IMPORTANT:
  *
- * DO NOT reuse the GitHub token that was previously posted.
- * Revoke that token in GitHub and create a new one.
+ * NEVER commit your real GitHub token to a public repository.
  *
- * Also note that putting a GitHub token in browser-side
- * JavaScript exposes it to anyone who can access this page.
+ * Replace this with your NEW token for testing.
+ *
+ * Required fine-grained token permission:
+ *
+ * Repository access:
+ *   Only select repositories
+ *   → AnimeshShrivastav/animeshshrivastav.github.io
+ *
+ * Repository permissions:
+ *   Contents → Read and write
+ *
+ * IMPORTANT:
+ * A browser-side token is NOT secure for a public website.
+ * For production, move GitHub API calls to a backend/serverless
+ * function so the token is never exposed to visitors.
  */
+
 const GITHUB_TOKEN =
     "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";
 
 
-/*
- * GitHub repository.
- */
 const GITHUB_REPOSITORY =
     "AnimeshShrivastav/animeshshrivastav.github.io";
 
 
-/*
- * Folder containing product images.
- */
 const IMAGE_FOLDER =
     "images";
 
 
-/*
- * GitHub branch.
- */
 const GITHUB_BRANCH =
     "main";
-
-
-/* ---------------------------------------------------------
-   TOKEN DEBUG
---------------------------------------------------------- */
-
-if (
-    GITHUB_TOKEN &&
-    GITHUB_TOKEN !==
-        "YOUR_GITHUB_TOKEN_HERE"
-) {
-
-    console.log(
-        "GitHub token loaded:",
-        GITHUB_TOKEN.substring(0, 4),
-        "length:",
-        GITHUB_TOKEN.length
-    );
-
-}
-else {
-
-    console.warn(
-        "GitHub token has not been configured."
-    );
-
-}
 
 
 /* ---------------------------------------------------------
@@ -74,45 +51,25 @@ else {
 --------------------------------------------------------- */
 
 const imageFile =
-    document.getElementById(
-        "imageFile"
-    );
-
+    document.getElementById("imageFile");
 
 const preview =
-    document.getElementById(
-        "preview"
-    );
-
+    document.getElementById("preview");
 
 const filename =
-    document.getElementById(
-        "filename"
-    );
-
+    document.getElementById("filename");
 
 const uploadButton =
-    document.getElementById(
-        "uploadButton"
-    );
-
+    document.getElementById("uploadButton");
 
 const uploadMessage =
-    document.getElementById(
-        "uploadMessage"
-    );
-
+    document.getElementById("uploadMessage");
 
 const refreshButton =
-    document.getElementById(
-        "refreshButton"
-    );
-
+    document.getElementById("refreshButton");
 
 const imageList =
-    document.getElementById(
-        "imageList"
-    );
+    document.getElementById("imageList");
 
 
 /* ---------------------------------------------------------
@@ -134,10 +91,31 @@ console.log(
 
 
 /* ---------------------------------------------------------
+   TOKEN CHECK
+--------------------------------------------------------- */
+
+function tokenConfigured() {
+
+    return (
+        typeof GITHUB_TOKEN === "string" &&
+        GITHUB_TOKEN.trim() !== "" &&
+        GITHUB_TOKEN.trim() !== "YOUR_NEW_GITHUB_TOKEN_HERE"
+    );
+}
+
+
+/* ---------------------------------------------------------
    GITHUB HEADERS
 --------------------------------------------------------- */
 
 function githubHeaders() {
+
+    if (!tokenConfigured()) {
+
+        throw new Error(
+            "GitHub token has not been configured."
+        );
+    }
 
     return {
 
@@ -159,28 +137,183 @@ function githubHeaders() {
    GITHUB API URL
 --------------------------------------------------------- */
 
-function githubFileURL(
-    fileName
-) {
+function githubFileURL(fileName) {
 
-    const url =
+    const safeFileName =
+        encodeURIComponent(fileName);
+
+    return (
         "https://api.github.com/repos/" +
         GITHUB_REPOSITORY +
         "/contents/" +
         IMAGE_FOLDER +
         "/" +
-        encodeURIComponent(
-            fileName
+        safeFileName
+    );
+}
+
+
+/* ---------------------------------------------------------
+   GITHUB ERROR HANDLER
+--------------------------------------------------------- */
+
+async function githubError(response) {
+
+    let data = {};
+
+    try {
+
+        data =
+            await response.json();
+
+    }
+    catch (error) {
+
+        console.warn(
+            "Could not parse GitHub error response.",
+            error
         );
 
+    }
 
-    console.log(
-        "GITHUB FILE URL:",
-        url
+
+    console.error(
+        "GITHUB API ERROR:",
+        {
+            status: response.status,
+            statusText: response.statusText,
+            response: data
+        }
     );
 
 
-    return url;
+    let message =
+        data.message ||
+        response.statusText ||
+        "Unknown GitHub error.";
+
+
+    if (response.status === 401) {
+
+        message =
+            "GitHub authentication failed: Bad credentials.\n\n" +
+            "Create a NEW fine-grained token and make sure it is copied correctly.\n\n" +
+            "Required:\n" +
+            "Repository access → your repository\n" +
+            "Contents → Read and write";
+    }
+
+
+    else if (response.status === 403) {
+
+        message =
+            "GitHub permission denied (403).\n\n" +
+            "Make sure the token has:\n" +
+            "Contents → Read and write\n\n" +
+            "If this is an organization repository, check whether the organization requires token approval.";
+    }
+
+
+    else if (response.status === 404) {
+
+        message =
+            "GitHub returned 404.\n\n" +
+            "Check the repository name, branch, image folder, and repository access granted to the token.";
+    }
+
+
+    return new Error(message);
+}
+
+
+/* ---------------------------------------------------------
+   TEST GITHUB AUTHENTICATION
+--------------------------------------------------------- */
+
+async function testGitHubAuthentication() {
+
+    console.group(
+        "GITHUB AUTHENTICATION TEST"
+    );
+
+
+    try {
+
+        if (!tokenConfigured()) {
+
+            throw new Error(
+                "GitHub token has not been configured."
+            );
+        }
+
+
+        const url =
+            "https://api.github.com/repos/" +
+            GITHUB_REPOSITORY;
+
+
+        console.log(
+            "Testing repository:",
+            GITHUB_REPOSITORY
+        );
+
+
+        const response =
+            await fetch(
+                url,
+                {
+                    method: "GET",
+                    headers: githubHeaders(),
+                    cache: "no-store"
+                }
+            );
+
+
+        console.log(
+            "AUTH TEST RESPONSE:",
+            {
+                status: response.status,
+                statusText: response.statusText,
+                ok: response.ok
+            }
+        );
+
+
+        if (!response.ok) {
+
+            throw await githubError(
+                response
+            );
+        }
+
+
+        const data =
+            await response.json();
+
+
+        console.log(
+            "GITHUB AUTHENTICATION SUCCESS:",
+            {
+                repository:
+                    data.full_name,
+
+                private:
+                    data.private,
+
+                defaultBranch:
+                    data.default_branch
+            }
+        );
+
+
+        return data;
+
+    }
+    finally {
+
+        console.groupEnd();
+
+    }
 }
 
 
@@ -188,65 +321,56 @@ function githubFileURL(
    IMAGE SELECTION
 --------------------------------------------------------- */
 
-imageFile.addEventListener(
-    "change",
-    function () {
+if (imageFile) {
 
-        const file =
-            imageFile.files[0];
+    imageFile.addEventListener(
+        "change",
+        function () {
 
-
-        if (!file) {
-
-            console.warn(
-                "No image file selected."
-            );
-
-            return;
-        }
+            const file =
+                imageFile.files[0];
 
 
-        console.log(
-            "IMAGE SELECTED:",
-            {
-                name:
-                    file.name,
+            if (!file) {
 
-                type:
-                    file.type,
-
-                size:
-                    file.size,
-
-                lastModified:
-                    file.lastModified
+                return;
             }
-        );
 
 
-        /*
-         * Show preview.
-         */
-        preview.src =
-            URL.createObjectURL(
-                file
+            console.log(
+                "IMAGE SELECTED:",
+                {
+                    name: file.name,
+                    type: file.type,
+                    size: file.size
+                }
             );
 
 
-        preview.hidden =
-            false;
+            if (
+                !file.type.startsWith("image/")
+            ) {
+
+                uploadMessage.textContent =
+                    "ERROR:\n\nPlease select an image file.";
+
+                imageFile.value = "";
+
+                return;
+            }
 
 
-        /*
-         * Don't automatically use the camera
-         * filename.
-         *
-         * User enters:
-         *
-         * Product Name_Price
-         */
-    }
-);
+            preview.src =
+                URL.createObjectURL(file);
+
+
+            preview.hidden =
+                false;
+
+        }
+    );
+
+}
 
 
 /* ---------------------------------------------------------
@@ -255,24 +379,16 @@ imageFile.addEventListener(
 
 function validateAdminInput() {
 
-    console.log(
-        "VALIDATING ADMIN INPUT..."
-    );
-
-
-    if (
-        !GITHUB_TOKEN ||
-        GITHUB_TOKEN ===
-            "YOUR_GITHUB_TOKEN_HERE"
-    ) {
+    if (!tokenConfigured()) {
 
         throw new Error(
-            "GitHub token has not been added to admin.js."
+            "GitHub token has not been configured."
         );
     }
 
 
     if (
+        !imageFile ||
         !imageFile.files[0]
     ) {
 
@@ -283,6 +399,7 @@ function validateAdminInput() {
 
 
     if (
+        !filename ||
         !filename.value.trim()
     ) {
 
@@ -292,9 +409,6 @@ function validateAdminInput() {
     }
 
 
-    /*
-     * Remove extension for validation.
-     */
     const baseName =
         filename.value
             .trim()
@@ -304,22 +418,9 @@ function validateAdminInput() {
             );
 
 
-    /*
-     * There must be exactly ONE underscore.
-     *
-     * Correct:
-     *
-     * Blue Shirt_599
-     *
-     * Incorrect:
-     *
-     * Blue_Shirt_599
-     */
     const underscoreCount =
         (
-            baseName.match(
-                /_/g
-            ) || []
+            baseName.match(/_/g) || []
         ).length;
 
 
@@ -364,9 +465,7 @@ function validateAdminInput() {
 
 
     const price =
-        Number(
-            priceText
-        );
+        Number(priceText);
 
 
     if (
@@ -380,16 +479,10 @@ function validateAdminInput() {
     }
 
 
-    console.log(
-        "INPUT VALIDATION PASSED:",
-        {
-            productName:
-                productName,
-
-            price:
-                price
-        }
-    );
+    return {
+        productName,
+        price
+    };
 }
 
 
@@ -397,20 +490,12 @@ function validateAdminInput() {
    NORMALIZE FILENAME
 --------------------------------------------------------- */
 
-function normalizeFilename(
-    name
-) {
+function normalizeFilename(name) {
 
-    /*
-     * Remove surrounding whitespace.
-     */
     name =
         name.trim();
 
 
-    /*
-     * Remove existing extension.
-     */
     name =
         name.replace(
             /\.(jpg|jpeg|png|webp|gif)$/i,
@@ -418,10 +503,6 @@ function normalizeFilename(
         );
 
 
-    /*
-     * Remove accidental underscores
-     * at beginning/end.
-     */
     name =
         name.replace(
             /^_+|_+$/g,
@@ -429,17 +510,6 @@ function normalizeFilename(
         );
 
 
-    /*
-     * Collapse accidental multiple underscores.
-     *
-     * Example:
-     *
-     * Shirt__599
-     *
-     * becomes:
-     *
-     * Shirt_599
-     */
     name =
         name.replace(
             /_+/g,
@@ -448,19 +518,9 @@ function normalizeFilename(
 
 
     /*
-     * GitHub filename will always be JPG.
+     * All uploaded images become JPG.
      */
-    const finalName =
-        name + ".jpg";
-
-
-    console.log(
-        "NORMALIZED FILENAME:",
-        finalName
-    );
-
-
-    return finalName;
+    return name + ".jpg";
 }
 
 
@@ -468,9 +528,7 @@ function normalizeFilename(
    GET PRODUCT INFORMATION
 --------------------------------------------------------- */
 
-function getProductInformation(
-    finalFilename
-) {
+function getProductInformation(finalFilename) {
 
     const baseName =
         finalFilename.replace(
@@ -483,7 +541,7 @@ function getProductInformation(
         baseName.split("_");
 
 
-    const product = {
+    return {
 
         name:
             parts[0].trim(),
@@ -494,15 +552,6 @@ function getProductInformation(
             )
 
     };
-
-
-    console.log(
-        "PRODUCT INFORMATION:",
-        product
-    );
-
-
-    return product;
 }
 
 
@@ -510,9 +559,7 @@ function getProductInformation(
    RESIZE IMAGE
 --------------------------------------------------------- */
 
-async function resizeImage(
-    file
-) {
+async function resizeImage(file) {
 
     console.log(
         "STARTING IMAGE RESIZE:",
@@ -520,173 +567,111 @@ async function resizeImage(
     );
 
 
-    try {
-
-        const bitmap =
-            await createImageBitmap(
-                file
-            );
+    const bitmap =
+        await createImageBitmap(file);
 
 
-        console.log(
-            "ORIGINAL IMAGE SIZE:",
-            {
-                width:
-                    bitmap.width,
+    const maximumSize =
+        800;
 
-                height:
-                    bitmap.height
-            }
+
+    const scale =
+        Math.min(
+            1,
+            maximumSize /
+            Math.max(
+                bitmap.width,
+                bitmap.height
+            )
         );
 
 
-        const maximumSize =
-            800;
-
-
-        const scale =
-            Math.min(
-                1,
-                maximumSize /
-                    Math.max(
-                        bitmap.width,
-                        bitmap.height
-                    )
-            );
-
-
-        const width =
-            Math.round(
-                bitmap.width *
-                scale
-            );
-
-
-        const height =
-            Math.round(
-                bitmap.height *
-                scale
-            );
-
-
-        const canvas =
-            document.createElement(
-                "canvas"
-            );
-
-
-        canvas.width =
-            width;
-
-
-        canvas.height =
-            height;
-
-
-        const context =
-            canvas.getContext(
-                "2d"
-            );
-
-
-        /*
-         * Better image quality when resizing.
-         */
-        context.imageSmoothingEnabled =
-            true;
-
-
-        context.imageSmoothingQuality =
-            "high";
-
-
-        context.drawImage(
-            bitmap,
-            0,
-            0,
-            width,
-            height
+    const width =
+        Math.round(
+            bitmap.width * scale
         );
 
 
-        return new Promise(
-            (resolve, reject) => {
-
-                canvas.toBlob(
-                    blob => {
-
-                        if (!blob) {
-
-                            const error =
-                                new Error(
-                                    "Image resizing failed: canvas.toBlob returned null."
-                                );
+    const height =
+        Math.round(
+            bitmap.height * scale
+        );
 
 
-                            console.error(
-                                "IMAGE RESIZE ERROR:",
-                                error
-                            );
+    const canvas =
+        document.createElement("canvas");
 
 
-                            reject(
-                                error
-                            );
+    canvas.width =
+        width;
 
 
-                            return;
+    canvas.height =
+        height;
+
+
+    const context =
+        canvas.getContext("2d");
+
+
+    context.imageSmoothingEnabled =
+        true;
+
+
+    context.imageSmoothingQuality =
+        "high";
+
+
+    context.drawImage(
+        bitmap,
+        0,
+        0,
+        width,
+        height
+    );
+
+
+    bitmap.close();
+
+
+    return new Promise(
+        (resolve, reject) => {
+
+            canvas.toBlob(
+                blob => {
+
+                    if (!blob) {
+
+                        reject(
+                            new Error(
+                                "Image resizing failed."
+                            )
+                        );
+
+                        return;
+                    }
+
+
+                    console.log(
+                        "IMAGE RESIZED:",
+                        {
+                            width,
+                            height,
+                            size: blob.size,
+                            type: blob.type
                         }
+                    );
 
 
-                        console.log(
-                            "RESIZED IMAGE:",
-                            {
-                                width:
-                                    width,
+                    resolve(blob);
 
-                                height:
-                                    height,
+                },
+                "image/jpeg",
+                0.82
+            );
 
-                                size:
-                                    blob.size,
-
-                                type:
-                                    blob.type
-                            }
-                        );
-
-
-                        resolve(
-                            blob
-                        );
-
-                    },
-
-                    "image/jpeg",
-
-                    0.82
-                );
-
-            }
-        );
-
-    }
-    catch (error) {
-
-        console.error(
-            "IMAGE RESIZE ERROR:",
-            {
-                file:
-                    file.name,
-
-                error:
-                    error
-            }
-        );
-
-
-        throw error;
-    }
+        }
+    );
 }
 
 
@@ -694,94 +679,49 @@ async function resizeImage(
    BLOB TO BASE64
 --------------------------------------------------------- */
 
-async function blobToBase64(
-    blob
-) {
+async function blobToBase64(blob) {
 
-    console.log(
-        "CONVERTING BLOB TO BASE64:",
-        {
-            size:
-                blob.size,
-
-            type:
-                blob.type
-        }
-    );
+    const arrayBuffer =
+        await blob.arrayBuffer();
 
 
-    try {
-
-        const arrayBuffer =
-            await blob.arrayBuffer();
-
-
-        const bytes =
-            new Uint8Array(
-                arrayBuffer
-            );
-
-
-        let binary =
-            "";
-
-
-        const chunkSize =
-            0x8000;
-
-
-        for (
-            let i = 0;
-            i < bytes.length;
-            i += chunkSize
-        ) {
-
-            binary +=
-                String.fromCharCode(
-                    ...bytes.subarray(
-                        i,
-                        i + chunkSize
-                    )
-                );
-        }
-
-
-        const base64 =
-            btoa(
-                binary
-            );
-
-
-        console.log(
-            "BASE64 CONVERSION COMPLETE:",
-            {
-                originalBytes:
-                    bytes.length,
-
-                base64Length:
-                    base64.length
-            }
+    const bytes =
+        new Uint8Array(
+            arrayBuffer
         );
 
 
-        return base64;
+    let binary =
+        "";
+
+
+    const chunkSize =
+        0x8000;
+
+
+    for (
+        let i = 0;
+        i < bytes.length;
+        i += chunkSize
+    ) {
+
+        binary +=
+            String.fromCharCode(
+                ...bytes.subarray(
+                    i,
+                    i + chunkSize
+                )
+            );
 
     }
-    catch (error) {
-
-        console.error(
-            "BASE64 CONVERSION ERROR:",
-            error
-        );
 
 
-        throw error;
-    }
+    return btoa(binary);
 }
 
 
 /* ---------------------------------------------------------
-   UPLOAD IMAGE
+   UPLOAD / UPDATE IMAGE
 --------------------------------------------------------- */
 
 async function uploadImage() {
@@ -793,11 +733,8 @@ async function uploadImage() {
 
     try {
 
-        /* ---------------------------------------------
-           VALIDATE
-        --------------------------------------------- */
-
-        validateAdminInput();
+        const input =
+            validateAdminInput();
 
 
         uploadMessage.textContent =
@@ -808,55 +745,25 @@ async function uploadImage() {
             imageFile.files[0];
 
 
-        /*
-         * Create final filename.
-         */
         const finalFilename =
             normalizeFilename(
                 filename.value
             );
 
 
-        /*
-         * Extract product information.
-         */
         const product =
             getProductInformation(
                 finalFilename
             );
 
 
-        console.log(
-            "UPLOAD PRODUCT:",
-            product
-        );
-
-
-        /* ---------------------------------------------
-           RESIZE
-        --------------------------------------------- */
-
         uploadMessage.textContent =
             "Resizing image...";
 
 
         const resizedBlob =
-            await resizeImage(
-                file
-            );
+            await resizeImage(file);
 
-
-        if (!resizedBlob) {
-
-            throw new Error(
-                "Image resizing failed."
-            );
-        }
-
-
-        /* ---------------------------------------------
-           CONVERT TO BASE64
-        --------------------------------------------- */
 
         uploadMessage.textContent =
             "Preparing upload...";
@@ -868,89 +775,29 @@ async function uploadImage() {
             );
 
 
-        /* ---------------------------------------------
-           GITHUB URL
-        --------------------------------------------- */
-
         const apiURL =
             githubFileURL(
                 finalFilename
             );
 
 
-        console.log(
-            "UPLOAD API URL:",
-            apiURL
-        );
-
-
         /* ---------------------------------------------
-           CHECK EXISTING FILE
+           CHECK WHETHER FILE EXISTS
         --------------------------------------------- */
 
         uploadMessage.textContent =
             "Checking GitHub...";
 
 
-        console.log(
-            "CHECKING EXISTING GITHUB FILE..."
-        );
-
-
-        let existingResponse;
-
-
-        try {
-
-            existingResponse =
-                await fetch(
-                    apiURL,
-                    {
-
-                        method:
-                            "GET",
-
-                        headers:
-                            githubHeaders(),
-
-                        cache:
-                            "no-store"
-
-                    }
-                );
-
-        }
-        catch (networkError) {
-
-            console.error(
-                "GITHUB CHECK NETWORK ERROR:",
+        const existingResponse =
+            await fetch(
+                apiURL,
                 {
-                    url:
-                        apiURL,
-
-                    error:
-                        networkError
+                    method: "GET",
+                    headers: githubHeaders(),
+                    cache: "no-store"
                 }
             );
-
-
-            throw networkError;
-        }
-
-
-        console.log(
-            "GITHUB CHECK RESPONSE:",
-            {
-                status:
-                    existingResponse.status,
-
-                statusText:
-                    existingResponse.statusText,
-
-                ok:
-                    existingResponse.ok
-            }
-        );
 
 
         let existingSHA =
@@ -965,81 +812,37 @@ async function uploadImage() {
                 await existingResponse.json();
 
 
-            console.log(
-                "EXISTING FILE FOUND:",
-                existing
-            );
-
-
             existingSHA =
                 existing.sha;
 
+
+            console.log(
+                "EXISTING FILE FOUND:",
+                {
+                    name:
+                        existing.name,
+
+                    sha:
+                        existing.sha
+                }
+            );
+
         }
+
+
         else if (
             existingResponse.status !== 404
         ) {
 
-            let error;
-
-
-            try {
-
-                error =
-                    await existingResponse.json();
-
-            }
-            catch (jsonError) {
-
-                console.error(
-                    "GITHUB ERROR JSON PARSE FAILED:",
-                    jsonError
-                );
-
-
-                error =
-                    {
-                        message:
-                            "GitHub returned HTTP " +
-                            existingResponse.status
-                    };
-            }
-
-
-            console.error(
-                "GITHUB EXISTING FILE CHECK ERROR:",
-                {
-                    status:
-                        existingResponse.status,
-
-                    statusText:
-                        existingResponse.statusText,
-
-                    url:
-                        apiURL,
-
-                    response:
-                        error
-                }
-            );
-
-
-            throw new Error(
-                error.message ||
-                "Could not check existing image."
-            );
-
-        }
-        else {
-
-            console.log(
-                "FILE DOES NOT EXIST. NEW FILE WILL BE CREATED."
+            throw await githubError(
+                existingResponse
             );
 
         }
 
 
         /* ---------------------------------------------
-           UPLOAD
+           CREATE / UPDATE
         --------------------------------------------- */
 
         uploadMessage.textContent =
@@ -1067,12 +870,9 @@ async function uploadImage() {
 
 
         /*
-         * GitHub requires the existing SHA
-         * when replacing a file.
+         * GitHub requires SHA when updating.
          */
-        if (
-            existingSHA
-        ) {
+        if (existingSHA) {
 
             body.sha =
                 existingSHA;
@@ -1080,148 +880,43 @@ async function uploadImage() {
         }
 
 
-        console.log(
-            "SENDING IMAGE TO GITHUB:",
-            {
-                filename:
-                    finalFilename,
-
-                branch:
-                    GITHUB_BRANCH,
-
-                updating:
-                    !!existingSHA,
-
-                base64Length:
-                    base64.length
-            }
-        );
-
-
-        let uploadResponse;
-
-
-        try {
-
-            uploadResponse =
-                await fetch(
-                    apiURL,
-                    {
-
-                        method:
-                            "PUT",
-
-                        headers:
-                            {
-                                ...githubHeaders(),
-
-                                "Content-Type":
-                                    "application/json"
-
-                            },
-
-                        body:
-                            JSON.stringify(
-                                body
-                            )
-
-                    }
-                );
-
-        }
-        catch (networkError) {
-
-            console.error(
-                "GITHUB UPLOAD NETWORK ERROR:",
+        const uploadResponse =
+            await fetch(
+                apiURL,
                 {
-                    url:
-                        apiURL,
+                    method: "PUT",
 
-                    error:
-                        networkError
+                    headers: {
+                        ...githubHeaders(),
+
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body:
+                        JSON.stringify(body)
                 }
             );
 
 
-            throw networkError;
+        if (!uploadResponse.ok) {
+
+            throw await githubError(
+                uploadResponse
+            );
+
         }
+
+
+        const result =
+            await uploadResponse.json();
 
 
         console.log(
-            "GITHUB UPLOAD RESPONSE:",
-            {
-                status:
-                    uploadResponse.status,
-
-                statusText:
-                    uploadResponse.statusText,
-
-                ok:
-                    uploadResponse.ok
-            }
-        );
-
-
-        let result;
-
-
-        try {
-
-            result =
-                await uploadResponse.json();
-
-        }
-        catch (jsonError) {
-
-            console.error(
-                "GITHUB UPLOAD JSON PARSE ERROR:",
-                jsonError
-            );
-
-
-            result =
-                {};
-        }
-
-
-        if (
-            !uploadResponse.ok
-        ) {
-
-            console.error(
-                "GITHUB UPLOAD ERROR:",
-                {
-                    status:
-                        uploadResponse.status,
-
-                    statusText:
-                        uploadResponse.statusText,
-
-                    url:
-                        apiURL,
-
-                    response:
-                        result
-                }
-            );
-
-
-            throw new Error(
-                result.message ||
-                "GitHub upload failed."
-            );
-        }
-
-
-        console.log(
-            "GITHUB UPLOAD SUCCESS:",
+            "UPLOAD SUCCESS:",
             result
         );
 
-
-        /* ---------------------------------------------
-           SUCCESS
-        --------------------------------------------- */
 
         uploadMessage.textContent =
             "SUCCESS!\n\n" +
@@ -1234,9 +929,10 @@ async function uploadImage() {
             );
 
 
-        /*
-         * Clear input.
-         */
+        /* ---------------------------------------------
+           CLEAR INPUT
+        --------------------------------------------- */
+
         imageFile.value =
             "";
 
@@ -1253,38 +949,19 @@ async function uploadImage() {
             true;
 
 
-        /*
-         * Refresh image list.
-         */
+        /* ---------------------------------------------
+           REFRESH
+        --------------------------------------------- */
+
         await loadImages();
 
     }
+
     catch (error) {
 
         console.error(
-            "================================================="
-        );
-
-        console.error(
-            "UPLOAD ERROR:"
-        );
-
-        console.error(
+            "UPLOAD ERROR:",
             error
-        );
-
-        console.error(
-            "ERROR MESSAGE:",
-            error?.message
-        );
-
-        console.error(
-            "ERROR STACK:",
-            error?.stack
-        );
-
-        console.error(
-            "================================================="
         );
 
 
@@ -1292,10 +969,11 @@ async function uploadImage() {
             "ERROR:\n\n" +
             (
                 error?.message ||
-                "Unknown error"
+                "Unknown error."
             );
 
     }
+
     finally {
 
         console.groupEnd();
@@ -1315,6 +993,16 @@ async function loadImages() {
     );
 
 
+    if (!imageList) {
+
+        console.error(
+            "imageList element not found."
+        );
+
+        return;
+    }
+
+
     imageList.innerHTML =
         "Loading...";
 
@@ -1327,129 +1015,28 @@ async function loadImages() {
             "/contents/" +
             IMAGE_FOLDER +
             "?ref=" +
-            GITHUB_BRANCH +
-            "&t=" +
-            Date.now();
-
-
-        console.log(
-            "IMAGE FOLDER API URL:",
-            url
-        );
-
-
-        let response;
-
-
-        try {
-
-            response =
-                await fetch(
-                    url,
-                    {
-
-                        method:
-                            "GET",
-
-                        headers:
-                            githubHeaders(),
-
-                        cache:
-                            "no-store"
-
-                    }
-                );
-
-        }
-        catch (networkError) {
-
-            console.error(
-                "IMAGE FOLDER NETWORK ERROR:",
-                {
-                    url:
-                        url,
-
-                    error:
-                        networkError
-                }
+            encodeURIComponent(
+                GITHUB_BRANCH
             );
 
 
-            throw networkError;
-        }
-
-
-        console.log(
-            "IMAGE FOLDER RESPONSE:",
-            {
-                status:
-                    response.status,
-
-                statusText:
-                    response.statusText,
-
-                ok:
-                    response.ok,
-
-                url:
-                    response.url,
-
-                type:
-                    response.type
-            }
-        );
+        const response =
+            await fetch(
+                url,
+                {
+                    method: "GET",
+                    headers: githubHeaders(),
+                    cache: "no-store"
+                }
+            );
 
 
         if (!response.ok) {
 
-            let error;
-
-
-            try {
-
-                error =
-                    await response.json();
-
-            }
-            catch (jsonError) {
-
-                console.error(
-                    "FAILED TO PARSE GITHUB ERROR:",
-                    jsonError
-                );
-
-
-                error =
-                    {
-                        message:
-                            "GitHub returned HTTP " +
-                            response.status
-                    };
-            }
-
-
-            console.error(
-                "GITHUB IMAGE FOLDER ERROR:",
-                {
-                    status:
-                        response.status,
-
-                    statusText:
-                        response.statusText,
-
-                    url:
-                        url,
-
-                    response:
-                        error
-                }
+            throw await githubError(
+                response
             );
 
-
-            throw new Error(
-                error.message ||
-                "Could not read images."
-            );
         }
 
 
@@ -1457,25 +1044,7 @@ async function loadImages() {
             await response.json();
 
 
-        console.log(
-            "GITHUB IMAGE FOLDER DATA:",
-            files
-        );
-
-
-        imageList.innerHTML =
-            "";
-
-
-        if (
-            !Array.isArray(files)
-        ) {
-
-            console.error(
-                "GITHUB DID NOT RETURN AN ARRAY:",
-                files
-            );
-
+        if (!Array.isArray(files)) {
 
             throw new Error(
                 "GitHub did not return an image list."
@@ -1483,10 +1052,8 @@ async function loadImages() {
         }
 
 
-        console.log(
-            "TOTAL FILES RETURNED:",
-            files.length
-        );
+        imageList.innerHTML =
+            "";
 
 
         const imageFiles =
@@ -1494,9 +1061,8 @@ async function loadImages() {
                 .filter(
                     file =>
                         file.type === "file" &&
-                        /\.(jpg|jpeg|png|webp|gif)$/i.test(
-                            file.name
-                        )
+                        /\.(jpg|jpeg|png|webp|gif)$/i
+                            .test(file.name)
                 )
                 .sort(
                     (a, b) =>
@@ -1506,87 +1072,37 @@ async function loadImages() {
                 );
 
 
-        console.log(
-            "IMAGE FILES FOUND:",
-            imageFiles.length
-        );
-
-
         imageFiles.forEach(
             file => {
 
-                console.log(
-                    "ADDING IMAGE:",
-                    {
-                        name:
-                            file.name,
-
-                        path:
-                            file.path,
-
-                        sha:
-                            file.sha,
-
-                        download_url:
-                            file.download_url
-                    }
-                );
-
-
-                createImageRow(
-                    file
-                );
+                createImageRow(file);
 
             }
         );
 
 
         if (
-            imageList.children.length === 0
+            imageFiles.length === 0
         ) {
-
-            console.warn(
-                "NO IMAGE FILES FOUND IN:",
-                IMAGE_FOLDER
-            );
-
 
             imageList.textContent =
                 "No images found.";
+
         }
 
 
         console.log(
-            "IMAGE LIST CREATED SUCCESSFULLY."
+            "IMAGE LIST LOADED:",
+            imageFiles.length
         );
 
     }
+
     catch (error) {
 
         console.error(
-            "================================================="
-        );
-
-        console.error(
-            "LIST ERROR:"
-        );
-
-        console.error(
+            "LOAD IMAGES ERROR:",
             error
-        );
-
-        console.error(
-            "ERROR MESSAGE:",
-            error?.message
-        );
-
-        console.error(
-            "ERROR STACK:",
-            error?.stack
-        );
-
-        console.error(
-            "================================================="
         );
 
 
@@ -1594,10 +1110,11 @@ async function loadImages() {
             "ERROR: " +
             (
                 error?.message ||
-                "Unknown error"
+                "Unknown error."
             );
 
     }
+
     finally {
 
         console.groupEnd();
@@ -1610,14 +1127,10 @@ async function loadImages() {
    CREATE IMAGE ROW
 --------------------------------------------------------- */
 
-function createImageRow(
-    file
-) {
+function createImageRow(file) {
 
     const row =
-        document.createElement(
-            "div"
-        );
+        document.createElement("div");
 
 
     row.className =
@@ -1629,38 +1142,19 @@ function createImageRow(
     --------------------------------------------- */
 
     const image =
-        document.createElement(
-            "img"
-        );
-
-
-    /*
-     * GitHub gives us the correct raw URL.
-     */
-    const imageURL =
-        file.download_url;
-
-
-    console.log(
-        "CREATING IMAGE:",
-        {
-            filename:
-                file.name,
-
-            url:
-                imageURL,
-
-            path:
-                file.path,
-
-            sha:
-                file.sha
-        }
-    );
+        document.createElement("img");
 
 
     image.src =
-        imageURL;
+        file.download_url ||
+        (
+            "https://raw.githubusercontent.com/" +
+            GITHUB_REPOSITORY +
+            "/" +
+            GITHUB_BRANCH +
+            "/" +
+            file.path
+        );
 
 
     image.alt =
@@ -1671,112 +1165,18 @@ function createImageRow(
         "lazy";
 
 
-    /*
-     * IMPORTANT:
-     *
-     * This catches errors loading the ACTUAL IMAGE.
-     *
-     * A successful GitHub API request does not mean
-     * that the browser was able to load the image.
-     */
     image.addEventListener(
         "error",
-        function (event) {
+        function () {
 
             console.error(
-                "================================================="
-            );
-
-            console.error(
-                "IMAGE LOAD ERROR"
-            );
-
-            console.error(
-                "Filename:",
+                "IMAGE LOAD ERROR:",
                 file.name
             );
 
-            console.error(
-                "Image URL:",
-                imageURL
-            );
 
-            console.error(
-                "GitHub path:",
-                file.path
-            );
-
-            console.error(
-                "GitHub SHA:",
-                file.sha
-            );
-
-            console.error(
-                "Image element:",
-                image
-            );
-
-            console.error(
-                "Event:",
-                event
-            );
-
-            console.error(
-                "Possible causes:",
-                [
-                    "The download URL is invalid.",
-                    "The GitHub file does not exist.",
-                    "The image is inaccessible.",
-                    "The raw GitHub request failed.",
-                    "The browser blocked the request.",
-                    "The file is not actually a valid image.",
-                    "GitHub/raw.githubusercontent.com returned an error."
-                ]
-            );
-
-            console.error(
-                "================================================="
-            );
-
-
-            /*
-             * Optional visual indication.
-             */
             image.style.border =
                 "2px solid red";
-
-
-            image.title =
-                "Image failed to load: " +
-                file.name;
-
-        }
-    );
-
-
-    /*
-     * Successful image load.
-     */
-    image.addEventListener(
-        "load",
-        function () {
-
-            console.log(
-                "IMAGE LOADED SUCCESSFULLY:",
-                {
-                    filename:
-                        file.name,
-
-                    url:
-                        imageURL,
-
-                    width:
-                        image.naturalWidth,
-
-                    height:
-                        image.naturalHeight
-                }
-            );
 
         }
     );
@@ -1787,9 +1187,7 @@ function createImageRow(
     --------------------------------------------- */
 
     const name =
-        document.createElement(
-            "div"
-        );
+        document.createElement("div");
 
 
     name.className =
@@ -1805,9 +1203,7 @@ function createImageRow(
     --------------------------------------------- */
 
     const deleteButton =
-        document.createElement(
-            "button"
-        );
+        document.createElement("button");
 
 
     deleteButton.type =
@@ -1822,7 +1218,8 @@ function createImageRow(
         "Delete";
 
 
-    deleteButton.onclick =
+    deleteButton.addEventListener(
+        "click",
         function () {
 
             deleteImage(
@@ -1830,11 +1227,12 @@ function createImageRow(
                 file.sha
             );
 
-        };
+        }
+    );
 
 
     /* ---------------------------------------------
-       ADD TO ROW
+       ROW
     --------------------------------------------- */
 
     row.appendChild(
@@ -1868,34 +1266,25 @@ async function deleteImage(
 ) {
 
     console.group(
-        "DELETE IMAGE: " +
-        name
+        "DELETE IMAGE: " + name
     );
 
 
-    const confirmed =
-        confirm(
-            "Delete " +
-            name +
-            "?"
-        );
-
-
-    if (!confirmed) {
-
-        console.log(
-            "DELETE CANCELLED."
-        );
-
-
-        console.groupEnd();
-
-
-        return;
-    }
-
-
     try {
+
+        const confirmed =
+            confirm(
+                "Delete " +
+                name +
+                "?"
+            );
+
+
+        if (!confirmed) {
+
+            return;
+        }
+
 
         uploadMessage.textContent =
             "Deleting " +
@@ -1904,150 +1293,66 @@ async function deleteImage(
 
 
         const url =
-            githubFileURL(
-                name
-            );
+            githubFileURL(name);
 
 
-        console.log(
-            "DELETE URL:",
-            url
-        );
-
-
-        console.log(
-            "DELETE SHA:",
-            sha
-        );
-
-
-        let response;
-
-
-        try {
-
-            response =
-                await fetch(
-                    url,
-                    {
-
-                        method:
-                            "DELETE",
-
-                        headers:
-                            {
-                                ...githubHeaders(),
-
-                                "Content-Type":
-                                    "application/json"
-
-                            },
-
-                        body:
-                            JSON.stringify({
-
-                                message:
-                                    "Delete product image " +
-                                    name,
-
-                                sha:
-                                    sha,
-
-                                branch:
-                                    GITHUB_BRANCH
-
-                            })
-
-                    }
-                );
-
-        }
-        catch (networkError) {
-
-            console.error(
-                "DELETE NETWORK ERROR:",
-                {
-                    url:
-                        url,
-
-                    error:
-                        networkError
-                }
-            );
-
-
-            throw networkError;
-        }
-
-
-        console.log(
-            "DELETE RESPONSE:",
-            {
-                status:
-                    response.status,
-
-                statusText:
-                    response.statusText,
-
-                ok:
-                    response.ok
-            }
-        );
-
-
-        let result;
-
-
-        try {
-
-            result =
-                await response.json();
-
-        }
-        catch (jsonError) {
-
-            console.error(
-                "DELETE JSON PARSE ERROR:",
-                jsonError
-            );
-
-
-            result =
-                {};
-        }
-
-
-        if (
-            !response.ok
-        ) {
-
-            console.error(
-                "GITHUB DELETE ERROR:",
-                {
-                    status:
-                        response.status,
-
-                    statusText:
-                        response.statusText,
-
-                    url:
-                        url,
-
-                    response:
-                        result
-                }
-            );
-
+        /*
+         * SHA is required by GitHub when deleting.
+         */
+        if (!sha) {
 
             throw new Error(
-                result.message ||
-                "Delete failed."
+                "GitHub file SHA is missing. Refresh the image list and try again."
             );
         }
 
 
+        const response =
+            await fetch(
+                url,
+                {
+                    method: "DELETE",
+
+                    headers: {
+                        ...githubHeaders(),
+
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body:
+                        JSON.stringify({
+
+                            message:
+                                "Delete product image " +
+                                name,
+
+                            sha:
+                                sha,
+
+                            branch:
+                                GITHUB_BRANCH
+
+                        })
+                }
+            );
+
+
+        if (!response.ok) {
+
+            throw await githubError(
+                response
+            );
+
+        }
+
+
+        const result =
+            await response.json();
+
+
         console.log(
-            "IMAGE DELETED SUCCESSFULLY:",
+            "IMAGE DELETED:",
             result
         );
 
@@ -2060,32 +1365,12 @@ async function deleteImage(
         await loadImages();
 
     }
+
     catch (error) {
 
         console.error(
-            "================================================="
-        );
-
-        console.error(
-            "DELETE ERROR:"
-        );
-
-        console.error(
+            "DELETE ERROR:",
             error
-        );
-
-        console.error(
-            "ERROR MESSAGE:",
-            error?.message
-        );
-
-        console.error(
-            "ERROR STACK:",
-            error?.stack
-        );
-
-        console.error(
-            "================================================="
         );
 
 
@@ -2093,10 +1378,11 @@ async function deleteImage(
             "DELETE ERROR:\n\n" +
             (
                 error?.message ||
-                "Unknown error"
+                "Unknown error."
             );
 
     }
+
     finally {
 
         console.groupEnd();
@@ -2109,38 +1395,36 @@ async function deleteImage(
    BUTTONS
 --------------------------------------------------------- */
 
-uploadButton.addEventListener(
-    "click",
-    function () {
+if (uploadButton) {
 
-        console.log(
-            "UPLOAD BUTTON CLICKED."
-        );
+    uploadButton.addEventListener(
+        "click",
+        function () {
 
+            uploadImage();
 
-        uploadImage();
+        }
+    );
 
-    }
-);
-
-
-refreshButton.addEventListener(
-    "click",
-    function () {
-
-        console.log(
-            "REFRESH BUTTON CLICKED."
-        );
+}
 
 
-        loadImages();
+if (refreshButton) {
 
-    }
-);
+    refreshButton.addEventListener(
+        "click",
+        function () {
+
+            loadImages();
+
+        }
+    );
+
+}
 
 
 /* ---------------------------------------------------------
-   GLOBAL UNHANDLED ERROR HANDLER
+   GLOBAL ERROR HANDLERS
 --------------------------------------------------------- */
 
 window.addEventListener(
@@ -2171,23 +1455,13 @@ window.addEventListener(
 );
 
 
-/* ---------------------------------------------------------
-   GLOBAL UNHANDLED PROMISE HANDLER
---------------------------------------------------------- */
-
 window.addEventListener(
     "unhandledrejection",
     function (event) {
 
         console.error(
-            "UNHANDLED PROMISE ERROR:",
-            {
-                reason:
-                    event.reason,
-
-                promise:
-                    event.promise
-            }
+            "UNHANDLED PROMISE:",
+            event.reason
         );
 
     }
@@ -2195,35 +1469,101 @@ window.addEventListener(
 
 
 /* ---------------------------------------------------------
+   STARTUP
+--------------------------------------------------------- */
+
+async function startAdmin() {
+
+    console.log(
+        "================================================="
+    );
+
+    console.log(
+        "PRESENT PERFECT ADMIN STARTING"
+    );
+
+    console.log(
+        "Repository:",
+        GITHUB_REPOSITORY
+    );
+
+    console.log(
+        "Image folder:",
+        IMAGE_FOLDER
+    );
+
+    console.log(
+        "Branch:",
+        GITHUB_BRANCH
+    );
+
+    console.log(
+        "================================================="
+    );
+
+
+    try {
+
+        /*
+         * Test authentication FIRST.
+         *
+         * This makes a 401 much easier to identify.
+         */
+
+        if (!tokenConfigured()) {
+
+            throw new Error(
+                "Add your NEW GitHub token to GITHUB_TOKEN before using the admin panel."
+            );
+        }
+
+
+        await testGitHubAuthentication();
+
+
+        /*
+         * Authentication succeeded.
+         * Now load the images.
+         */
+
+        await loadImages();
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "GITHUB STARTUP FAILED:",
+            error
+        );
+
+
+        if (uploadMessage) {
+
+            uploadMessage.textContent =
+                "GITHUB ERROR:\n\n" +
+                (
+                    error?.message ||
+                    "Unknown error."
+                );
+
+        }
+
+
+        if (imageList) {
+
+            imageList.textContent =
+                "GitHub connection failed.";
+
+        }
+
+    }
+
+}
+
+
+/* ---------------------------------------------------------
    START
 --------------------------------------------------------- */
 
-console.log(
-    "================================================="
-);
-
-console.log(
-    "PRESENT PERFECT ADMIN STARTING"
-);
-
-console.log(
-    "Repository:",
-    GITHUB_REPOSITORY
-);
-
-console.log(
-    "Image folder:",
-    IMAGE_FOLDER
-);
-
-console.log(
-    "Branch:",
-    GITHUB_BRANCH
-);
-
-console.log(
-    "================================================="
-);
-
-
-loadImages();
+startAdmin();
