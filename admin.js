@@ -99,7 +99,7 @@ function tokenConfigured() {
     return (
         typeof GITHUB_TOKEN === "string" &&
         GITHUB_TOKEN.trim() !== "" &&
-        GITHUB_TOKEN.trim() !== "YOUR_NEW_GITHUB_TOKEN_HERE"
+        GITHUB_TOKEN.trim() !== "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"
     );
 }
 
