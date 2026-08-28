@@ -5,20 +5,47 @@
 
 
 /* ---------------------------------------------------------
-   DOM
+   GITHUB CONFIGURATION
 --------------------------------------------------------- */
 
-const repository =
-    document.getElementById(
-        "repository"
-    );
+/*
+ * PUT YOUR GITHUB PERSONAL ACCESS TOKEN HERE.
+ *
+ * Example:
+ *
+ * const GITHUB_TOKEN =
+ *     "github_pat_xxxxxxxxxxxxxxxxx";
+ *
+ * Do not put "Bearer" here.
+ */
+const GITHUB_TOKEN =
+    "YOUR_GITHUB_TOKEN_HERE";
 
 
-const githubToken =
-    document.getElementById(
-        "githubToken"
-    );
+/*
+ * GitHub repository.
+ */
+const GITHUB_REPOSITORY =
+    "AnimeshShrivastav/animeshshrivastav.github.io";
 
+
+/*
+ * Folder containing product images.
+ */
+const IMAGE_FOLDER =
+    "images";
+
+
+/*
+ * GitHub branch.
+ */
+const GITHUB_BRANCH =
+    "main";
+
+
+/* ---------------------------------------------------------
+   DOM
+--------------------------------------------------------- */
 
 const imageFile =
     document.getElementById(
@@ -63,6 +90,49 @@ const imageList =
 
 
 /* ---------------------------------------------------------
+   GITHUB HEADERS
+--------------------------------------------------------- */
+
+function githubHeaders() {
+
+    return {
+
+        "Authorization":
+            "Bearer " +
+            GITHUB_TOKEN.trim(),
+
+        "Accept":
+            "application/vnd.github+json",
+
+        "X-GitHub-Api-Version":
+            "2022-11-28"
+
+    };
+}
+
+
+/* ---------------------------------------------------------
+   GITHUB API URL
+--------------------------------------------------------- */
+
+function githubFileURL(
+    fileName
+) {
+
+    return (
+        "https://api.github.com/repos/" +
+        GITHUB_REPOSITORY +
+        "/contents/" +
+        IMAGE_FOLDER +
+        "/" +
+        encodeURIComponent(
+            fileName
+        )
+    );
+}
+
+
+/* ---------------------------------------------------------
    IMAGE SELECTION
 --------------------------------------------------------- */
 
@@ -80,6 +150,9 @@ imageFile.addEventListener(
         }
 
 
+        /*
+         * Show preview.
+         */
         preview.src =
             URL.createObjectURL(
                 file
@@ -90,66 +163,32 @@ imageFile.addEventListener(
             false;
 
 
-        if (
-            !filename.value
-        ) {
-
-            filename.value =
-                file.name
-                    .replace(
-                        /\s+/g,
-                        "_"
-                    );
-        }
-
+        /*
+         * Don't automatically use the camera
+         * filename.
+         *
+         * User enters:
+         *
+         * Product Name_Price
+         */
     }
 );
 
 
 /* ---------------------------------------------------------
-   GITHUB HEADERS
---------------------------------------------------------- */
-
-function githubHeaders() {
-
-    return {
-
-        "Authorization":
-            "Bearer " +
-            githubToken.value.trim(),
-
-        "Accept":
-            "application/vnd.github+json",
-
-        "X-GitHub-Api-Version":
-            "2022-11-28"
-
-    };
-}
-
-
-/* ---------------------------------------------------------
-   CHECK INPUT
+   VALIDATE INPUT
 --------------------------------------------------------- */
 
 function validateAdminInput() {
 
     if (
-        !repository.value.trim()
+        !GITHUB_TOKEN ||
+        GITHUB_TOKEN ===
+            "YOUR_GITHUB_TOKEN_HERE"
     ) {
 
         throw new Error(
-            "Repository is required."
-        );
-    }
-
-
-    if (
-        !githubToken.value.trim()
-    ) {
-
-        throw new Error(
-            "GitHub token is required."
+            "GitHub token has not been added to admin.js."
         );
     }
 
@@ -169,9 +208,191 @@ function validateAdminInput() {
     ) {
 
         throw new Error(
-            "Filename is required."
+            "Please enter the product name and price."
         );
     }
+
+
+    /*
+     * Remove extension for validation.
+     */
+    const baseName =
+        filename.value
+            .trim()
+            .replace(
+                /\.(jpg|jpeg|png|webp|gif)$/i,
+                ""
+            );
+
+
+    /*
+     * There must be exactly ONE underscore.
+     *
+     * Correct:
+     *
+     * Blue Shirt_599
+     *
+     * Incorrect:
+     *
+     * Blue_Shirt_599
+     */
+    const underscoreCount =
+        (
+            baseName.match(
+                /_/g
+            ) || []
+        ).length;
+
+
+    if (
+        underscoreCount !== 1
+    ) {
+
+        throw new Error(
+            "Use exactly one underscore.\n\n" +
+            "Correct example:\n" +
+            "Blue Shirt_599"
+        );
+    }
+
+
+    const parts =
+        baseName.split("_");
+
+
+    const productName =
+        parts[0].trim();
+
+
+    const priceText =
+        parts[1].trim();
+
+
+    if (!productName) {
+
+        throw new Error(
+            "Product name is missing."
+        );
+    }
+
+
+    if (!priceText) {
+
+        throw new Error(
+            "Price is missing."
+        );
+    }
+
+
+    const price =
+        Number(
+            priceText
+        );
+
+
+    if (
+        !Number.isFinite(price) ||
+        price < 0
+    ) {
+
+        throw new Error(
+            "Price must be a valid number."
+        );
+    }
+}
+
+
+/* ---------------------------------------------------------
+   NORMALIZE FILENAME
+--------------------------------------------------------- */
+
+function normalizeFilename(
+    name
+) {
+
+    /*
+     * Remove surrounding whitespace.
+     */
+    name =
+        name.trim();
+
+
+    /*
+     * Remove existing extension.
+     */
+    name =
+        name.replace(
+            /\.(jpg|jpeg|png|webp|gif)$/i,
+            ""
+        );
+
+
+    /*
+     * Remove accidental underscores
+     * at beginning/end.
+     */
+    name =
+        name.replace(
+            /^_+|_+$/g,
+            ""
+        );
+
+
+    /*
+     * Collapse accidental multiple underscores.
+     *
+     * Example:
+     *
+     * Shirt__599
+     *
+     * becomes:
+     *
+     * Shirt_599
+     */
+    name =
+        name.replace(
+            /_+/g,
+            "_"
+        );
+
+
+    /*
+     * GitHub filename will always be JPG.
+     */
+    return name + ".jpg";
+}
+
+
+/* ---------------------------------------------------------
+   GET PRODUCT INFORMATION
+--------------------------------------------------------- */
+
+function getProductInformation(
+    finalFilename
+) {
+
+    const baseName =
+        finalFilename.replace(
+            /\.jpg$/i,
+            ""
+        );
+
+
+    const parts =
+        baseName.split("_");
+
+
+    return {
+
+        name:
+            parts[0].trim(),
+
+        price:
+            Number(
+                parts[1].trim()
+            )
+
+    };
 }
 
 
@@ -238,6 +459,17 @@ async function resizeImage(
         );
 
 
+    /*
+     * Better image quality when resizing.
+     */
+    context.imageSmoothingEnabled =
+        true;
+
+
+    context.imageSmoothingQuality =
+        "high";
+
+
     context.drawImage(
         bitmap,
         0,
@@ -287,7 +519,8 @@ async function blobToBase64(
         );
 
 
-    let binary = "";
+    let binary =
+        "";
 
 
     const chunkSize =
@@ -300,12 +533,13 @@ async function blobToBase64(
         i += chunkSize
     ) {
 
-        binary += String.fromCharCode(
-            ...bytes.subarray(
-                i,
-                i + chunkSize
-            )
-        );
+        binary +=
+            String.fromCharCode(
+                ...bytes.subarray(
+                    i,
+                    i + chunkSize
+                )
+            );
     }
 
 
@@ -316,53 +550,16 @@ async function blobToBase64(
 
 
 /* ---------------------------------------------------------
-   NORMALIZE FILENAME
---------------------------------------------------------- */
-
-function normalizeFilename(
-    name
-) {
-
-    name =
-        name.trim();
-
-
-    name =
-        name.replace(
-            /\s+/g,
-            "_"
-        );
-
-
-    name =
-        name.replace(
-            /\.(png|webp|jpeg)$/i,
-            ".jpg"
-        );
-
-
-    if (
-        !/\.jpg$/i.test(
-            name
-        )
-    ) {
-
-        name +=
-            ".jpg";
-    }
-
-
-    return name;
-}
-
-
-/* ---------------------------------------------------------
-   UPLOAD
+   UPLOAD IMAGE
 --------------------------------------------------------- */
 
 async function uploadImage() {
 
     try {
+
+        /* ---------------------------------------------
+           VALIDATE
+        --------------------------------------------- */
 
         validateAdminInput();
 
@@ -375,10 +572,36 @@ async function uploadImage() {
             imageFile.files[0];
 
 
+        /*
+         * Create final filename.
+         */
         const finalFilename =
             normalizeFilename(
                 filename.value
             );
+
+
+        /*
+         * Extract product information.
+         */
+        const product =
+            getProductInformation(
+                finalFilename
+            );
+
+
+        console.log(
+            "Product:",
+            product
+        );
+
+
+        /* ---------------------------------------------
+           RESIZE
+        --------------------------------------------- */
+
+        uploadMessage.textContent =
+            "Resizing image...";
 
 
         const resizedBlob =
@@ -395,8 +618,12 @@ async function uploadImage() {
         }
 
 
+        /* ---------------------------------------------
+           CONVERT TO BASE64
+        --------------------------------------------- */
+
         uploadMessage.textContent =
-            "Converting image...";
+            "Preparing upload...";
 
 
         const base64 =
@@ -405,22 +632,19 @@ async function uploadImage() {
             );
 
 
-        const repo =
-            repository.value.trim();
-
+        /* ---------------------------------------------
+           GITHUB URL
+        --------------------------------------------- */
 
         const apiURL =
-            "https://api.github.com/repos/" +
-            repo +
-            "/contents/images/" +
-            encodeURIComponent(
+            githubFileURL(
                 finalFilename
             );
 
 
-        /* -------------------------------------------------
-           CHECK WHETHER FILE ALREADY EXISTS
-        ------------------------------------------------- */
+        /* ---------------------------------------------
+           CHECK EXISTING FILE
+        --------------------------------------------- */
 
         uploadMessage.textContent =
             "Checking GitHub...";
@@ -430,6 +654,7 @@ async function uploadImage() {
             await fetch(
                 apiURL,
                 {
+
                     method:
                         "GET",
 
@@ -438,6 +663,7 @@ async function uploadImage() {
 
                     cache:
                         "no-store"
+
                 }
             );
 
@@ -456,17 +682,32 @@ async function uploadImage() {
 
             existingSHA =
                 existing.sha;
+
+        }
+        else if (
+            existingResponse.status !== 404
+        ) {
+
+            const error =
+                await existingResponse.json();
+
+
+            throw new Error(
+                error.message ||
+                "Could not check existing image."
+            );
+
         }
 
 
-        /* -------------------------------------------------
+        /* ---------------------------------------------
            UPLOAD
-        ------------------------------------------------- */
+        --------------------------------------------- */
 
         uploadMessage.textContent =
             existingSHA
-                ? "Updating image..."
-                : "Uploading image...";
+                ? "Updating product image..."
+                : "Uploading product image...";
 
 
         const body = {
@@ -479,17 +720,25 @@ async function uploadImage() {
                       finalFilename,
 
             content:
-                base64
+                base64,
+
+            branch:
+                GITHUB_BRANCH
 
         };
 
 
+        /*
+         * GitHub requires the existing SHA
+         * when replacing a file.
+         */
         if (
             existingSHA
         ) {
 
             body.sha =
                 existingSHA;
+
         }
 
 
@@ -507,12 +756,14 @@ async function uploadImage() {
 
                             "Content-Type":
                                 "application/json"
+
                         },
 
                     body:
                         JSON.stringify(
                             body
                         )
+
                 }
             );
 
@@ -532,13 +783,43 @@ async function uploadImage() {
         }
 
 
+        /* ---------------------------------------------
+           SUCCESS
+        --------------------------------------------- */
+
         uploadMessage.textContent =
-            "SUCCESS\n\n" +
+            "SUCCESS!\n\n" +
             finalFilename +
             "\n\n" +
-            "GitHub has accepted the image.";
+            product.name +
+            " — ₹" +
+            product.price.toLocaleString(
+                "en-IN"
+            );
 
 
+        /*
+         * Clear input.
+         */
+        imageFile.value =
+            "";
+
+
+        filename.value =
+            "";
+
+
+        preview.src =
+            "";
+
+
+        preview.hidden =
+            true;
+
+
+        /*
+         * Refresh image list.
+         */
         await loadImages();
 
     }
@@ -558,7 +839,7 @@ async function uploadImage() {
 
 
 /* ---------------------------------------------------------
-   LIST IMAGES
+   LOAD EXISTING IMAGES
 --------------------------------------------------------- */
 
 async function loadImages() {
@@ -569,20 +850,14 @@ async function loadImages() {
 
     try {
 
-        if (
-            !repository.value.trim()
-        ) {
-
-            throw new Error(
-                "Repository is required."
-            );
-        }
-
-
         const url =
             "https://api.github.com/repos/" +
-            repository.value.trim() +
-            "/contents/images?t=" +
+            GITHUB_REPOSITORY +
+            "/contents/" +
+            IMAGE_FOLDER +
+            "?ref=" +
+            GITHUB_BRANCH +
+            "&t=" +
             Date.now();
 
 
@@ -591,20 +866,20 @@ async function loadImages() {
                 url,
                 {
 
+                    method:
+                        "GET",
+
                     headers:
-                        githubToken.value.trim()
-                            ? githubHeaders()
-                            : {},
+                        githubHeaders(),
 
                     cache:
                         "no-store"
+
                 }
             );
 
 
-        if (
-            !response.ok
-        ) {
+        if (!response.ok) {
 
             const error =
                 await response.json();
@@ -625,11 +900,29 @@ async function loadImages() {
             "";
 
 
+        if (
+            !Array.isArray(files)
+        ) {
+
+            throw new Error(
+                "GitHub did not return an image list."
+            );
+        }
+
+
         files
             .filter(
                 file =>
-                    file.type ===
-                    "file"
+                    file.type === "file" &&
+                    /\.(jpg|jpeg|png|webp|gif)$/i.test(
+                        file.name
+                    )
+            )
+            .sort(
+                (a, b) =>
+                    a.name.localeCompare(
+                        b.name
+                    )
             )
             .forEach(
                 file => {
@@ -637,13 +930,13 @@ async function loadImages() {
                     createImageRow(
                         file
                     );
+
                 }
             );
 
 
         if (
-            imageList.children.length ===
-            0
+            imageList.children.length === 0
         ) {
 
             imageList.textContent =
@@ -667,7 +960,7 @@ async function loadImages() {
 
 
 /* ---------------------------------------------------------
-   IMAGE ROW
+   CREATE IMAGE ROW
 --------------------------------------------------------- */
 
 function createImageRow(
@@ -684,22 +977,34 @@ function createImageRow(
         "image-row";
 
 
+    /* ---------------------------------------------
+       IMAGE
+    --------------------------------------------- */
+
     const image =
         document.createElement(
             "img"
         );
 
 
+    /*
+     * GitHub gives us the correct raw URL.
+     */
     image.src =
-        "images/" +
-        encodeURIComponent(
-            file.name
-        );
+        file.download_url;
 
 
     image.alt =
         file.name;
 
+
+    image.loading =
+        "lazy";
+
+
+    /* ---------------------------------------------
+       NAME
+    --------------------------------------------- */
 
     const name =
         document.createElement(
@@ -715,10 +1020,18 @@ function createImageRow(
         file.name;
 
 
+    /* ---------------------------------------------
+       DELETE BUTTON
+    --------------------------------------------- */
+
     const deleteButton =
         document.createElement(
             "button"
         );
+
+
+    deleteButton.type =
+        "button";
 
 
     deleteButton.className =
@@ -736,8 +1049,13 @@ function createImageRow(
                 file.name,
                 file.sha
             );
+
         };
 
+
+    /* ---------------------------------------------
+       ADD TO ROW
+    --------------------------------------------- */
 
     row.appendChild(
         image
@@ -761,7 +1079,7 @@ function createImageRow(
 
 
 /* ---------------------------------------------------------
-   DELETE
+   DELETE IMAGE
 --------------------------------------------------------- */
 
 async function deleteImage(
@@ -777,9 +1095,7 @@ async function deleteImage(
         );
 
 
-    if (
-        !confirmed
-    ) {
+    if (!confirmed) {
 
         return;
     }
@@ -787,11 +1103,14 @@ async function deleteImage(
 
     try {
 
+        uploadMessage.textContent =
+            "Deleting " +
+            name +
+            "...";
+
+
         const url =
-            "https://api.github.com/repos/" +
-            repository.value.trim() +
-            "/contents/images/" +
-            encodeURIComponent(
+            githubFileURL(
                 name
             );
 
@@ -810,19 +1129,24 @@ async function deleteImage(
 
                             "Content-Type":
                                 "application/json"
+
                         },
 
                     body:
                         JSON.stringify({
 
                             message:
-                                "Delete " +
+                                "Delete product image " +
                                 name,
 
                             sha:
-                                sha
+                                sha,
+
+                            branch:
+                                GITHUB_BRANCH
 
                         })
+
                 }
             );
 
@@ -831,9 +1155,7 @@ async function deleteImage(
             await response.json();
 
 
-        if (
-            !response.ok
-        ) {
+        if (!response.ok) {
 
             throw new Error(
                 result.message ||
@@ -843,7 +1165,7 @@ async function deleteImage(
 
 
         uploadMessage.textContent =
-            "Deleted: " +
+            "Deleted:\n" +
             name;
 
 
@@ -859,7 +1181,7 @@ async function deleteImage(
 
 
         uploadMessage.textContent =
-            "DELETE ERROR:\n" +
+            "DELETE ERROR:\n\n" +
             error.message;
     }
 }
@@ -869,9 +1191,20 @@ async function deleteImage(
    BUTTONS
 --------------------------------------------------------- */
 
-uploadButton.onclick =
-    uploadImage;
+uploadButton.addEventListener(
+    "click",
+    uploadImage
+);
 
 
-refreshButton.onclick =
-    loadImages;
+refreshButton.addEventListener(
+    "click",
+    loadImages
+);
+
+
+/* ---------------------------------------------------------
+   START
+--------------------------------------------------------- */
+
+loadImages();
