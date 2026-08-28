@@ -38,60 +38,17 @@
 </header>
 
 
-
 <main>
 
 
-<section>
-
-    <h2>
-        GitHub Connection
-    </h2>
-
-
-    <p class="warning">
-
-        Enter your GitHub Personal Access Token
-        only on this page.
-
-        It is not stored by this application.
-
-    </p>
-
-
-    <label>
-
-        GitHub repository
-
-        <input
-            id="repository"
-            value="AnimeshShrivastav/animeshrivastav.github.io"
-        >
-
-    </label>
-
-
-    <label>
-
-        GitHub token
-
-        <input
-            id="githubToken"
-            type="password"
-            autocomplete="off"
-            placeholder="Paste token here"
-        >
-
-    </label>
-
-</section>
-
-
+<!-- =====================================================
+     ADD PRODUCT
+===================================================== -->
 
 <section>
 
     <h2>
-        Upload Product
+        Add Product
     </h2>
 
 
@@ -111,7 +68,7 @@
 
     <img
         id="preview"
-        alt="Preview"
+        alt="Product preview"
         hidden
     >
 
@@ -122,7 +79,9 @@
 
         <input
             id="filename"
-            placeholder="AJ001_Necklace_MRP799.jpg"
+            type="text"
+            placeholder="Necklace_799"
+            autocomplete="off"
         >
 
     </label>
@@ -130,9 +89,33 @@
 
     <p class="hint">
 
-        Example:
+        Use:
 
-        AJ001_Necklace_MRP799.jpg
+        <strong>
+            Product Name_Price
+        </strong>
+
+        <br><br>
+
+        Examples:
+
+        <br>
+        Necklace_799
+
+        <br>
+        Blue Shirt_599
+
+        <br>
+        Cotton Saree_1299
+
+        <br><br>
+
+        The underscore separates the product name
+        from the price.
+
+        <br>
+
+        The <strong>.jpg</strong> extension is added automatically.
 
     </p>
 
@@ -150,6 +133,10 @@
 </section>
 
 
+
+<!-- =====================================================
+     EXISTING IMAGES
+===================================================== -->
 
 <section>
 
