@@ -20,6 +20,12 @@
  */
 const GITHUB_TOKEN =
     "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";
+console.log(
+    "Token loaded:",
+    GITHUB_TOKEN.substring(0, 4),
+    "length:",
+    GITHUB_TOKEN.length
+);
 
 
 /*
