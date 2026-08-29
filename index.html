@@ -146,15 +146,29 @@ window.onload = function () {
     tokenClient = google.accounts.oauth2.initTokenClient({
         client_id: CLIENT_ID,
         scope: DRIVE_SCOPE,
+
         callback: function(response) {
 
+            console.log("Google OAuth response:", response);
+
             if (response.error) {
-                console.error(response);
-                setStatus("Google login failed.");
+                console.error("OAuth error:", response);
+                setStatus("Google login failed: " + response.error);
+                return;
+            }
+
+            if (!response.access_token) {
+                console.error("No access token returned:", response);
+                setStatus("Google login succeeded but no access token was returned.");
                 return;
             }
 
             accessToken = response.access_token;
+
+            console.log(
+                "Access token received:",
+                accessToken ? "YES" : "NO"
+            );
 
             setStatus("Logged in.");
 
@@ -166,10 +180,13 @@ window.onload = function () {
 
 };
 
-
 document.getElementById("loginButton").onclick = function () {
 
-    tokenClient.requestAccessToken();
+    console.log("Requesting Google access token...");
+
+    tokenClient.requestAccessToken({
+        prompt: "consent"
+    });
 
 };
 
