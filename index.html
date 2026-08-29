@@ -1,161 +1,980 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html>
 <head>
-
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
+    <title>Google Drive Image Manager</title>
 
-    <meta
-        name="description"
-        content="Present Perfect Store"
-    >
-
-    <title>Present Perfect Store</title>
-
-    <link
-        rel="stylesheet"
-        href="style.css"
-    >
-
+    <!-- Google Identity Services -->
+    <script src="https://accounts.google.com/gsi/client"></script>
 </head>
-
 
 <body>
 
+<h1>Google Drive Image Manager</h1>
 
-<header class="site-header">
+<p>
+    <button id="loginButton">Login with Google</button>
+</p>
 
-    <div class="header-inner">
+<p id="status">Not logged in.</p>
 
-        <a
-            href="./"
-            class="brand"
-        >
-            Present Perfect
-        </a>
+<hr>
 
+<h2>Images</h2>
 
-        <a
-            href="checkout.html"
-            class="cart-link"
-        >
-            🛒 Cart
+<button id="refreshButton" disabled>Refresh Images</button>
 
-            <span id="cartCount">
-                0
-            </span>
+<div id="images"></div>
 
-        </a>
+<hr>
 
-    </div>
+<h2>Create / Add Image</h2>
 
-</header>
+<p>
+    Select an existing image from your computer:
+    <input type="file" id="fileInput" accept="image/*">
+</p>
 
+<p>
+    Or take a photo on a mobile device:
+    <input type="file" id="cameraInput" accept="image/*" capture="environment">
+</p>
 
+<p>
+    Existing Drive image:
+    <select id="existingImageSelect">
+        <option value="">-- Select image --</option>
+    </select>
+</p>
 
-<main>
+<p>
+    Thumbnail width:
+    <input type="number" id="thumbnailWidth" value="300" min="50">
+</p>
 
+<p>
+    Thumbnail height:
+    <input type="number" id="thumbnailHeight" value="300" min="50">
+</p>
 
-    <!-- HERO -->
+<p>
+    Crop X:
+    <input type="number" id="cropX" value="0">
 
-    <section class="hero">
+    Crop Y:
+    <input type="number" id="cropY" value="0">
 
-        <p class="eyebrow">
-            PRESENT PERFECT STORE
-        </p>
+    Crop Width:
+    <input type="number" id="cropWidth" value="300">
 
-        <h1>
-            Find something
-            <span>beautiful.</span>
-        </h1>
+    Crop Height:
+    <input type="number" id="cropHeight" value="300">
+</p>
 
-        <p>
-            Artificial jewellery, gifts,
-            fashion accessories and home decor.
-        </p>
+<p>
+    <button id="prepareButton">Prepare Image</button>
+</p>
 
-    </section>
+<h3>Preview</h3>
 
+<canvas id="previewCanvas"></canvas>
 
+<p>
+    File name:
+    <input type="text" id="fileName" value="image.jpg">
+</p>
 
-    <!-- SEARCH -->
+<p>
+    <button id="createButton" disabled>Create Image in Drive</button>
+</p>
 
-    <section class="shop-controls">
+<hr>
 
-        <input
-            id="searchInput"
-            type="search"
-            placeholder="Search products..."
-            autocomplete="off"
-        >
+<h2>Update Selected Image</h2>
 
+<p>
+    Select an image above and prepare a new image, then:
+</p>
 
-        <div
-            id="categories"
-            class="categories"
-        ></div>
+<button id="updateButton" disabled>Update Selected Drive Image</button>
 
-    </section>
+<hr>
 
+<h2>Delete</h2>
 
-
-    <!-- PRODUCTS -->
-
-    <section class="products-section">
-
-        <div class="section-title">
-
-            <h2>
-                Products
-            </h2>
-
-            <span id="productCount">
-                Loading...
-            </span>
-
-        </div>
-
-
-        <div
-            id="productGrid"
-            class="product-grid"
-        ></div>
+<button id="deleteButton" disabled>Delete Selected Drive Image</button>
 
 
-        <p
-            id="message"
-            class="message"
-        ></p>
+<script>
 
-    </section>
+//
+// CONFIGURATION
+//
 
+const CLIENT_ID = "821226707437-646379ioipofso23f4h80askh1chld6o.apps.googleusercontent.com";
 
-</main>
+const DRIVE_FOLDER_ID = "1MIn5SrjXa3WqlCQm2JdzgW7xmaOWdipX";
 
-
-
-<footer>
-
-    <p>
-        © <span id="year"></span>
-        Present Perfect Store
-    </p>
-
-    <a href="admin.html">
-        Admin
-    </a>
-
-</footer>
+const DRIVE_SCOPE = "https://www.googleapis.com/auth/drive";
 
 
+//
+// GLOBAL VARIABLES
+//
 
-<script src="script.js"></script>
+let accessToken = null;
+
+let images = [];
+
+let selectedDriveFile = null;
+
+let preparedBlob = null;
+
+let preparedImageName = "";
+
+let tokenClient;
+
+
+//
+// GOOGLE LOGIN
+//
+
+window.onload = function () {
+
+    tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: CLIENT_ID,
+        scope: DRIVE_SCOPE,
+        callback: function(response) {
+
+            if (response.error) {
+                console.error(response);
+                setStatus("Google login failed.");
+                return;
+            }
+
+            accessToken = response.access_token;
+
+            setStatus("Logged in.");
+
+            document.getElementById("refreshButton").disabled = false;
+
+            loadImages();
+        }
+    });
+
+};
+
+
+document.getElementById("loginButton").onclick = function () {
+
+    tokenClient.requestAccessToken();
+
+};
+
+
+//
+// STATUS
+//
+
+function setStatus(message) {
+
+    document.getElementById("status").textContent = message;
+
+}
+
+
+//
+// DRIVE API HELPER
+//
+
+async function driveRequest(url, options = {}) {
+
+    options.headers = options.headers || {};
+
+    options.headers["Authorization"] = "Bearer " + accessToken;
+
+    return fetch(url, options);
+
+}
+
+
+//
+// LOAD IMAGES
+//
+
+async function loadImages() {
+
+    if (!accessToken) {
+        return;
+    }
+
+    setStatus("Loading images...");
+
+    const query =
+        "'" + DRIVE_FOLDER_ID + "' in parents " +
+        "and mimeType contains 'image/' " +
+        "and trashed = false";
+
+    const url =
+        "https://www.googleapis.com/drive/v3/files" +
+        "?q=" + encodeURIComponent(query) +
+        "&fields=files(id,name,mimeType,size,modifiedTime,thumbnailLink)" +
+        "&orderBy=name";
+
+    try {
+
+        const response = await driveRequest(url);
+
+        if (!response.ok) {
+
+            const text = await response.text();
+
+            console.error(text);
+
+            setStatus("Unable to load Drive images.");
+
+            return;
+        }
+
+        const data = await response.json();
+
+        images = data.files || [];
+
+        displayImages();
+
+        populateImageSelector();
+
+        setStatus(images.length + " image(s) found.");
+
+    } catch (error) {
+
+        console.error(error);
+
+        setStatus("Error loading images.");
+    }
+
+}
+
+
+//
+// DISPLAY IMAGES
+//
+
+function displayImages() {
+
+    const container = document.getElementById("images");
+
+    container.innerHTML = "";
+
+    if (images.length === 0) {
+
+        container.textContent = "No images found.";
+
+        return;
+    }
+
+
+    images.forEach(function(file) {
+
+        const wrapper = document.createElement("div");
+
+        const title = document.createElement("p");
+
+        title.textContent =
+            file.name +
+            " (" +
+            file.mimeType +
+            ")";
+
+        const image = document.createElement("img");
+
+        image.alt = file.name;
+
+        image.width = 200;
+
+        image.style = "";
+
+        loadDriveImage(file.id, image);
+
+
+        const selectButton = document.createElement("button");
+
+        selectButton.textContent = "Select";
+
+        selectButton.onclick = function() {
+
+            selectedDriveFile = file;
+
+            document.getElementById("updateButton").disabled = false;
+            document.getElementById("deleteButton").disabled = false;
+
+            setStatus("Selected: " + file.name);
+
+        };
+
+
+        const deleteButton = document.createElement("button");
+
+        deleteButton.textContent = "Delete";
+
+        deleteButton.onclick = function() {
+
+            deleteImage(file);
+
+        };
+
+
+        wrapper.appendChild(title);
+
+        wrapper.appendChild(image);
+
+        wrapper.appendChild(document.createElement("br"));
+
+        wrapper.appendChild(selectButton);
+
+        wrapper.appendChild(deleteButton);
+
+        wrapper.appendChild(document.createElement("hr"));
+
+        container.appendChild(wrapper);
+
+    });
+
+}
+
+
+//
+// LOAD AN IMAGE FROM GOOGLE DRIVE
+//
+
+async function loadDriveImage(fileId, imageElement) {
+
+    try {
+
+        const response = await driveRequest(
+            "https://www.googleapis.com/drive/v3/files/" +
+            fileId +
+            "?alt=media"
+        );
+
+        if (!response.ok) {
+
+            console.error("Could not load image.");
+
+            return;
+        }
+
+        const blob = await response.blob();
+
+        const objectUrl = URL.createObjectURL(blob);
+
+        imageElement.src = objectUrl;
+
+    } catch (error) {
+
+        console.error(error);
+
+    }
+
+}
+
+
+//
+// IMAGE SELECTOR
+//
+
+function populateImageSelector() {
+
+    const select =
+        document.getElementById("existingImageSelect");
+
+    select.innerHTML =
+        '<option value="">-- Select image --</option>';
+
+    images.forEach(function(file) {
+
+        const option =
+            document.createElement("option");
+
+        option.value = file.id;
+
+        option.textContent = file.name;
+
+        select.appendChild(option);
+
+    });
+
+}
+
+
+//
+// SELECT EXISTING DRIVE IMAGE
+//
+
+document.getElementById("existingImageSelect").onchange =
+async function() {
+
+    const fileId = this.value;
+
+    if (!fileId) {
+        return;
+    }
+
+    const file =
+        images.find(function(item) {
+            return item.id === fileId;
+        });
+
+    if (!file) {
+        return;
+    }
+
+    selectedDriveFile = file;
+
+    document.getElementById("updateButton").disabled = false;
+    document.getElementById("deleteButton").disabled = false;
+
+    setStatus("Loading " + file.name + "...");
+
+    try {
+
+        const response = await driveRequest(
+            "https://www.googleapis.com/drive/v3/files/" +
+            file.id +
+            "?alt=media"
+        );
+
+        const blob = await response.blob();
+
+        const objectUrl =
+            URL.createObjectURL(blob);
+
+        const image =
+            new Image();
+
+        image.onload = function() {
+
+            document.getElementById("cropWidth").value =
+                image.width;
+
+            document.getElementById("cropHeight").value =
+                image.height;
+
+            document.getElementById("thumbnailWidth").value =
+                Math.min(300, image.width);
+
+            document.getElementById("thumbnailHeight").value =
+                Math.min(300, image.height);
+
+            window.currentSourceImage = image;
+
+            drawPreview();
+
+            URL.revokeObjectURL(objectUrl);
+
+        };
+
+        image.src = objectUrl;
+
+        document.getElementById("fileName").value =
+            file.name;
+
+        setStatus("Image loaded.");
+
+    } catch (error) {
+
+        console.error(error);
+
+        setStatus("Unable to load selected image.");
+
+    }
+
+};
+
+
+//
+// LOCAL FILE SELECTION
+//
+
+document.getElementById("fileInput").onchange =
+function(event) {
+
+    if (!event.target.files.length) {
+        return;
+    }
+
+    loadLocalImage(event.target.files[0]);
+
+};
+
+
+//
+// CAMERA
+//
+
+document.getElementById("cameraInput").onchange =
+function(event) {
+
+    if (!event.target.files.length) {
+        return;
+    }
+
+    loadLocalImage(event.target.files[0]);
+
+};
+
+
+//
+// LOAD LOCAL IMAGE
+//
+
+function loadLocalImage(file) {
+
+    const url =
+        URL.createObjectURL(file);
+
+    const image =
+        new Image();
+
+    image.onload = function() {
+
+        window.currentSourceImage = image;
+
+        document.getElementById("cropX").value = 0;
+
+        document.getElementById("cropY").value = 0;
+
+        document.getElementById("cropWidth").value =
+            image.width;
+
+        document.getElementById("cropHeight").value =
+            image.height;
+
+        document.getElementById("fileName").value =
+            file.name;
+
+        drawPreview();
+
+        URL.revokeObjectURL(url);
+
+    };
+
+    image.src = url;
+
+}
+
+
+//
+// DRAW PREVIEW
+//
+
+function drawPreview() {
+
+    const image =
+        window.currentSourceImage;
+
+    if (!image) {
+        return;
+    }
+
+    const cropX =
+        Number(document.getElementById("cropX").value);
+
+    const cropY =
+        Number(document.getElementById("cropY").value);
+
+    const cropWidth =
+        Number(document.getElementById("cropWidth").value);
+
+    const cropHeight =
+        Number(document.getElementById("cropHeight").value);
+
+    const thumbnailWidth =
+        Number(document.getElementById("thumbnailWidth").value);
+
+    const thumbnailHeight =
+        Number(document.getElementById("thumbnailHeight").value);
+
+
+    const canvas =
+        document.getElementById("previewCanvas");
+
+    canvas.width = thumbnailWidth;
+
+    canvas.height = thumbnailHeight;
+
+    const context =
+        canvas.getContext("2d");
+
+    context.clearRect(
+        0,
+        0,
+        thumbnailWidth,
+        thumbnailHeight
+    );
+
+
+    context.drawImage(
+        image,
+
+        cropX,
+        cropY,
+        cropWidth,
+        cropHeight,
+
+        0,
+        0,
+        thumbnailWidth,
+        thumbnailHeight
+    );
+
+}
+
+
+//
+// PREPARE IMAGE
+//
+
+document.getElementById("prepareButton").onclick =
+function() {
+
+    const image =
+        window.currentSourceImage;
+
+    if (!image) {
+
+        alert("Please select or take an image first.");
+
+        return;
+    }
+
+    drawPreview();
+
+    const canvas =
+        document.getElementById("previewCanvas");
+
+    canvas.toBlob(
+        function(blob) {
+
+            preparedBlob = blob;
+
+            preparedImageName =
+                document.getElementById("fileName").value;
+
+            document.getElementById("createButton").disabled =
+                false;
+
+            setStatus("Image prepared.");
+
+        },
+        "image/jpeg",
+        0.85
+    );
+
+};
+
+
+//
+// CREATE IMAGE
+//
+
+document.getElementById("createButton").onclick =
+async function() {
+
+    if (!preparedBlob) {
+
+        alert("Prepare an image first.");
+
+        return;
+    }
+
+    setStatus("Uploading image...");
+
+    try {
+
+        const metadata = {
+
+            name: preparedImageName || "image.jpg",
+
+            parents: [
+                DRIVE_FOLDER_ID
+            ]
+
+        };
+
+
+        const form =
+            new FormData();
+
+        form.append(
+            "metadata",
+            new Blob(
+                [JSON.stringify(metadata)],
+                {
+                    type: "application/json"
+                }
+            )
+        );
+
+        form.append(
+            "file",
+            preparedBlob,
+            preparedImageName || "image.jpg"
+        );
+
+
+        const response =
+            await driveRequest(
+                "https://www.googleapis.com/upload/drive/v3/files" +
+                "?uploadType=multipart&fields=id,name,mimeType",
+                {
+                    method: "POST",
+                    body: form
+                }
+            );
+
+
+        if (!response.ok) {
+
+            const text =
+                await response.text();
+
+            console.error(text);
+
+            setStatus("Upload failed.");
+
+            return;
+        }
+
+
+        const result =
+            await response.json();
+
+        console.log(result);
+
+        setStatus(
+            "Created: " + result.name
+        );
+
+        await loadImages();
+
+    } catch (error) {
+
+        console.error(error);
+
+        setStatus("Upload error.");
+
+    }
+
+};
+
+
+//
+// UPDATE EXISTING IMAGE
+//
+
+document.getElementById("updateButton").onclick =
+async function() {
+
+    if (!selectedDriveFile) {
+
+        alert("Select a Drive image first.");
+
+        return;
+    }
+
+    if (!preparedBlob) {
+
+        alert("Prepare a new image first.");
+
+        return;
+    }
+
+
+    setStatus("Updating image...");
+
+
+    try {
+
+        const metadata = {
+
+            name:
+                document.getElementById("fileName").value ||
+                selectedDriveFile.name
+
+        };
+
+
+        const form =
+            new FormData();
+
+
+        form.append(
+            "metadata",
+            new Blob(
+                [JSON.stringify(metadata)],
+                {
+                    type: "application/json"
+                }
+            )
+        );
+
+
+        form.append(
+            "file",
+            preparedBlob,
+            metadata.name
+        );
+
+
+        const response =
+            await driveRequest(
+                "https://www.googleapis.com/upload/drive/v3/files/" +
+                selectedDriveFile.id +
+                "?uploadType=multipart",
+                {
+                    method: "PATCH",
+                    body: form
+                }
+            );
+
+
+        if (!response.ok) {
+
+            const text =
+                await response.text();
+
+            console.error(text);
+
+            setStatus("Update failed.");
+
+            return;
+        }
+
+
+        setStatus("Image updated.");
+
+        await loadImages();
+
+    } catch (error) {
+
+        console.error(error);
+
+        setStatus("Update error.");
+
+    }
+
+};
+
+
+//
+// DELETE IMAGE
+//
+
+async function deleteImage(file) {
+
+    if (!confirm(
+        "Delete " + file.name + "?"
+    )) {
+
+        return;
+    }
+
+
+    setStatus("Deleting " + file.name + "...");
+
+
+    try {
+
+        const response =
+            await driveRequest(
+                "https://www.googleapis.com/drive/v3/files/" +
+                file.id,
+                {
+                    method: "DELETE"
+                }
+            );
+
+
+        if (!response.ok) {
+
+            const text =
+                await response.text();
+
+            console.error(text);
+
+            setStatus("Delete failed.");
+
+            return;
+        }
+
+
+        if (
+            selectedDriveFile &&
+            selectedDriveFile.id === file.id
+        ) {
+
+            selectedDriveFile = null;
+
+            document.getElementById(
+                "updateButton"
+            ).disabled = true;
+
+            document.getElementById(
+                "deleteButton"
+            ).disabled = true;
+
+        }
+
+
+        setStatus("Image deleted.");
+
+        await loadImages();
+
+    } catch (error) {
+
+        console.error(error);
+
+        setStatus("Delete error.");
+
+    }
+
+}
+
+
+//
+// DIRECT DELETE BUTTON
+//
+
+document.getElementById("deleteButton").onclick =
+function() {
+
+    if (!selectedDriveFile) {
+
+        alert("Select an image first.");
+
+        return;
+    }
+
+    deleteImage(selectedDriveFile);
+
+};
+
+
+//
+// REFRESH
+//
+
+document.getElementById("refreshButton").onclick =
+function() {
+
+    loadImages();
+
+};
+
+</script>
 
 </body>
-
 </html>
