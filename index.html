@@ -268,6 +268,13 @@ function displayProducts() {
     image.src = product.imageUrl;
     image.alt = product.name;
     image.loading = "lazy";
+    image.onerror = function() {
+      this.style.display = "none";
+      const fallback = document.createElement("div");
+      fallback.style.cssText = "display:flex;align-items:center;justify-content:center;width:100%;height:100%;min-height:180px;color:#777;font-size:13px;text-align:center;padding:15px";
+      fallback.textContent = "Image unavailable";
+      this.parentElement.appendChild(fallback);
+    };
 
     const body = document.createElement("div");
     body.className = "card-body";
@@ -542,6 +549,9 @@ function displayAdminProducts() {
     const img = document.createElement("img");
     img.src = product.imageUrl;
     img.alt = product.name;
+    img.onerror = function() {
+      this.style.display = "none";
+    };
 
     const title = document.createElement("strong");
     title.textContent = product.name + " - ₹" + product.price;
