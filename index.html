@@ -46,6 +46,10 @@ button{border:0;border-radius:7px;padding:10px 14px;cursor:pointer}
 label{display:block;font-weight:700;margin:12px 0 5px}
 input{width:100%;padding:10px;border:1px solid #ccc;border-radius:6px;font-size:15px}
 .preview{max-width:100%;margin-top:15px;text-align:center}
+.cropper{position:relative;width:min(100%,420px);height:min(82vw,420px);min-height:260px;margin:15px auto;overflow:hidden;background:#111;border-radius:10px;touch-action:none;user-select:none}
+#cropImage{position:absolute;max-width:none;max-height:none;transform-origin:0 0;will-change:transform;pointer-events:none}
+.crop-window{position:absolute;width:72%;aspect-ratio:1;left:14%;top:14%;border:3px solid #fff;box-shadow:0 0 0 9999px rgba(0,0,0,.48);pointer-events:none}
+.crop-help{font-size:13px;color:#666;margin:6px 0 12px}
 #previewCanvas{max-width:100%;border:1px solid #ccc;border-radius:8px}
 .admin-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
 .primary{background:#7b3f61;color:#fff}
@@ -124,27 +128,22 @@ footer{text-align:center;background:#eee;padding:25px;margin-top:40px}
     <label>Or choose an image</label>
     <input id="fileInput" type="file" accept="image/*">
 
+    <div class="cropper" id="cropper">
+      <img id="cropImage" alt="Crop image">
+      <div class="crop-window"></div>
+    </div>
+    <p class="crop-help">Use one finger to move the photo. Pinch with two fingers to zoom. The square shows the part that will be saved.</p>
+
     <div class="preview">
       <canvas id="previewCanvas"></canvas>
     </div>
 
-    <label>Crop X</label>
-    <input id="cropX" type="number" value="0">
-
-    <label>Crop Y</label>
-    <input id="cropY" type="number" value="0">
-
-    <label>Crop Width</label>
-    <input id="cropWidth" type="number" value="600">
-
-    <label>Crop Height</label>
-    <input id="cropHeight" type="number" value="600">
-
-    <label>Output Width</label>
-    <input id="outputWidth" type="number" value="700" min="100">
-
-    <label>Output Height</label>
-    <input id="outputHeight" type="number" value="700" min="100">
+    <label>Output Size</label>
+    <select id="outputSize">
+      <option value="700">700 × 700</option>
+      <option value="900">900 × 900</option>
+      <option value="1200">1200 × 1200</option>
+    </select>
 
     <div class="admin-actions">
       <button class="secondary" onclick="drawPreview()">Preview Crop</button>
@@ -174,7 +173,7 @@ const DRIVE_FOLDER_ID = "1MIn5SrjXa3WqlCQm2JdzgW7xmaOWdipX";
 
 const ADMIN_EMAIL = "presentperfectchowrasta@gmail.com";
 
-const WHATSAPP_NUMBER = "91890241120";
+const WHATSAPP_NUMBER = "918902411270";
 
 /* ================= STATE ================= */
 
@@ -205,45 +204,92 @@ document.addEventListener("DOMContentLoaded", function() {
 Apps Script returns JSONP so GitHub Pages does not need
 Google OAuth to read the private Drive folder.
 */
-function loadCatalogue() {
+let catalogueRequestInProgress = false;
+
+function loadCatalogue(retryAttempt) {
+  retryAttempt = Number.isFinite(retryAttempt) ? retryAttempt : 0;
+
   if (!CATALOGUE_API_URL || CATALOGUE_API_URL.includes("PASTE_")) {
     setStatus("Please configure the Apps Script Web App URL.");
     return;
   }
 
-  const callbackName = "catalogueCallback_" + Date.now();
+  if (catalogueRequestInProgress) return;
+  catalogueRequestInProgress = true;
 
-  window[callbackName] = function(data) {
-    try {
-      if (!data || !data.ok) {
-        throw new Error("Catalogue API returned an error.");
-      }
-
-      products = data.products || [];
-      displayProducts();
-      setStatus(products.length + " product(s) available.");
-    } catch (err) {
-      console.error(err);
-      setStatus("Unable to load catalogue.");
-    } finally {
-      delete window[callbackName];
-      script.remove();
-    }
-  };
+  const callbackName =
+    "catalogueCallback_" + Date.now() + "_" +
+    Math.random().toString(36).slice(2);
 
   const script = document.createElement("script");
+  let finished = false;
+  let timeoutId;
+
+  function finish() {
+    if (finished) return;
+    finished = true;
+    catalogueRequestInProgress = false;
+    clearTimeout(timeoutId);
+    delete window[callbackName];
+    if (script.parentNode) script.parentNode.removeChild(script);
+  }
+
+  function retryOrFail(message) {
+    finish();
+
+    if (retryAttempt < 2) {
+      setStatus(message + " Retrying...");
+      setTimeout(function() {
+        loadCatalogue(retryAttempt + 1);
+      }, 1200 * (retryAttempt + 1));
+    } else {
+      setStatus("Catalogue service unavailable. Tap here to retry.");
+      const status = document.getElementById("status");
+      status.onclick = function() {
+        status.onclick = null;
+        loadCatalogue(0);
+      };
+    }
+  }
+
+  window[callbackName] = function(data) {
+    if (finished) return;
+
+    if (!data || !data.ok) {
+      console.error("Catalogue API error:", data);
+      retryOrFail("Catalogue request failed.");
+      return;
+    }
+
+    products = data.products || [];
+    displayProducts();
+
+    // If Admin is open, update its product list immediately too.
+    if (document.getElementById("adminPanel").style.display === "block") {
+      displayAdminProducts();
+    }
+
+    setStatus(products.length + " product(s) available.");
+    finish();
+  };
+
   script.src = CATALOGUE_API_URL +
     (CATALOGUE_API_URL.includes("?") ? "&" : "?") +
     "callback=" + encodeURIComponent(callbackName) +
     "&t=" + Date.now();
 
   script.onerror = function() {
-    setStatus("Unable to connect to catalogue service.");
-    delete window[callbackName];
-    script.remove();
+    console.error("Catalogue service connection failed.");
+    retryOrFail("Unable to connect to catalogue service.");
   };
 
   document.body.appendChild(script);
+
+  timeoutId = setTimeout(function() {
+    if (finished) return;
+    console.error("Catalogue request timed out.");
+    retryOrFail("Catalogue request timed out.");
+  }, 20000);
 }
 
 function setStatus(message) {
@@ -599,6 +645,11 @@ function displayAdminProducts() {
   const container = document.getElementById("adminProducts");
   container.innerHTML = "";
 
+  if (!products.length) {
+    container.innerHTML = "<p>No products found.</p>";
+    return;
+  }
+
   products.forEach(function(product) {
     const box = document.createElement("div");
     box.className = "admin-product";
@@ -629,9 +680,26 @@ function displayAdminProducts() {
 
 /* ================= CAMERA / CROP ================= */
 
+const cropState = {
+  scale: 1,
+  minScale: 1,
+  x: 0,
+  y: 0,
+  pointers: new Map(),
+  startX: 0,
+  startY: 0,
+  startScale: 1,
+  startDistance: 0,
+  startMidX: 0,
+  startMidY: 0,
+  startPanX: 0,
+  startPanY: 0
+};
+
 function handleLocalFile(event) {
   if (!event.target.files || !event.target.files.length) return;
   loadLocalImage(event.target.files[0]);
+  event.target.value = "";
 }
 
 function loadLocalImage(file) {
@@ -641,59 +709,234 @@ function loadLocalImage(file) {
   image.onload = function() {
     currentSourceImage = image;
 
-    const size = Math.min(image.width, image.height);
+    const cropper = document.getElementById("cropper");
+    const cropImage = document.getElementById("cropImage");
 
-    document.getElementById("cropX").value =
-      Math.floor((image.width - size) / 2);
+    cropImage.src = url;
+    cropImage.style.width = image.naturalWidth + "px";
+    cropImage.style.height = image.naturalHeight + "px";
 
-    document.getElementById("cropY").value =
-      Math.floor((image.height - size) / 2);
+    const cropSize = cropper.clientWidth * 0.72;
+    const coverScale = Math.max(
+      cropSize / image.naturalWidth,
+      cropSize / image.naturalHeight
+    );
 
-    document.getElementById("cropWidth").value = size;
-    document.getElementById("cropHeight").value = size;
+    cropState.minScale = coverScale;
+    cropState.scale = coverScale;
 
+    cropState.x =
+      (cropper.clientWidth - image.naturalWidth * coverScale) / 2;
+    cropState.y =
+      (cropper.clientHeight - image.naturalHeight * coverScale) / 2;
+
+    clampCropPosition();
+    applyCropTransform();
     drawPreview();
 
     document.getElementById("uploadButton").disabled = false;
+    setStatus("Photo ready. Drag with one finger and pinch to zoom.");
 
     URL.revokeObjectURL(url);
+  };
+
+  image.onerror = function() {
+    URL.revokeObjectURL(url);
+    alert("Could not read that image.");
   };
 
   image.src = url;
 }
 
-function drawPreview() {
-  if (!currentSourceImage) {
-    alert("Please take or select an image first.");
-    return;
-  }
+function applyCropTransform() {
+  const img = document.getElementById("cropImage");
+  img.style.transform =
+    "translate3d(" + cropState.x + "px," +
+    cropState.y + "px,0) scale(" + cropState.scale + ")";
+}
 
-  const cropX = Number(document.getElementById("cropX").value);
-  const cropY = Number(document.getElementById("cropY").value);
-  const cropWidth = Number(document.getElementById("cropWidth").value);
-  const cropHeight = Number(document.getElementById("cropHeight").value);
-  const outputWidth = Number(document.getElementById("outputWidth").value);
-  const outputHeight = Number(document.getElementById("outputHeight").value);
+function clampCropPosition() {
+  if (!currentSourceImage) return;
+
+  const cropper = document.getElementById("cropper");
+  const cropSize = cropper.clientWidth * 0.72;
+  const left = cropper.clientWidth * 0.14;
+  const top = cropper.clientHeight * 0.14;
+  const right = left + cropSize;
+  const bottom = top + cropSize;
+
+  const scaledW = currentSourceImage.naturalWidth * cropState.scale;
+  const scaledH = currentSourceImage.naturalHeight * cropState.scale;
+
+  cropState.x = Math.min(left, Math.max(right - scaledW, cropState.x));
+  cropState.y = Math.min(top, Math.max(bottom - scaledH, cropState.y));
+}
+
+function getCropSourceRect() {
+  if (!currentSourceImage) return null;
+
+  const cropper = document.getElementById("cropper");
+  const cropSize = cropper.clientWidth * 0.72;
+  const cropLeft = cropper.clientWidth * 0.14;
+  const cropTop = cropper.clientHeight * 0.14;
+
+  let sx = (cropLeft - cropState.x) / cropState.scale;
+  let sy = (cropTop - cropState.y) / cropState.scale;
+  let size = cropSize / cropState.scale;
+
+  size = Math.min(
+    size,
+    currentSourceImage.naturalWidth,
+    currentSourceImage.naturalHeight
+  );
+
+  sx = Math.max(0, Math.min(currentSourceImage.naturalWidth - size, sx));
+  sy = Math.max(0, Math.min(currentSourceImage.naturalHeight - size, sy));
+
+  return {x: sx, y: sy, size: size};
+}
+
+function drawPreview() {
+  if (!currentSourceImage) return;
+
+  const rect = getCropSourceRect();
+  if (!rect) return;
+
+  const outputSize =
+    Number(document.getElementById("outputSize").value) || 700;
 
   const canvas = document.getElementById("previewCanvas");
-  canvas.width = outputWidth;
-  canvas.height = outputHeight;
+  canvas.width = outputSize;
+  canvas.height = outputSize;
 
   const ctx = canvas.getContext("2d");
-  ctx.clearRect(0, 0, outputWidth, outputHeight);
+  ctx.clearRect(0, 0, outputSize, outputSize);
 
   ctx.drawImage(
     currentSourceImage,
-    cropX,
-    cropY,
-    cropWidth,
-    cropHeight,
-    0,
-    0,
-    outputWidth,
-    outputHeight
+    rect.x, rect.y, rect.size, rect.size,
+    0, 0, outputSize, outputSize
   );
 }
+
+function pointerDistance(a, b) {
+  return Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+}
+
+function pointerMidpoint(a, b) {
+  return {
+    x: (a.clientX + b.clientX) / 2,
+    y: (a.clientY + b.clientY) / 2
+  };
+}
+
+function setupTouchCropper() {
+  const cropper = document.getElementById("cropper");
+  if (!cropper) return;
+
+  cropper.addEventListener("pointerdown", function(e) {
+    if (!currentSourceImage) return;
+
+    cropper.setPointerCapture(e.pointerId);
+    cropState.pointers.set(e.pointerId, e);
+
+    if (cropState.pointers.size === 1) {
+      cropState.startX = e.clientX;
+      cropState.startY = e.clientY;
+      cropState.startPanX = cropState.x;
+      cropState.startPanY = cropState.y;
+    }
+
+    if (cropState.pointers.size === 2) {
+      const pts = Array.from(cropState.pointers.values());
+      const mid = pointerMidpoint(pts[0], pts[1]);
+
+      cropState.startDistance = pointerDistance(pts[0], pts[1]);
+      cropState.startScale = cropState.scale;
+      cropState.startMidX = mid.x;
+      cropState.startMidY = mid.y;
+      cropState.startPanX = cropState.x;
+      cropState.startPanY = cropState.y;
+    }
+  });
+
+  cropper.addEventListener("pointermove", function(e) {
+    if (!cropState.pointers.has(e.pointerId)) return;
+
+    cropState.pointers.set(e.pointerId, e);
+
+    if (cropState.pointers.size === 1) {
+      const dx = e.clientX - cropState.startX;
+      const dy = e.clientY - cropState.startY;
+
+      cropState.x = cropState.startPanX + dx;
+      cropState.y = cropState.startPanY + dy;
+
+      clampCropPosition();
+      applyCropTransform();
+      drawPreview();
+    }
+
+    if (cropState.pointers.size === 2) {
+      const pts = Array.from(cropState.pointers.values());
+      const distance = pointerDistance(pts[0], pts[1]);
+
+      if (!cropState.startDistance) return;
+
+      cropState.scale = Math.max(
+        cropState.minScale,
+        Math.min(
+          cropState.startScale * distance / cropState.startDistance,
+          cropState.minScale * 5
+        )
+      );
+
+      const mid = pointerMidpoint(pts[0], pts[1]);
+
+      cropState.x =
+        cropState.startPanX + (mid.x - cropState.startMidX);
+      cropState.y =
+        cropState.startPanY + (mid.y - cropState.startMidY);
+
+      clampCropPosition();
+      applyCropTransform();
+      drawPreview();
+    }
+  });
+
+  function endPointer(e) {
+    cropState.pointers.delete(e.pointerId);
+
+    if (cropState.pointers.size === 1) {
+      const p = Array.from(cropState.pointers.values())[0];
+      cropState.startX = p.clientX;
+      cropState.startY = p.clientY;
+      cropState.startPanX = cropState.x;
+      cropState.startPanY = cropState.y;
+    }
+  }
+
+  cropper.addEventListener("pointerup", endPointer);
+  cropper.addEventListener("pointercancel", endPointer);
+
+  cropper.addEventListener("wheel", function(e) {
+    if (!currentSourceImage) return;
+    e.preventDefault();
+
+    const factor = e.deltaY < 0 ? 1.08 : 0.92;
+
+    cropState.scale = Math.max(
+      cropState.minScale,
+      Math.min(cropState.scale * factor, cropState.minScale * 5)
+    );
+
+    clampCropPosition();
+    applyCropTransform();
+    drawPreview();
+  }, {passive:false});
+}
+
+document.addEventListener("DOMContentLoaded", setupTouchCropper);
 
 /* ================= ADMIN DRIVE UPLOAD ================= */
 
@@ -789,9 +1032,11 @@ async function uploadProduct() {
       document.getElementById("fileInput").value = "";
 
       currentSourceImage = null;
+      document.getElementById("cropImage").removeAttribute("src");
       document.getElementById("uploadButton").disabled = true;
 
-      loadCatalogue();
+      // Refresh both customer cards and the Admin product list immediately.
+      loadCatalogue(0);
 
     } catch (err) {
       console.error(err);
