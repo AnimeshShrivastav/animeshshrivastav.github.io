@@ -174,7 +174,7 @@ const DRIVE_FOLDER_ID = "1MIn5SrjXa3WqlCQm2JdzgW7xmaOWdipX";
 
 const ADMIN_EMAIL = "presentperfectchowrasta@gmail.com";
 
-const WHATSAPP_NUMBER = "918902411270";
+const WHATSAPP_NUMBER = "91890241120";
 
 /* ================= STATE ================= */
 
@@ -250,6 +250,64 @@ function setStatus(message) {
   document.getElementById("status").textContent = message;
 }
 
+const imageCache = {};
+
+function loadProductImage(product, imageElement) {
+  if (!product || !product.id) return;
+
+  if (imageCache[product.id]) {
+    imageElement.src = imageCache[product.id];
+    return;
+  }
+
+  const callbackName = "imageCallback_" + Date.now() + "_" + Math.random().toString(36).slice(2);
+  const script = document.createElement("script");
+  let finished = false;
+
+  window[callbackName] = function(data) {
+    if (finished) return;
+    finished = true;
+
+    if (data && data.ok && data.dataUrl) {
+      imageCache[product.id] = data.dataUrl;
+      imageElement.src = data.dataUrl;
+    } else {
+      showImageUnavailable(imageElement);
+    }
+
+    delete window[callbackName];
+    script.remove();
+  };
+
+  script.src = CATALOGUE_API_URL +
+    (CATALOGUE_API_URL.includes("?") ? "&" : "?") +
+    "imageId=" + encodeURIComponent(product.id) +
+    "&callback=" + encodeURIComponent(callbackName) +
+    "&t=" + Date.now();
+
+  script.onerror = function() {
+    if (finished) return;
+    finished = true;
+    showImageUnavailable(imageElement);
+    delete window[callbackName];
+    script.remove();
+  };
+
+  document.body.appendChild(script);
+}
+
+function showImageUnavailable(imageElement) {
+  imageElement.style.display = "none";
+  const parent = imageElement.parentElement;
+  if (!parent || parent.querySelector(".image-fallback")) return;
+
+  const fallback = document.createElement("div");
+  fallback.className = "image-fallback";
+  fallback.style.cssText = "display:flex;align-items:center;justify-content:center;width:100%;height:100%;min-height:180px;color:#777;font-size:13px;text-align:center;padding:15px";
+  fallback.textContent = "Image unavailable";
+  parent.appendChild(fallback);
+}
+
 function displayProducts() {
   const container = document.getElementById("images");
   container.innerHTML = "";
@@ -265,7 +323,7 @@ function displayProducts() {
 
     const image = document.createElement("img");
     image.className = "card-image";
-    image.src = product.imageUrl;
+    loadProductImage(product, image);
     image.alt = product.name;
     image.loading = "lazy";
     image.onerror = function() {
@@ -318,7 +376,6 @@ function addToCart(product) {
       id: product.id,
       name: product.name,
       price: Number(product.price),
-      imageUrl: product.imageUrl,
       quantity: 1
     });
   }
@@ -360,7 +417,7 @@ function renderCart() {
     row.className = "cart-row";
 
     const img = document.createElement("img");
-    img.src = item.imageUrl;
+    loadProductImage(item, img);
     img.alt = item.name;
 
     const details = document.createElement("div");
@@ -547,7 +604,7 @@ function displayAdminProducts() {
     box.className = "admin-product";
 
     const img = document.createElement("img");
-    img.src = product.imageUrl;
+    loadProductImage(product, img);
     img.alt = product.name;
     img.onerror = function() {
       this.style.display = "none";
