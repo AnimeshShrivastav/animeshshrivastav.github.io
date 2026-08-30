@@ -1,997 +1,778 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Present Perfect</title>
 
-    <title>Google Drive Image Manager</title>
+<script src="https://accounts.google.com/gsi/client"></script>
 
-    <!-- Google Identity Services -->
-    <script src="https://accounts.google.com/gsi/client"></script>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#faf7f5;color:#333}
+header{background:#7b3f61;color:#fff;padding:26px 18px;text-align:center}
+header h1{margin:0 0 8px;font-size:32px}
+header p{margin:0}
+.admin-link{position:absolute;right:14px;top:14px}
+.admin-link button{background:transparent;color:#fff;border:1px solid #fff;border-radius:6px;padding:7px 11px;cursor:pointer}
+.intro{text-align:center;padding:28px 18px 10px}
+.intro h2{color:#7b3f61;margin:0 0 10px}
+.intro p{max-width:700px;margin:7px auto;line-height:1.6}
+.catalogue{max-width:1200px;margin:auto;padding:20px}
+.catalogue h2{text-align:center;color:#7b3f61}
+#images{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:18px}
+.card{background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.1)}
+.card-image{width:100%;aspect-ratio:1/1;object-fit:cover;background:#eee;display:block}
+.card-body{padding:13px}
+.card-name{font-weight:700;font-size:16px;margin-bottom:7px}
+.card-price{font-weight:700;color:#7b3f61;font-size:18px;margin-bottom:10px}
+button{border:0;border-radius:7px;padding:10px 14px;cursor:pointer}
+.add{width:100%;background:#7b3f61;color:#fff}
+.cart-float{position:fixed;right:18px;bottom:18px;z-index:1000;background:#25d366;color:#fff;border-radius:28px;padding:14px 19px;font-weight:700;box-shadow:0 3px 12px rgba(0,0,0,.25)}
+.status{text-align:center;min-height:22px;margin:10px}
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:2000;padding:16px}
+.modal-box{background:#fff;max-width:620px;margin:20px auto;padding:20px;border-radius:12px;max-height:92vh;overflow:auto}
+.cart-row{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid #eee;align-items:center}
+.cart-row img{width:62px;height:62px;object-fit:cover;border-radius:6px}
+.cart-details{flex:1}
+.qty{display:flex;gap:7px;align-items:center;margin-top:6px}
+.qty button{background:#eee;padding:4px 9px}
+.total{text-align:right;font-size:20px;font-weight:700;margin-top:18px}
+.whatsapp{width:100%;background:#25d366;color:#fff;margin-top:15px;font-size:16px}
+.close{width:100%;background:#ddd;margin-top:9px}
+#adminPanel{display:none;max-width:900px;margin:25px auto;padding:20px}
+.admin-box{background:#fff;padding:20px;border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,.1);margin-bottom:18px}
+.admin-box h2{color:#7b3f61;margin-top:0}
+label{display:block;font-weight:700;margin:12px 0 5px}
+input{width:100%;padding:10px;border:1px solid #ccc;border-radius:6px;font-size:15px}
+.preview{max-width:100%;margin-top:15px;text-align:center}
+#previewCanvas{max-width:100%;border:1px solid #ccc;border-radius:8px}
+.admin-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.primary{background:#7b3f61;color:#fff}
+.secondary{background:#eee}
+.admin-products{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:14px}
+.admin-product{background:#fafafa;border:1px solid #ddd;padding:10px;border-radius:8px}
+.admin-product img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:6px}
+.admin-product strong{display:block;margin:8px 0}
+footer{text-align:center;background:#eee;padding:25px;margin-top:40px}
+.hidden{display:none!important}
+@media(max-width:600px){
+  header h1{font-size:27px}
+  .admin-link{position:static;margin-top:14px}
+  #images{grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+  .card-body{padding:9px}
+  .card-name{font-size:14px}
+  .card-price{font-size:16px}
+  .add{font-size:13px;padding:9px 5px}
+}
+</style>
 </head>
 
 <body>
+<header>
+  <h1>Present Perfect</h1>
+  <p>Beautiful gifts for beautiful moments</p>
+  <div class="admin-link">
+    <button onclick="openAdmin()">Admin</button>
+  </div>
+</header>
 
-<h1>Google Drive Image Manager</h1>
+<section class="intro">
+  <h2>Welcome to the shop Present Perfect</h2>
+  <p>This shop has <strong>gift items</strong>, <strong>home decor items</strong> and <strong>artificial jewellery items</strong>.</p>
+  <p>Browse our collection and add your favourite products to your cart.</p>
+</section>
 
-<p>
-    <button id="loginButton">Login with Google</button>
-</p>
+<div id="status" class="status">Loading catalogue...</div>
 
-<p id="status">Not logged in.</p>
+<section class="catalogue">
+  <h2>Our Products</h2>
+  <div id="images"></div>
+</section>
 
-<hr>
+<button class="cart-float" onclick="openCart()">🛒 My Cart (<span id="cartCount">0</span>)</button>
 
-<h2>Images</h2>
+<div id="cartModal" class="modal">
+  <div class="modal-box">
+    <h2>My Cart</h2>
+    <div id="cartItems"></div>
+    <div id="cartTotal" class="total">Total: ₹0</div>
+    <button class="whatsapp" onclick="checkoutWhatsApp()">Checkout on WhatsApp</button>
+    <button class="close" onclick="closeCart()">Continue Shopping</button>
+  </div>
+</div>
 
-<button id="refreshButton" disabled>Refresh Images</button>
+<section id="adminPanel">
+  <div class="admin-box">
+    <h2>Admin Panel</h2>
+    <p id="adminUser"></p>
+    <button class="secondary" onclick="closeAdmin()">Close Admin</button>
+  </div>
 
-<div id="images"></div>
+  <div class="admin-box">
+    <h2>Add New Product</h2>
 
-<hr>
+    <label>Product Name</label>
+    <input id="productName" type="text" placeholder="Example: Peacock Decor">
 
-<h2>Create / Add Image</h2>
+    <label>Price (₹)</label>
+    <input id="productPrice" type="number" min="0" placeholder="599">
 
-<p>
-    Select an existing image from your computer:
-    <input type="file" id="fileInput" accept="image/*">
-</p>
+    <label>Take photo with mobile camera</label>
+    <input id="cameraInput" type="file" accept="image/*" capture="environment">
 
-<p>
-    Or take a photo on a mobile device:
-    <input type="file" id="cameraInput" accept="image/*" capture="environment">
-</p>
+    <label>Or choose an image</label>
+    <input id="fileInput" type="file" accept="image/*">
 
-<p>
-    Existing Drive image:
-    <select id="existingImageSelect">
-        <option value="">-- Select image --</option>
-    </select>
-</p>
+    <div class="preview">
+      <canvas id="previewCanvas"></canvas>
+    </div>
 
-<p>
-    Thumbnail width:
-    <input type="number" id="thumbnailWidth" value="300" min="50">
-</p>
+    <label>Crop X</label>
+    <input id="cropX" type="number" value="0">
 
-<p>
-    Thumbnail height:
-    <input type="number" id="thumbnailHeight" value="300" min="50">
-</p>
+    <label>Crop Y</label>
+    <input id="cropY" type="number" value="0">
 
-<p>
-    Crop X:
-    <input type="number" id="cropX" value="0">
+    <label>Crop Width</label>
+    <input id="cropWidth" type="number" value="600">
 
-    Crop Y:
-    <input type="number" id="cropY" value="0">
+    <label>Crop Height</label>
+    <input id="cropHeight" type="number" value="600">
 
-    Crop Width:
-    <input type="number" id="cropWidth" value="300">
+    <label>Output Width</label>
+    <input id="outputWidth" type="number" value="700" min="100">
 
-    Crop Height:
-    <input type="number" id="cropHeight" value="300">
-</p>
+    <label>Output Height</label>
+    <input id="outputHeight" type="number" value="700" min="100">
 
-<p>
-    <button id="prepareButton">Prepare Image</button>
-</p>
+    <div class="admin-actions">
+      <button class="secondary" onclick="drawPreview()">Preview Crop</button>
+      <button class="primary" id="uploadButton" onclick="uploadProduct()" disabled>Upload Product</button>
+    </div>
+  </div>
 
-<h3>Preview</h3>
+  <div class="admin-box">
+    <h2>Products in Drive</h2>
+    <div id="adminProducts" class="admin-products"></div>
+  </div>
+</section>
 
-<canvas id="previewCanvas"></canvas>
-
-<p>
-    File name:
-    <input type="text" id="fileName" value="image.jpg">
-</p>
-
-<p>
-    <button id="createButton" disabled>Create Image in Drive</button>
-</p>
-
-<hr>
-
-<h2>Update Selected Image</h2>
-
-<p>
-    Select an image above and prepare a new image, then:
-</p>
-
-<button id="updateButton" disabled>Update Selected Drive Image</button>
-
-<hr>
-
-<h2>Delete</h2>
-
-<button id="deleteButton" disabled>Delete Selected Drive Image</button>
-
+<footer>
+  <p>© Present Perfect</p>
+  <p>Gifts • Home Decor • Artificial Jewellery</p>
+</footer>
 
 <script>
+/* ================= CONFIG ================= */
 
-//
-// CONFIGURATION
-//
+const CATALOGUE_API_URL = "https://script.google.com/macros/s/AKfycbxVKPGaDPPgsTGoekfYeBDuv53KZDcOYhzmFD6TT-6KLiXV-hWtoe5FsGLYH_2YlTpNvg/exec";
 
 const CLIENT_ID = "821226707437-646379ioipofso23f4h80askh1chld6o.apps.googleusercontent.com";
 
 const DRIVE_FOLDER_ID = "1MIn5SrjXa3WqlCQm2JdzgW7xmaOWdipX";
 
-const DRIVE_SCOPE = "https://www.googleapis.com/auth/drive";
+const ADMIN_EMAIL = "presentperfectchowrasta@gmail.com";
 
+const WHATSAPP_NUMBER = "918902411270";
 
-//
-// GLOBAL VARIABLES
-//
+/* ================= STATE ================= */
 
+let products = [];
+let cart = [];
 let accessToken = null;
+let currentUser = null;
+let tokenClient = null;
+let currentSourceImage = null;
 
-let images = [];
+/* ================= START ================= */
 
-let selectedDriveFile = null;
+document.addEventListener("DOMContentLoaded", function() {
+  document.getElementById("cameraInput").addEventListener("change", handleLocalFile);
+  document.getElementById("fileInput").addEventListener("change", handleLocalFile);
+  loadCatalogue();
 
-let preparedBlob = null;
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: CLIENT_ID,
+    scope: "https://www.googleapis.com/auth/drive openid email profile",
+    callback: handleGoogleLogin
+  });
+});
 
-let preparedImageName = "";
+/* ================= CATALOGUE ================= */
 
-let tokenClient;
+/*
+Apps Script returns JSONP so GitHub Pages does not need
+Google OAuth to read the private Drive folder.
+*/
+function loadCatalogue() {
+  if (!CATALOGUE_API_URL || CATALOGUE_API_URL.includes("PASTE_")) {
+    setStatus("Please configure the Apps Script Web App URL.");
+    return;
+  }
 
+  const callbackName = "catalogueCallback_" + Date.now();
 
-//
-// GOOGLE LOGIN
-//
+  window[callbackName] = function(data) {
+    try {
+      if (!data || !data.ok) {
+        throw new Error("Catalogue API returned an error.");
+      }
 
-window.onload = function () {
+      products = data.products || [];
+      displayProducts();
+      setStatus(products.length + " product(s) available.");
+    } catch (err) {
+      console.error(err);
+      setStatus("Unable to load catalogue.");
+    } finally {
+      delete window[callbackName];
+      script.remove();
+    }
+  };
 
-    tokenClient = google.accounts.oauth2.initTokenClient({
-        client_id: CLIENT_ID,
-        scope: DRIVE_SCOPE,
+  const script = document.createElement("script");
+  script.src = CATALOGUE_API_URL +
+    (CATALOGUE_API_URL.includes("?") ? "&" : "?") +
+    "callback=" + encodeURIComponent(callbackName) +
+    "&t=" + Date.now();
 
-        callback: function(response) {
+  script.onerror = function() {
+    setStatus("Unable to connect to catalogue service.");
+    delete window[callbackName];
+    script.remove();
+  };
 
-            console.log("Google OAuth response:", response);
-
-            if (response.error) {
-                console.error("OAuth error:", response);
-                setStatus("Google login failed: " + response.error);
-                return;
-            }
-
-            if (!response.access_token) {
-                console.error("No access token returned:", response);
-                setStatus("Google login succeeded but no access token was returned.");
-                return;
-            }
-
-            accessToken = response.access_token;
-
-            console.log(
-                "Access token received:",
-                accessToken ? "YES" : "NO"
-            );
-
-            setStatus("Logged in.");
-
-            document.getElementById("refreshButton").disabled = false;
-
-            loadImages();
-        }
-    });
-
-};
-
-document.getElementById("loginButton").onclick = function () {
-
-    console.log("Requesting Google access token...");
-
-    tokenClient.requestAccessToken({
-        prompt: "consent"
-    });
-
-};
-
-
-//
-// STATUS
-//
+  document.body.appendChild(script);
+}
 
 function setStatus(message) {
-
-    document.getElementById("status").textContent = message;
-
+  document.getElementById("status").textContent = message;
 }
 
-
-//
-// DRIVE API HELPER
-//
-
-async function driveRequest(url, options = {}) {
-
-    options.headers = options.headers || {};
-
-    options.headers["Authorization"] = "Bearer " + accessToken;
-
-    return fetch(url, options);
-
-}
-
-
-//
-// LOAD IMAGES
-//
-
-async function loadImages() {
-
-    if (!accessToken) {
-        return;
-    }
-
-    setStatus("Loading images...");
-
-    const query =
-        "'" + DRIVE_FOLDER_ID + "' in parents " +
-        "and mimeType contains 'image/' " +
-        "and trashed = false";
-
-    const url =
-        "https://www.googleapis.com/drive/v3/files" +
-        "?q=" + encodeURIComponent(query) +
-        "&fields=files(id,name,mimeType,size,modifiedTime,thumbnailLink)" +
-        "&orderBy=name";
-
-    try {
-
-        const response = await driveRequest(url);
-
-        if (!response.ok) {
-
-            const text = await response.text();
-
-            console.error(text);
-
-            setStatus("Unable to load Drive images.");
-
-            return;
-        }
-
-        const data = await response.json();
-
-        images = data.files || [];
-
-        displayImages();
-
-        populateImageSelector();
-
-        setStatus(images.length + " image(s) found.");
-
-    } catch (error) {
-
-        console.error(error);
-
-        setStatus("Error loading images.");
-    }
-
-}
-
-
-//
-// DISPLAY IMAGES
-//
-
-function displayImages() {
-
-    const container = document.getElementById("images");
-
-    container.innerHTML = "";
-
-    if (images.length === 0) {
-
-        container.textContent = "No images found.";
-
-        return;
-    }
-
-
-    images.forEach(function(file) {
-
-        const wrapper = document.createElement("div");
-
-        const title = document.createElement("p");
-
-        title.textContent =
-            file.name +
-            " (" +
-            file.mimeType +
-            ")";
-
-        const image = document.createElement("img");
-
-        image.alt = file.name;
-
-        image.width = 200;
-
-        image.style = "";
-
-        loadDriveImage(file.id, image);
-
-
-        const selectButton = document.createElement("button");
-
-        selectButton.textContent = "Select";
-
-        selectButton.onclick = function() {
-
-            selectedDriveFile = file;
-
-            document.getElementById("updateButton").disabled = false;
-            document.getElementById("deleteButton").disabled = false;
-
-            setStatus("Selected: " + file.name);
-
-        };
-
-
-        const deleteButton = document.createElement("button");
-
-        deleteButton.textContent = "Delete";
-
-        deleteButton.onclick = function() {
-
-            deleteImage(file);
-
-        };
-
-
-        wrapper.appendChild(title);
-
-        wrapper.appendChild(image);
-
-        wrapper.appendChild(document.createElement("br"));
-
-        wrapper.appendChild(selectButton);
-
-        wrapper.appendChild(deleteButton);
-
-        wrapper.appendChild(document.createElement("hr"));
-
-        container.appendChild(wrapper);
-
-    });
-
-}
-
-
-//
-// LOAD AN IMAGE FROM GOOGLE DRIVE
-//
-
-async function loadDriveImage(fileId, imageElement) {
-
-    try {
-
-        const response = await driveRequest(
-            "https://www.googleapis.com/drive/v3/files/" +
-            fileId +
-            "?alt=media"
-        );
-
-        if (!response.ok) {
-
-            console.error("Could not load image.");
-
-            return;
-        }
-
-        const blob = await response.blob();
-
-        const objectUrl = URL.createObjectURL(blob);
-
-        imageElement.src = objectUrl;
-
-    } catch (error) {
-
-        console.error(error);
-
-    }
-
-}
-
-
-//
-// IMAGE SELECTOR
-//
-
-function populateImageSelector() {
-
-    const select =
-        document.getElementById("existingImageSelect");
-
-    select.innerHTML =
-        '<option value="">-- Select image --</option>';
-
-    images.forEach(function(file) {
-
-        const option =
-            document.createElement("option");
-
-        option.value = file.id;
-
-        option.textContent = file.name;
-
-        select.appendChild(option);
-
-    });
-
-}
-
-
-//
-// SELECT EXISTING DRIVE IMAGE
-//
-
-document.getElementById("existingImageSelect").onchange =
-async function() {
-
-    const fileId = this.value;
-
-    if (!fileId) {
-        return;
-    }
-
-    const file =
-        images.find(function(item) {
-            return item.id === fileId;
-        });
-
-    if (!file) {
-        return;
-    }
-
-    selectedDriveFile = file;
-
-    document.getElementById("updateButton").disabled = false;
-    document.getElementById("deleteButton").disabled = false;
-
-    setStatus("Loading " + file.name + "...");
-
-    try {
-
-        const response = await driveRequest(
-            "https://www.googleapis.com/drive/v3/files/" +
-            file.id +
-            "?alt=media"
-        );
-
-        const blob = await response.blob();
-
-        const objectUrl =
-            URL.createObjectURL(blob);
-
-        const image =
-            new Image();
-
-        image.onload = function() {
-
-            document.getElementById("cropWidth").value =
-                image.width;
-
-            document.getElementById("cropHeight").value =
-                image.height;
-
-            document.getElementById("thumbnailWidth").value =
-                Math.min(300, image.width);
-
-            document.getElementById("thumbnailHeight").value =
-                Math.min(300, image.height);
-
-            window.currentSourceImage = image;
-
-            drawPreview();
-
-            URL.revokeObjectURL(objectUrl);
-
-        };
-
-        image.src = objectUrl;
-
-        document.getElementById("fileName").value =
-            file.name;
-
-        setStatus("Image loaded.");
-
-    } catch (error) {
-
-        console.error(error);
-
-        setStatus("Unable to load selected image.");
-
-    }
-
-};
-
-
-//
-// LOCAL FILE SELECTION
-//
-
-document.getElementById("fileInput").onchange =
-function(event) {
-
-    if (!event.target.files.length) {
-        return;
-    }
-
-    loadLocalImage(event.target.files[0]);
-
-};
-
-
-//
-// CAMERA
-//
-
-document.getElementById("cameraInput").onchange =
-function(event) {
-
-    if (!event.target.files.length) {
-        return;
-    }
-
-    loadLocalImage(event.target.files[0]);
-
-};
-
-
-//
-// LOAD LOCAL IMAGE
-//
-
-function loadLocalImage(file) {
-
-    const url =
-        URL.createObjectURL(file);
-
-    const image =
-        new Image();
-
-    image.onload = function() {
-
-        window.currentSourceImage = image;
-
-        document.getElementById("cropX").value = 0;
-
-        document.getElementById("cropY").value = 0;
-
-        document.getElementById("cropWidth").value =
-            image.width;
-
-        document.getElementById("cropHeight").value =
-            image.height;
-
-        document.getElementById("fileName").value =
-            file.name;
-
-        drawPreview();
-
-        URL.revokeObjectURL(url);
-
+function displayProducts() {
+  const container = document.getElementById("images");
+  container.innerHTML = "";
+
+  if (!products.length) {
+    container.innerHTML = "<p>No products found.</p>";
+    return;
+  }
+
+  products.forEach(function(product) {
+    const card = document.createElement("div");
+    card.className = "card";
+
+    const image = document.createElement("img");
+    image.className = "card-image";
+    image.src = product.imageUrl;
+    image.alt = product.name;
+    image.loading = "lazy";
+
+    const body = document.createElement("div");
+    body.className = "card-body";
+
+    const name = document.createElement("div");
+    name.className = "card-name";
+    name.textContent = product.name;
+
+    const price = document.createElement("div");
+    price.className = "card-price";
+    price.textContent = "₹" + product.price;
+
+    const button = document.createElement("button");
+    button.className = "add";
+    button.textContent = "Add to My Cart";
+    button.onclick = function() {
+      addToCart(product);
     };
 
-    image.src = url;
+    body.appendChild(name);
+    body.appendChild(price);
+    body.appendChild(button);
 
+    card.appendChild(image);
+    card.appendChild(body);
+    container.appendChild(card);
+  });
 }
 
+/* ================= CART ================= */
 
-//
-// DRAW PREVIEW
-//
+function addToCart(product) {
+  const existing = cart.find(function(item) {
+    return item.id === product.id;
+  });
 
-function drawPreview() {
+  if (existing) {
+    existing.quantity++;
+  } else {
+    cart.push({
+      id: product.id,
+      name: product.name,
+      price: Number(product.price),
+      imageUrl: product.imageUrl,
+      quantity: 1
+    });
+  }
 
-    const image =
-        window.currentSourceImage;
-
-    if (!image) {
-        return;
-    }
-
-    const cropX =
-        Number(document.getElementById("cropX").value);
-
-    const cropY =
-        Number(document.getElementById("cropY").value);
-
-    const cropWidth =
-        Number(document.getElementById("cropWidth").value);
-
-    const cropHeight =
-        Number(document.getElementById("cropHeight").value);
-
-    const thumbnailWidth =
-        Number(document.getElementById("thumbnailWidth").value);
-
-    const thumbnailHeight =
-        Number(document.getElementById("thumbnailHeight").value);
-
-
-    const canvas =
-        document.getElementById("previewCanvas");
-
-    canvas.width = thumbnailWidth;
-
-    canvas.height = thumbnailHeight;
-
-    const context =
-        canvas.getContext("2d");
-
-    context.clearRect(
-        0,
-        0,
-        thumbnailWidth,
-        thumbnailHeight
-    );
-
-
-    context.drawImage(
-        image,
-
-        cropX,
-        cropY,
-        cropWidth,
-        cropHeight,
-
-        0,
-        0,
-        thumbnailWidth,
-        thumbnailHeight
-    );
-
+  updateCartCount();
+  setStatus(product.name + " added to cart.");
 }
 
+function updateCartCount() {
+  const count = cart.reduce(function(sum, item) {
+    return sum + item.quantity;
+  }, 0);
+  document.getElementById("cartCount").textContent = count;
+}
 
-//
-// PREPARE IMAGE
-//
+function openCart() {
+  renderCart();
+  document.getElementById("cartModal").style.display = "block";
+}
 
-document.getElementById("prepareButton").onclick =
-function() {
+function closeCart() {
+  document.getElementById("cartModal").style.display = "none";
+}
 
-    const image =
-        window.currentSourceImage;
+function renderCart() {
+  const container = document.getElementById("cartItems");
+  container.innerHTML = "";
 
-    if (!image) {
+  let total = 0;
 
-        alert("Please select or take an image first.");
+  if (!cart.length) {
+    container.innerHTML = "<p>Your cart is empty.</p>";
+  }
 
-        return;
-    }
+  cart.forEach(function(item, index) {
+    total += item.price * item.quantity;
+
+    const row = document.createElement("div");
+    row.className = "cart-row";
+
+    const img = document.createElement("img");
+    img.src = item.imageUrl;
+    img.alt = item.name;
+
+    const details = document.createElement("div");
+    details.className = "cart-details";
+
+    const name = document.createElement("strong");
+    name.textContent = item.name;
+
+    const price = document.createElement("div");
+    price.textContent = "₹" + item.price + " each";
+
+    const qty = document.createElement("div");
+    qty.className = "qty";
+
+    const minus = document.createElement("button");
+    minus.textContent = "−";
+    minus.onclick = function() {
+      changeQuantity(index, -1);
+    };
+
+    const number = document.createElement("span");
+    number.textContent = item.quantity;
+
+    const plus = document.createElement("button");
+    plus.textContent = "+";
+    plus.onclick = function() {
+      changeQuantity(index, 1);
+    };
+
+    const remove = document.createElement("button");
+    remove.textContent = "Remove";
+    remove.onclick = function() {
+      cart.splice(index, 1);
+      updateCartCount();
+      renderCart();
+    };
+
+    qty.appendChild(minus);
+    qty.appendChild(number);
+    qty.appendChild(plus);
+    qty.appendChild(remove);
+
+    details.appendChild(name);
+    details.appendChild(price);
+    details.appendChild(qty);
+
+    row.appendChild(img);
+    row.appendChild(details);
+    container.appendChild(row);
+  });
+
+  document.getElementById("cartTotal").textContent = "Total: ₹" + total;
+}
+
+function changeQuantity(index, amount) {
+  cart[index].quantity += amount;
+
+  if (cart[index].quantity <= 0) {
+    cart.splice(index, 1);
+  }
+
+  updateCartCount();
+  renderCart();
+}
+
+/* ================= WHATSAPP ================= */
+
+function checkoutWhatsApp() {
+  if (!cart.length) {
+    alert("Your cart is empty.");
+    return;
+  }
+
+  let total = 0;
+
+  let message =
+    "Hello Present Perfect,%0A%0A" +
+    "I would like to place an order:%0A%0A";
+
+  cart.forEach(function(item, index) {
+    const lineTotal = item.price * item.quantity;
+    total += lineTotal;
+
+    message +=
+      (index + 1) + ". " +
+      item.name +
+      " - ₹" +
+      item.price +
+      " x " +
+      item.quantity +
+      " = ₹" +
+      lineTotal +
+      "%0A";
+  });
+
+  message += "%0ATotal: ₹" + total;
+  message += "%0A%0AThank you.";
+
+  const url =
+    "https://wa.me/" +
+    WHATSAPP_NUMBER +
+    "?text=" +
+    message;
+
+  window.open(url, "_blank");
+}
+
+/* ================= ADMIN LOGIN ================= */
+
+function openAdmin() {
+  if (!accessToken) {
+    tokenClient.requestAccessToken({prompt: "consent"});
+    return;
+  }
+
+  showAdminIfAllowed();
+}
+
+async function handleGoogleLogin(response) {
+  if (response.error) {
+    alert("Google login failed: " + response.error);
+    return;
+  }
+
+  accessToken = response.access_token;
+
+  try {
+    const response = await fetch(
+      "https://www.googleapis.com/oauth2/v3/userinfo",
+      {
+        headers: {
+          Authorization: "Bearer " + accessToken
+        }
+      }
+    );
+
+    if (!response.ok) throw new Error("Unable to identify Google account.");
+
+    currentUser = await response.json();
+    showAdminIfAllowed();
+  } catch (err) {
+    console.error(err);
+    alert("Unable to verify Google account.");
+  }
+}
+
+function showAdminIfAllowed() {
+  if (!currentUser || !currentUser.email) {
+    alert("Unable to identify Google account.");
+    return;
+  }
+
+  if (
+    currentUser.email.toLowerCase() !==
+    ADMIN_EMAIL.toLowerCase()
+  ) {
+    alert("Access denied. Only the shop administrator can use this area.");
+    return;
+  }
+
+  document.getElementById("adminUser").textContent =
+    "Logged in as: " + currentUser.email;
+
+  document.getElementById("adminPanel").style.display = "block";
+  displayAdminProducts();
+
+  document.getElementById("adminPanel").scrollIntoView({
+    behavior: "smooth"
+  });
+}
+
+function closeAdmin() {
+  document.getElementById("adminPanel").style.display = "none";
+}
+
+/* ================= ADMIN PRODUCTS ================= */
+
+function displayAdminProducts() {
+  const container = document.getElementById("adminProducts");
+  container.innerHTML = "";
+
+  products.forEach(function(product) {
+    const box = document.createElement("div");
+    box.className = "admin-product";
+
+    const img = document.createElement("img");
+    img.src = product.imageUrl;
+    img.alt = product.name;
+
+    const title = document.createElement("strong");
+    title.textContent = product.name + " - ₹" + product.price;
+
+    const deleteButton = document.createElement("button");
+    deleteButton.className = "secondary";
+    deleteButton.textContent = "Delete";
+    deleteButton.onclick = function() {
+      deleteDriveFile(product);
+    };
+
+    box.appendChild(img);
+    box.appendChild(title);
+    box.appendChild(deleteButton);
+    container.appendChild(box);
+  });
+}
+
+/* ================= CAMERA / CROP ================= */
+
+function handleLocalFile(event) {
+  if (!event.target.files || !event.target.files.length) return;
+  loadLocalImage(event.target.files[0]);
+}
+
+function loadLocalImage(file) {
+  const url = URL.createObjectURL(file);
+  const image = new Image();
+
+  image.onload = function() {
+    currentSourceImage = image;
+
+    const size = Math.min(image.width, image.height);
+
+    document.getElementById("cropX").value =
+      Math.floor((image.width - size) / 2);
+
+    document.getElementById("cropY").value =
+      Math.floor((image.height - size) / 2);
+
+    document.getElementById("cropWidth").value = size;
+    document.getElementById("cropHeight").value = size;
 
     drawPreview();
 
-    const canvas =
-        document.getElementById("previewCanvas");
+    document.getElementById("uploadButton").disabled = false;
 
-    canvas.toBlob(
-        function(blob) {
+    URL.revokeObjectURL(url);
+  };
 
-            preparedBlob = blob;
-
-            preparedImageName =
-                document.getElementById("fileName").value;
-
-            document.getElementById("createButton").disabled =
-                false;
-
-            setStatus("Image prepared.");
-
-        },
-        "image/jpeg",
-        0.85
-    );
-
-};
-
-
-//
-// CREATE IMAGE
-//
-
-document.getElementById("createButton").onclick =
-async function() {
-
-    if (!preparedBlob) {
-
-        alert("Prepare an image first.");
-
-        return;
-    }
-
-    setStatus("Uploading image...");
-
-    try {
-
-        const metadata = {
-
-            name: preparedImageName || "image.jpg",
-
-            parents: [
-                DRIVE_FOLDER_ID
-            ]
-
-        };
-
-
-        const form =
-            new FormData();
-
-        form.append(
-            "metadata",
-            new Blob(
-                [JSON.stringify(metadata)],
-                {
-                    type: "application/json"
-                }
-            )
-        );
-
-        form.append(
-            "file",
-            preparedBlob,
-            preparedImageName || "image.jpg"
-        );
-
-
-        const response =
-            await driveRequest(
-                "https://www.googleapis.com/upload/drive/v3/files" +
-                "?uploadType=multipart&fields=id,name,mimeType",
-                {
-                    method: "POST",
-                    body: form
-                }
-            );
-
-
-        if (!response.ok) {
-
-            const text =
-                await response.text();
-
-            console.error(text);
-
-            setStatus("Upload failed.");
-
-            return;
-        }
-
-
-        const result =
-            await response.json();
-
-        console.log(result);
-
-        setStatus(
-            "Created: " + result.name
-        );
-
-        await loadImages();
-
-    } catch (error) {
-
-        console.error(error);
-
-        setStatus("Upload error.");
-
-    }
-
-};
-
-
-//
-// UPDATE EXISTING IMAGE
-//
-
-document.getElementById("updateButton").onclick =
-async function() {
-
-    if (!selectedDriveFile) {
-
-        alert("Select a Drive image first.");
-
-        return;
-    }
-
-    if (!preparedBlob) {
-
-        alert("Prepare a new image first.");
-
-        return;
-    }
-
-
-    setStatus("Updating image...");
-
-
-    try {
-
-        const metadata = {
-
-            name:
-                document.getElementById("fileName").value ||
-                selectedDriveFile.name
-
-        };
-
-
-        const form =
-            new FormData();
-
-
-        form.append(
-            "metadata",
-            new Blob(
-                [JSON.stringify(metadata)],
-                {
-                    type: "application/json"
-                }
-            )
-        );
-
-
-        form.append(
-            "file",
-            preparedBlob,
-            metadata.name
-        );
-
-
-        const response =
-            await driveRequest(
-                "https://www.googleapis.com/upload/drive/v3/files/" +
-                selectedDriveFile.id +
-                "?uploadType=multipart",
-                {
-                    method: "PATCH",
-                    body: form
-                }
-            );
-
-
-        if (!response.ok) {
-
-            const text =
-                await response.text();
-
-            console.error(text);
-
-            setStatus("Update failed.");
-
-            return;
-        }
-
-
-        setStatus("Image updated.");
-
-        await loadImages();
-
-    } catch (error) {
-
-        console.error(error);
-
-        setStatus("Update error.");
-
-    }
-
-};
-
-
-//
-// DELETE IMAGE
-//
-
-async function deleteImage(file) {
-
-    if (!confirm(
-        "Delete " + file.name + "?"
-    )) {
-
-        return;
-    }
-
-
-    setStatus("Deleting " + file.name + "...");
-
-
-    try {
-
-        const response =
-            await driveRequest(
-                "https://www.googleapis.com/drive/v3/files/" +
-                file.id,
-                {
-                    method: "DELETE"
-                }
-            );
-
-
-        if (!response.ok) {
-
-            const text =
-                await response.text();
-
-            console.error(text);
-
-            setStatus("Delete failed.");
-
-            return;
-        }
-
-
-        if (
-            selectedDriveFile &&
-            selectedDriveFile.id === file.id
-        ) {
-
-            selectedDriveFile = null;
-
-            document.getElementById(
-                "updateButton"
-            ).disabled = true;
-
-            document.getElementById(
-                "deleteButton"
-            ).disabled = true;
-
-        }
-
-
-        setStatus("Image deleted.");
-
-        await loadImages();
-
-    } catch (error) {
-
-        console.error(error);
-
-        setStatus("Delete error.");
-
-    }
-
+  image.src = url;
 }
 
+function drawPreview() {
+  if (!currentSourceImage) {
+    alert("Please take or select an image first.");
+    return;
+  }
 
-//
-// DIRECT DELETE BUTTON
-//
+  const cropX = Number(document.getElementById("cropX").value);
+  const cropY = Number(document.getElementById("cropY").value);
+  const cropWidth = Number(document.getElementById("cropWidth").value);
+  const cropHeight = Number(document.getElementById("cropHeight").value);
+  const outputWidth = Number(document.getElementById("outputWidth").value);
+  const outputHeight = Number(document.getElementById("outputHeight").value);
 
-document.getElementById("deleteButton").onclick =
-function() {
+  const canvas = document.getElementById("previewCanvas");
+  canvas.width = outputWidth;
+  canvas.height = outputHeight;
 
-    if (!selectedDriveFile) {
+  const ctx = canvas.getContext("2d");
+  ctx.clearRect(0, 0, outputWidth, outputHeight);
 
-        alert("Select an image first.");
+  ctx.drawImage(
+    currentSourceImage,
+    cropX,
+    cropY,
+    cropWidth,
+    cropHeight,
+    0,
+    0,
+    outputWidth,
+    outputHeight
+  );
+}
 
-        return;
+/* ================= ADMIN DRIVE UPLOAD ================= */
+
+async function uploadProduct() {
+  if (!currentUser ||
+      currentUser.email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
+    alert("Administrator access required.");
+    return;
+  }
+
+  const productName =
+    document.getElementById("productName").value.trim();
+
+  const price =
+    Number(document.getElementById("productPrice").value);
+
+  if (!productName) {
+    alert("Enter a product name.");
+    return;
+  }
+
+  if (!Number.isFinite(price) || price < 0) {
+    alert("Enter a valid price.");
+    return;
+  }
+
+  if (!currentSourceImage) {
+    alert("Take or select a product image.");
+    return;
+  }
+
+  drawPreview();
+
+  const canvas = document.getElementById("previewCanvas");
+
+  canvas.toBlob(async function(blob) {
+    if (!blob) {
+      alert("Could not prepare image.");
+      return;
     }
 
-    deleteImage(selectedDriveFile);
+    const safeName = productName
+      .replace(/[^\w\s-]/g, "")
+      .replace(/\s+/g, "_")
+      .replace(/^_+|_+$/g, "");
 
+    const filename = safeName + "_" + price + ".jpg";
+
+    try {
+      setStatus("Uploading " + filename + "...");
+
+      const metadata = {
+        name: filename,
+        parents: [DRIVE_FOLDER_ID]
+      };
+
+      const form = new FormData();
+
+      form.append(
+        "metadata",
+        new Blob([JSON.stringify(metadata)], {
+          type: "application/json"
+        })
+      );
+
+      form.append("file", blob, filename);
+
+      const response = await fetch(
+        "https://www.googleapis.com/upload/drive/v3/files" +
+        "?uploadType=multipart&fields=id,name,mimeType",
+        {
+          method: "POST",
+          headers: {
+            Authorization: "Bearer " + accessToken
+          },
+          body: form
+        }
+      );
+
+      if (!response.ok) {
+        const text = await response.text();
+        console.error(text);
+        throw new Error("Drive upload failed.");
+      }
+
+      const result = await response.json();
+
+      alert("Product uploaded: " + result.name);
+
+      document.getElementById("productName").value = "";
+      document.getElementById("productPrice").value = "";
+      document.getElementById("cameraInput").value = "";
+      document.getElementById("fileInput").value = "";
+
+      currentSourceImage = null;
+      document.getElementById("uploadButton").disabled = true;
+
+      loadCatalogue();
+
+    } catch (err) {
+      console.error(err);
+      alert("Upload failed. Check Google Drive permissions and OAuth settings.");
+      setStatus("Upload failed.");
+    }
+  }, "image/jpeg", 0.88);
+}
+
+/* ================= ADMIN DELETE ================= */
+
+async function deleteDriveFile(product) {
+  if (!currentUser ||
+      currentUser.email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
+    alert("Administrator access required.");
+    return;
+  }
+
+  if (!confirm("Delete " + product.name + "?")) return;
+
+  try {
+    const response = await fetch(
+      "https://www.googleapis.com/drive/v3/files/" + product.id,
+      {
+        method: "DELETE",
+        headers: {
+          Authorization: "Bearer " + accessToken
+        }
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error("Delete failed.");
+    }
+
+    alert("Product deleted.");
+    loadCatalogue();
+
+  } catch (err) {
+    console.error(err);
+    alert("Could not delete the product.");
+  }
+}
+
+window.onclick = function(event) {
+  const modal = document.getElementById("cartModal");
+  if (event.target === modal) closeCart();
 };
-
-
-//
-// REFRESH
-//
-
-document.getElementById("refreshButton").onclick =
-function() {
-
-    loadImages();
-
-};
-
 </script>
-
 </body>
 </html>
